@@ -1,13 +1,12 @@
-/* storage.js */
+/* storage.js - 精简版（localStorage 封装 + 站点统计） */
 class Storage {
     static PREFIX = 'starlink_';
-    
+
     static get(key, defaultValue = null) {
         try {
             const item = localStorage.getItem(this.PREFIX + key);
             return item === null ? defaultValue : JSON.parse(item);
-        } catch (error) {
-            console.error(`获取存储数据失败 (${key}):`, error);
+        } catch {
             return defaultValue;
         }
     }
@@ -16,8 +15,7 @@ class Storage {
         try {
             localStorage.setItem(this.PREFIX + key, JSON.stringify(value));
             return true;
-        } catch (error) {
-            console.error(`设置存储数据失败 (${key}):`, error);
+        } catch {
             return false;
         }
     }
@@ -26,38 +24,9 @@ class Storage {
         try {
             localStorage.removeItem(this.PREFIX + key);
             return true;
-        } catch (error) {
-            console.error(`删除存储数据失败 (${key}):`, error);
+        } catch {
             return false;
         }
-    }
-
-    static clear() {
-        try {
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key && key.startsWith(this.PREFIX)) {
-                    keysToRemove.push(key);
-                }
-            }
-            keysToRemove.forEach(key => localStorage.removeItem(key));
-            return true;
-        } catch (error) {
-            console.error('清除存储失败:', error);
-            return false;
-        }
-    }
-
-    static getAllKeys() {
-        const keys = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith(this.PREFIX)) {
-                keys.push(key.substring(this.PREFIX.length));
-            }
-        }
-        return keys;
     }
 
     static getItem(key, defaultValue = null) {
@@ -68,12 +37,44 @@ class Storage {
         return this.set(key, value);
     }
 
+    static clear() {
+        try {
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key?.startsWith(this.PREFIX)) keysToRemove.push(key);
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    static getAllKeys() {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key?.startsWith(this.PREFIX)) keys.push(key.substring(this.PREFIX.length));
+        }
+        return keys;
+    }
+
+    // ---------- 站点统计 ----------
+    static normalizeUrl(url) {
+        if (!url) return '';
+        try {
+            return url.toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/$/, '');
+        } catch {
+            return url;
+        }
+    }
+
     static getSiteViews(url) {
         if (!url) return 0;
         try {
             const siteViews = this.get('site_views', {});
-            const normalizedUrl = this.normalizeUrl(url);
-            return siteViews[normalizedUrl] || 0;
+            return siteViews[this.normalizeUrl(url)] || 0;
         } catch {
             return 0;
         }
@@ -116,11 +117,11 @@ class Storage {
         try {
             const siteViews = this.get('site_views', {});
             const urls = Object.keys(siteViews);
+            const totalViews = Object.values(siteViews).reduce((sum, v) => sum + v, 0);
             return {
                 totalSites: urls.length,
-                totalViews: Object.values(siteViews).reduce((sum, views) => sum + views, 0),
-                averageViews: urls.length > 0 ? 
-                    Math.round(Object.values(siteViews).reduce((sum, views) => sum + views, 0) / urls.length) : 0,
+                totalViews,
+                averageViews: urls.length ? Math.round(totalViews / urls.length) : 0,
                 mostViewed: this.getPopularSites(1)[0] || null
             };
         } catch {
@@ -128,27 +129,14 @@ class Storage {
         }
     }
 
-    static normalizeUrl(url) {
-        if (!url) return '';
-        try {
-            let normalized = url.toLowerCase();
-            normalized = normalized.replace(/^(https?:\/\/)?(www\.)?/, '');
-            normalized = normalized.replace(/\/$/, '');
-            return normalized;
-        } catch {
-            return url;
-        }
-    }
-
+    // ---------- 链接有效性（已废弃，保留兼容） ----------
     static getLinkValidity(url) {
-        const normalizedUrl = this.normalizeUrl(url);
-        const cacheKey = `link_validity_${normalizedUrl}`;
+        const cacheKey = `link_validity_${this.normalizeUrl(url)}`;
         return this.get(cacheKey, null);
     }
 
     static setLinkValidity(url, valid) {
-        const normalizedUrl = this.normalizeUrl(url);
-        const cacheKey = `link_validity_${normalizedUrl}`;
+        const cacheKey = `link_validity_${this.normalizeUrl(url)}`;
         return this.set(cacheKey, { valid, timestamp: Date.now() });
     }
 }
