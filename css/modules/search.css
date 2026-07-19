@@ -1,4 +1,4 @@
-/* search.css - 精简版（搜索模态框位于导航栏下方） */
+/* search.css - 精简版（搜索模态框位于导航栏下方，移动端间距与主页一致） */
 .search-modal {
     position: fixed;
     top: 0;
@@ -12,9 +12,9 @@
     pointer-events: none;
     transition: opacity .3s ease, visibility .3s ease;
     display: flex;
-    align-items: flex-start;          /* 顶部对齐，使内容从导航栏下方开始 */
+    align-items: flex-start;
     justify-content: center;
-    padding: 70px 20px 20px;          /* 顶部留出导航栏高度(60px)+间距 */
+    padding: 60px 20px 20px;           /* 顶部与导航栏底部对齐 */
     box-sizing: border-box;
 }
 .search-modal.active {
@@ -236,9 +236,11 @@
     margin: 0;
 }
 
-/* 移动端适配 */
+/* 移动端适配：左右间距与主页一致 */
 @media (max-width: 768px) {
-    .search-modal { padding: 70px 12px 20px; }
+    .search-modal {
+        padding: 60px var(--container-padding-xs, 16px) var(--container-padding-xs, 16px);
+    }
     .search-modal .modal-content {
         max-width: 100%;
         padding: 14px 16px;
