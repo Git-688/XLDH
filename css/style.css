@@ -1,4 +1,4 @@
-/* style.css - 精简版（修复星聚笔记模态框移动端间距） */
+/* style.css - 精简版（修复合作伙伴模态框移动端间距） */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
@@ -431,6 +431,47 @@ p { margin-bottom: 1em; }
 .dark-mode .partner-icon { background: var(--bg-card, #2d2d2d); border-color: var(--border-color); }
 .dark-mode .partner-list::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
 .dark-mode .partner-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+
+/* ===== 合作伙伴模态框移动端间距修复 ===== */
+#partnerModal {
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 60px;
+    box-sizing: border-box;
+}
+/* 桌面端 */
+@media (min-width: 769px) {
+    #partnerModal {
+        display: flex;
+        flex-direction: column;
+        padding: 60px 12px 12px;
+    }
+    #partnerModal .feedback-modal-content {
+        margin: auto 0;
+        max-height: calc(100vh - 60px - 24px);
+        overflow-y: auto;
+        max-width: 600px;
+    }
+}
+/* 移动端：左右间距与主页一致 */
+@media (max-width: 768px) {
+    #partnerModal {
+        padding-left: var(--container-padding-xs, 16px);
+        padding-right: var(--container-padding-xs, 16px);
+        padding-top: calc(60px + var(--container-padding-xs, 16px));
+        padding-bottom: var(--container-padding-xs, 16px);
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+    }
+    #partnerModal .feedback-modal-content {
+        margin: auto 0;
+        width: 100%;
+        max-width: 100%;
+        max-height: calc(100vh - 60px - 2 * var(--container-padding-xs, 16px));
+        overflow-y: auto;
+    }
+}
 
 /* ===== 图标降级 ===== */
 .icon-fallback-text {
