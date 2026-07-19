@@ -1,4 +1,4 @@
-/* navbar.js - 精简版（导航栏组件） */
+/* navbar.js - 精简版（修复搜索按钮点击无反应） */
 class Navbar {
     constructor() {
         if (window.Starlink?.navbar) return window.Starlink.navbar;
@@ -30,14 +30,25 @@ class Navbar {
 
     // ---------- 事件绑定 ----------
     bindEvents() {
-        // 搜索按钮
+        // 搜索按钮 - 直接调用搜索模块的 toggle 方法，简化逻辑
         const searchBtn = document.getElementById('searchBtn');
         if (searchBtn) {
             searchBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.handleFeatureToggle('search', () => {
-                    window.Starlink?.search?.toggle?.() || window.newSearchModule?.toggle?.();
+                // 直接调用 newSearchModule 的 toggle，并确保其他模态关闭
+                this.closeAllModalsExcept(['search']).then(() => {
+                    if (window.newSearchModule && typeof window.newSearchModule.toggle === 'function') {
+                        window.newSearchModule.toggle();
+                    } else if (window.Starlink?.search && typeof window.Starlink.search.toggle === 'function') {
+                        window.Starlink.search.toggle();
+                    } else {
+                        console.warn('搜索模块未加载');
+                        window.toast?.show('搜索功能暂不可用', 'warning');
+                    }
+                }).catch(err => {
+                    console.error('搜索切换失败:', err);
+                    window.toast?.show('搜索功能出错', 'error');
                 });
             });
         }
@@ -130,10 +141,14 @@ class Navbar {
         for (const modal of activeModals) {
             const shouldClose = !Object.entries(modalMap).some(([key, m]) => m === modal && keepSet.has(key));
             if (shouldClose && modal?.hide) {
-                await new Promise(resolve => {
-                    modal.hide();
-                    setTimeout(resolve, 300);
-                });
+                try {
+                    await new Promise(resolve => {
+                        modal.hide();
+                        setTimeout(resolve, 300);
+                    });
+                } catch (e) {
+                    console.warn('关闭模态失败:', e);
+                }
             }
         }
 
