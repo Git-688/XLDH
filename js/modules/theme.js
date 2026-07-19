@@ -1,4 +1,4 @@
-/* theme.js - 深色模式切换平滑过渡 */
+/* theme.js - 深色模式切换平滑过渡 + 自动跟随系统 */
 class ThemeModule {
     constructor() {
         if (window.Starlink && window.Starlink.theme) return window.Starlink.theme;
@@ -37,7 +37,7 @@ class ThemeModule {
 
     applyTheme() {
         const htmlElement = document.documentElement;
-        // ===== 添加过渡效果 =====
+        // 添加过渡效果
         htmlElement.style.transition = 'background-color 0.3s ease, color 0.3s ease';
         
         let shouldBeDark = false;
@@ -58,7 +58,6 @@ class ThemeModule {
         this.updateButtonIcon(shouldBeDark);
         localStorage.setItem(this.THEME_KEY, this.currentTheme);
         
-        // ===== 过渡完成后移除过渡属性，避免影响其他样式 =====
         setTimeout(() => {
             htmlElement.style.transition = '';
         }, 300);
@@ -95,11 +94,16 @@ class ThemeModule {
 
     bindEvents() {
         this.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
+        // ===== 新增：监听系统主题变化 =====
         if (window.matchMedia) {
             this.systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
             this.systemThemeHandler = (e) => {
+                // 只有在自动模式下才响应系统变化
                 if (this.currentTheme === 'auto') {
                     this.applyTheme();
+                    // 可选的提示（避免频繁打扰，可注释）
+                    // const toast = window.Starlink?.toast || window.toast;
+                    // if (toast && toast.show) toast.show('已跟随系统切换主题', 'info');
                 }
             };
             this.systemThemeQuery.addEventListener('change', this.systemThemeHandler);
