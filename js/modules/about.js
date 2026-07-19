@@ -1,9 +1,15 @@
-/* about.js - 精简版（关于页面 + 赞赏模态框 + 支持者名单） */
+/* about.js - 私密空间链接已替换为 https://zzzskj.ccwu.cc */
 if (typeof Utils === 'undefined') {
     window.Utils = {
         escapeHtml: function(str) {
             if (!str) return '';
-            return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]);
+            return String(str).replace(/[&<>"']/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                if (m === '"') return '&quot;';
+                return '&#39;';
+            });
         },
         getApiBase: function() {
             return (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
@@ -13,7 +19,7 @@ if (typeof Utils === 'undefined') {
 
 class AboutModule {
     constructor() {
-        if (window.Starlink?.about) return window.Starlink.about;
+        if (window.Starlink && window.Starlink.about) return window.Starlink.about;
         
         this.modalElement = null;
         this.isShowing = false;
@@ -46,8 +52,12 @@ class AboutModule {
         const style = document.createElement('style');
         style.id = 'github-btn-style';
         style.textContent = `
-            .about-social-btn.github-btn { background: #24292e; }
-            .about-social-btn.github-btn:hover { background: #1a1e24; }
+            .about-social-btn.github-btn {
+                background: #24292e;
+            }
+            .about-social-btn.github-btn:hover {
+                background: #1a1e24;
+            }
         `;
         document.head.appendChild(style);
     }
@@ -66,34 +76,39 @@ class AboutModule {
         this.modalElement.className = 'about-modal';
         this.modalElement.innerHTML = this.renderModal();
         this.modalElement.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: transparent; display: none; align-items: center; justify-content: center;
-            z-index: 10000; opacity: 0; transition: opacity 0.3s ease;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         `;
         document.body.appendChild(this.modalElement);
         this.bindModalEvents();
     }
 
     renderModal() {
-        const esc = Utils.escapeHtml;
-        const qqBtn = `<button class="about-social-btn qq-btn tooltip" id="aboutQQBtn"><i class="fab fa-qq"></i><span class="tooltip-text">QQ联系</span></button>`;
-        const githubBtn = `<button class="about-social-btn github-btn tooltip" id="aboutGithubBtn"><i class="fab fa-github"></i><span class="tooltip-text">GitHub仓库</span></button>`;
-        const donateBtn = `<button class="about-social-btn donate-btn tooltip" id="aboutDonateBtn"><i class="fas fa-heart"></i><span class="tooltip-text">爱发电支持</span></button>`;
-        const spaceBtn = `<button class="about-social-btn space-btn tooltip" id="aboutPrivateSpaceBtn"><i class="fas fa-user-secret"></i><span class="tooltip-text">站长の空间</span></button>`;
-
         return `
             <div class="about-modal-content">
                 <div class="about-header">
-                    <div class="about-header-bg" style="background-image:url('${esc(this.wallpaperUrl)}')"></div>
+                    <div class="about-header-bg" style="background-image: url('${Utils.escapeHtml(this.wallpaperUrl)}')"></div>
                     <div class="about-header-overlay"></div>
                     <div class="about-header-content">
                         <div class="about-header-left">
-                            <div class="info-card">开发者：${esc(this.developer)}</div>
-                            <div class="info-card">网站版本：${esc(this.version)}</div>
-                            <div class="info-card">更新日期：${esc(this.updateDate)}</div>
+                            <div class="info-card">开发者：${Utils.escapeHtml(this.developer)}</div>
+                            <div class="info-card">网站版本：${Utils.escapeHtml(this.version)}</div>
+                            <div class="info-card">更新日期：${Utils.escapeHtml(this.updateDate)}</div>
                         </div>
                         <div class="about-header-right logo-card">
-                            <div class="about-brand-logo"><img class="about-logo-img" src="${esc(this.logoUrl)}" alt="星聚导航Logo"></div>
+                            <div class="about-brand-logo">
+                                <img class="about-logo-img" src="${Utils.escapeHtml(this.logoUrl)}" alt="星聚导航Logo">
+                            </div>
                             <div class="about-brand-title">星聚导航</div>
                             <div class="about-brand-subtitle">一款开源的个人网站</div>
                         </div>
@@ -102,14 +117,18 @@ class AboutModule {
                 <div class="about-main-content">
                     <div class="about-cards">
                         <div class="about-card white-bg">
-                            <div class="card-icon intro-icon"><i class="fas fa-info-circle"></i></div>
+                            <div class="card-icon intro-icon">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
                             <div class="card-content">
                                 <h3>简介</h3>
                                 <p>星聚导航是一个现代化的个人导航网站，致力于收集整理网络上的优质资源和个人开发的小工具，为用户提供便捷的上网导航体验。</p>
                             </div>
                         </div>
                         <div class="about-card white-bg">
-                            <div class="card-icon disclaimer-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                            <div class="card-icon disclaimer-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
                             <div class="card-content">
                                 <h3>免责声明</h3>
                                 <p>本站所有资源均来自互联网收集整理，仅供个人学习交流使用，不得用于商业用途。如有侵犯您的权益，请联系我们删除。</p>
@@ -119,7 +138,24 @@ class AboutModule {
                 </div>
                 <div class="about-footer">
                     <div class="about-action-buttons">
-                        <div class="about-social-buttons">${qqBtn}${githubBtn}${donateBtn}${spaceBtn}</div>
+                        <div class="about-social-buttons">
+                            <button class="about-social-btn qq-btn tooltip" id="aboutQQBtn">
+                                <i class="fab fa-qq"></i>
+                                <span class="tooltip-text">QQ联系</span>
+                            </button>
+                            <button class="about-social-btn github-btn tooltip" id="aboutGithubBtn">
+                                <i class="fab fa-github"></i>
+                                <span class="tooltip-text">GitHub仓库</span>
+                            </button>
+                            <button class="about-social-btn donate-btn tooltip" id="aboutDonateBtn">
+                                <i class="fas fa-heart"></i>
+                                <span class="tooltip-text">爱发电支持</span>
+                            </button>
+                            <button class="about-social-btn space-btn tooltip" id="aboutPrivateSpaceBtn">
+                                <i class="fas fa-user-secret"></i>
+                                <span class="tooltip-text">站长の空间</span>
+                            </button>
+                        </div>
                         <button class="about-close-btn" id="aboutCloseBtn">关闭</button>
                     </div>
                 </div>
@@ -129,7 +165,9 @@ class AboutModule {
 
     bindModalEvents() {
         if (!this.modalElement) return;
-        this.modalElement.addEventListener('click', (e) => { if (e.target === this.modalElement) this.hide(); });
+        this.modalElement.addEventListener('click', (e) => {
+            if (e.target === this.modalElement) this.hide();
+        });
         document.addEventListener('keydown', this.handleKeydown.bind(this));
         this.bindButtonEvents();
         this.preloadImages();
@@ -139,7 +177,7 @@ class AboutModule {
         const wallpaperImg = new Image();
         wallpaperImg.onload = () => {};
         wallpaperImg.onerror = () => {
-            const bgElement = this.modalElement?.querySelector('.about-header-bg');
+            const bgElement = this.modalElement.querySelector('.about-header-bg');
             if (bgElement) {
                 bgElement.style.backgroundImage = 'none';
                 bgElement.style.backgroundColor = 'var(--primary-color, #4361ee)';
@@ -153,126 +191,363 @@ class AboutModule {
     }
 
     bindButtonEvents() {
-        const bind = (id, cb) => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('click', cb);
-        };
-        bind('aboutQQBtn', () => window.open('https://yunzhiapi.cn/API/QQtzmp.php?token=XIZhAXKnSQcH&qq=1595126534', '_blank'));
-        bind('aboutGithubBtn', () => window.open('https://github.com/Git-688/XLDH', '_blank'));
-        bind('aboutDonateBtn', () => { this.hide(); setTimeout(() => this.showDonateModal(), 300); });
-        bind('aboutPrivateSpaceBtn', () => { this.hide(); setTimeout(() => window.open('https://zzzskj.ccwu.cc', '_blank'), 300); });
-        bind('aboutCloseBtn', () => this.hide());
+        const qqBtn = document.getElementById('aboutQQBtn');
+        if (qqBtn) {
+            qqBtn.addEventListener('click', () => {
+                window.open('https://yunzhiapi.cn/API/QQtzmp.php?token=XIZhAXKnSQcH&qq=1595126534', '_blank');
+            });
+        }
+        const githubBtn = document.getElementById('aboutGithubBtn');
+        if (githubBtn) {
+            githubBtn.addEventListener('click', () => {
+                window.open('https://github.com/Git-688/XLDH', '_blank');
+            });
+        }
+        const donateBtn = document.getElementById('aboutDonateBtn');
+        if (donateBtn) {
+            donateBtn.addEventListener('click', () => {
+                this.hide();
+                setTimeout(() => { this.showDonateModal(); }, 300);
+            });
+        }
+        const privateSpaceBtn = document.getElementById('aboutPrivateSpaceBtn');
+        if (privateSpaceBtn) {
+            privateSpaceBtn.addEventListener('click', () => {
+                this.hide();
+                setTimeout(() => { 
+                    window.open('https://zzzskj.ccwu.cc', '_blank');
+                }, 300);
+            });
+        }
+        const closeBtn = document.getElementById('aboutCloseBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => { this.hide(); });
+        }
     }
 
-    handleKeydown(e) { if (e.key === 'Escape' && this.isShowing) this.hide(); }
-
-    bindGlobalEvents() {
-        const aboutBtn = document.getElementById('aboutBtn');
-        if (aboutBtn) aboutBtn.addEventListener('click', () => this.show());
-    }
-
-    show() {
-        if (!this.modalElement) this.createModal();
-        if (this.isShowing) return;
-        window.Starlink?.sidebar?.hide?.();
-        window.sidebar?.hide?.();
-        this.isShowing = true;
-        this.modalElement.style.display = 'flex';
-        this.modalElement.offsetHeight;
-        setTimeout(() => {
-            this.modalElement.style.opacity = '1';
-            const content = this.modalElement.querySelector('.about-modal-content');
-            if (content) content.style.transform = 'scale(1)';
-        }, 10);
-        window.Starlink?.app?.registerModal(this);
-    }
-
-    hide() {
-        if (!this.isShowing || !this.modalElement) return;
-        this.modalElement.style.opacity = '0';
-        const content = this.modalElement.querySelector('.about-modal-content');
-        if (content) content.style.transform = 'scale(0.8)';
-        setTimeout(() => {
-            this.modalElement.style.display = 'none';
-            this.isShowing = false;
-            window.Starlink?.app?.unregisterModal(this);
-        }, 300);
-    }
-
-    // ---------- 赞赏模态框 ----------
     showDonateModal() {
-        const modal = document.createElement('div');
-        modal.className = 'donate-modal';
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: transparent; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 10002;
-            opacity: 0; transition: opacity 0.3s ease; padding: 16px;
-            box-sizing: border-box; pointer-events: auto;
+        const donateModal = document.createElement('div');
+        donateModal.className = 'donate-modal';
+        donateModal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10002;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            padding: 16px;
+            box-sizing: border-box;
+            pointer-events: auto;
         `;
 
         const isDarkMode = () => {
-            return (window.matchMedia?.('(prefers-color-scheme: dark)').matches) ||
+            return (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ||
                    document.documentElement.classList.contains('dark-mode');
         };
 
-        const colors = isDarkMode() ? {
-            bgCard: '#2d2d2d', borderColor: '#404040', textPrimary: '#f0f0f0',
-            textSecondary: '#c0c0c0', hoverBg: '#3a3a3a'
-        } : {
-            bgCard: '#ffffff', borderColor: '#e0e0e0', textPrimary: '#1e293b',
-            textSecondary: '#64748b', hoverBg: '#f8f9fa'
+        const getDarkColors = () => {
+            if (isDarkMode()) {
+                return {
+                    bgCard: '#2d2d2d',
+                    borderColor: '#404040',
+                    textPrimary: '#f0f0f0',
+                    textSecondary: '#c0c0c0',
+                    hoverBg: '#3a3a3a'
+                };
+            }
+            return {
+                bgCard: '#ffffff',
+                borderColor: '#e0e0e0',
+                textPrimary: '#1e293b',
+                textSecondary: '#64748b',
+                hoverBg: '#f8f9fa'
+            };
         };
+
+        const colors = getDarkColors();
 
         const style = document.createElement('style');
         style.textContent = `
-            .donate-modal-content { font-size: 10px !important; }
-            .donate-card-wrapper { aspect-ratio:1/1; display:flex; flex-direction:column; align-items:center; justify-content:center; background:${colors.bgCard}; border:1px solid ${colors.borderColor}; border-radius:8px; padding:0; margin:0; box-sizing:border-box; overflow:hidden; }
-            .left-buttons-grid { width:100%; height:100%; display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:12px; box-sizing:border-box; }
-            .donate-method-btn-left { width:100%; height:100%; display:flex; align-items:center; justify-content:center; border:2px solid; border-radius:8px; background:${colors.bgCard}; cursor:pointer; transition:all 0.2s; box-sizing:border-box; aspect-ratio:1/1; }
-            .donate-method-btn-left i { font-size:clamp(1.2rem,5vw,1.8rem); transition:transform 0.2s; }
-            .donate-method-btn-left.active { background:rgba(0,0,0,0.08); border-color:transparent; box-shadow:0 4px 12px rgba(0,0,0,0.1); transform:scale(1.05); }
-            .donate-method-btn-left.active i { transform:scale(1.1); }
-            .qrcode-content { width:100%; height:100%; display:flex; align-items:center; justify-content:center; }
-            .qrcode-content img { width:100%; height:100%; object-fit:cover; display:block; }
-            .help-content-container { width:100%; height:100%; display:flex; align-items:center; justify-content:center; text-align:center; padding:12px; box-sizing:border-box; }
-            .help-inner .help-title { font-size:16px; font-weight:600; margin-bottom:12px; color:${colors.textPrimary}; }
-            .help-inner .help-steps { font-size:12px; color:${colors.textSecondary}; line-height:1.6; }
-            .help-inner .help-steps p { margin:0 0 8px 0; }
-            .supporters-wrapper { background:${colors.bgCard}; border:1px solid ${colors.borderColor}; border-radius:8px; padding:12px; margin-top:12px; }
-            .supporters-header { display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; margin-bottom:12px; gap:8px; }
-            .supporters-title { font-size:13px; font-weight:600; color:${colors.textPrimary}; margin:0; }
-            .supporters-thanks { font-size:11px; color:${colors.textSecondary}; font-style:italic; }
-            .supporters-list-scroll { max-height:110px; overflow-y:auto; display:grid; grid-template-columns:repeat(auto-fill,minmax(65px,1fr)); gap:6px; padding-right:4px; scrollbar-width:thin; }
-            .supporter-name { background:${colors.bgCard}; color:${colors.textPrimary}; padding:4px 8px; border-radius:6px; font-size:10px; text-align:center; white-space:nowrap; border:1px solid ${colors.borderColor}; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
-            @media (max-width:480px) {
-                .supporters-list-scroll { max-height:90px; grid-template-columns:repeat(auto-fill,minmax(60px,1fr)); }
-                .left-buttons-grid { gap:8px; padding:8px; }
-                .help-inner .help-title { font-size:13px; }
-                .help-inner .help-steps { font-size:10px; }
-                .help-inner .help-steps p { margin-bottom:6px; }
+            .donate-modal-content {
+                font-size: 10px !important;
             }
-            .dark-mode .donate-method-btn-left.active { background:rgba(255,255,255,0.15); }
+            .donate-card-wrapper {
+                aspect-ratio: 1 / 1 !important;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background: ${colors.bgCard};
+                border: 1px solid ${colors.borderColor};
+                border-radius: 8px;
+                padding: 0 !important;
+                margin: 0;
+                box-sizing: border-box;
+                overflow: hidden;
+            }
+            .left-buttons-grid {
+                width: 100%;
+                height: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                padding: 12px;
+                box-sizing: border-box;
+            }
+            .donate-method-btn-left {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 2px solid;
+                border-radius: 8px;
+                background: ${colors.bgCard};
+                cursor: pointer;
+                transition: all 0.2s ease;
+                box-sizing: border-box;
+                aspect-ratio: 1 / 1;
+            }
+            .donate-method-btn-left i {
+                font-size: clamp(1.2rem, 5vw, 1.8rem);
+                transition: transform 0.2s;
+            }
+            .donate-method-btn-left.active {
+                background: rgba(0, 0, 0, 0.08) !important;
+                border-color: transparent !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                transform: scale(1.05);
+            }
+            .donate-method-btn-left.active i {
+                transform: scale(1.1);
+            }
+            @media (prefers-color-scheme: dark) {
+                .donate-method-btn-left.active {
+                    background: rgba(255, 255, 255, 0.15) !important;
+                }
+            }
+            .dark-mode .donate-method-btn-left.active {
+                background: rgba(255, 255, 255, 0.15) !important;
+            }
+            .qrcode-content {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .qrcode-content img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+            .help-content-container {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                padding: 12px;
+                box-sizing: border-box;
+            }
+            .help-inner {
+                width: 100%;
+            }
+            .help-inner .help-title {
+                font-size: 16px;
+                font-weight: 600;
+                margin-bottom: 12px;
+                color: ${colors.textPrimary};
+            }
+            .help-inner .help-steps {
+                font-size: 12px;
+                color: ${colors.textSecondary};
+                line-height: 1.6;
+            }
+            .help-inner .help-steps p {
+                margin: 0 0 8px 0;
+            }
+            .supporters-wrapper {
+                background: ${colors.bgCard};
+                border: 1px solid ${colors.borderColor};
+                border-radius: 8px;
+                padding: 12px;
+                margin-top: 12px;
+            }
+            .supporters-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                flex-wrap: wrap;
+                margin-bottom: 12px;
+                gap: 8px;
+            }
+            .supporters-title {
+                font-size: 13px;
+                font-weight: 600;
+                color: ${colors.textPrimary};
+                margin: 0;
+            }
+            .supporters-thanks {
+                font-size: 11px;
+                color: ${colors.textSecondary};
+                font-style: italic;
+            }
+            .supporters-list-scroll {
+                max-height: 110px;
+                overflow-y: auto;
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+                gap: 6px;
+                padding-right: 4px;
+                scrollbar-width: thin;
+            }
+            .supporter-name {
+                background: ${colors.bgCard};
+                color: ${colors.textPrimary};
+                padding: 4px 8px;
+                border-radius: 6px;
+                font-size: 10px;
+                text-align: center;
+                white-space: nowrap;
+                border: 1px solid ${colors.borderColor};
+                box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+                transition: all 0.2s;
+            }
+            @media (max-width: 480px) {
+                .supporters-list-scroll {
+                    max-height: 90px;
+                    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+                }
+                .left-buttons-grid {
+                    gap: 8px;
+                    padding: 8px;
+                }
+                .help-inner .help-title {
+                    font-size: 13px;
+                }
+                .help-inner .help-steps {
+                    font-size: 10px;
+                }
+                .help-inner .help-steps p {
+                    margin-bottom: 6px;
+                }
+            }
+            @media (prefers-color-scheme: dark) {
+                .donate-card-wrapper {
+                    background: #2d2d2d;
+                    border-color: #404040;
+                }
+                .supporters-wrapper {
+                    background: #2d2d2d;
+                    border-color: #404040;
+                }
+                .supporter-name {
+                    background: #2d2d2d;
+                    border-color: #404040;
+                    color: #e0e0e0;
+                    box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+                }
+                .supporters-title {
+                    color: #f0f0f0;
+                }
+                .supporters-thanks {
+                    color: #aaa;
+                }
+                .help-inner .help-title {
+                    color: #f0f0f0;
+                }
+                .help-inner .help-steps {
+                    color: #ccc;
+                }
+                .donate-method-btn-left {
+                    background: #2d2d2d;
+                }
+            }
+            .dark-mode .donate-card-wrapper {
+                background: #2d2d2d;
+                border-color: #404040;
+            }
+            .dark-mode .supporters-wrapper {
+                background: #2d2d2d;
+                border-color: #404040;
+            }
+            .dark-mode .supporter-name {
+                background: #2d2d2d;
+                border-color: #404040;
+                color: #e0e0e0;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            }
+            .dark-mode .supporters-title {
+                color: #f0f0f0;
+            }
+            .dark-mode .supporters-thanks {
+                color: #aaa;
+            }
+            .dark-mode .help-inner .help-title {
+                color: #f0f0f0;
+            }
+            .dark-mode .help-inner .help-steps {
+                color: #ccc;
+            }
+            .dark-mode .donate-method-btn-left {
+                background: #2d2d2d;
+            }
         `;
-        modal.appendChild(style);
+        donateModal.appendChild(style);
 
-        const esc = Utils.escapeHtml;
-        modal.innerHTML += `
-            <div class="donate-modal-content" style="display:flex;flex-direction:column;width:100%;max-width:500px;background:${colors.bgCard};border:1px solid ${colors.borderColor};border-radius:12px;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,0.1);transform:scale(0.8);transition:transform 0.3s ease;pointer-events:auto;">
-                <div style="display:flex;gap:16px;padding:16px;min-width:0;">
-                    <div class="donate-card-wrapper" style="flex:1;">
+        donateModal.innerHTML += `
+            <div class="donate-modal-content" style="
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                max-width: 500px;
+                background: ${colors.bgCard};
+                border: 1px solid ${colors.borderColor};
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+                transform: scale(0.8);
+                transition: transform 0.3s ease;
+                pointer-events: auto;
+            ">
+                <div style="display: flex; gap: 16px; padding: 16px; min-width: 0;">
+                    <div class="donate-card-wrapper" style="flex: 1;">
                         <div class="left-buttons-grid">
-                            <button class="donate-method-btn-left" data-type="qq" style="color:#6BC5FF;border-color:#6BC5FF;"><i class="fab fa-qq"></i></button>
-                            <button class="donate-method-btn-left" data-type="wechat" style="color:#7ED321;border-color:#7ED321;"><i class="fab fa-weixin"></i></button>
-                            <button class="donate-method-btn-left" data-type="alipay" style="color:#1677FF;border-color:#1677FF;"><i class="fab fa-alipay"></i></button>
-                            <button class="donate-method-btn-left" data-type="help" style="color:#FFD166;border-color:#FFD166;"><i class="fas fa-question-circle"></i></button>
+                            <button class="donate-method-btn-left" data-type="qq" style="color: #6BC5FF; border-color: #6BC5FF;">
+                                <i class="fab fa-qq"></i>
+                            </button>
+                            <button class="donate-method-btn-left" data-type="wechat" style="color: #7ED321; border-color: #7ED321;">
+                                <i class="fab fa-weixin"></i>
+                            </button>
+                            <button class="donate-method-btn-left" data-type="alipay" style="color: #1677FF; border-color: #1677FF;">
+                                <i class="fab fa-alipay"></i>
+                            </button>
+                            <button class="donate-method-btn-left" data-type="help" style="color: #FFD166; border-color: #FFD166;">
+                                <i class="fas fa-question-circle"></i>
+                            </button>
                         </div>
                     </div>
-                    <div class="donate-card-wrapper" style="flex:1;position:relative;">
-                        <div class="qrcode-content active" data-type="qq"><img src="${esc(this.qrCodes.qq)}" alt="QQ"></div>
-                        <div class="qrcode-content" data-type="wechat" style="display:none;"><img src="${esc(this.qrCodes.wechat)}" alt="微信"></div>
-                        <div class="qrcode-content" data-type="alipay" style="display:none;"><img src="${esc(this.qrCodes.alipay)}" alt="支付宝"></div>
-                        <div class="qrcode-content" data-type="help" style="display:none;">
+                    <div class="donate-card-wrapper" style="flex: 1; position: relative;">
+                        <div class="qrcode-content active" data-type="qq">
+                            <img src="${Utils.escapeHtml(this.qrCodes.qq)}" alt="QQ">
+                        </div>
+                        <div class="qrcode-content" data-type="wechat" style="display: none;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.wechat)}" alt="微信">
+                        </div>
+                        <div class="qrcode-content" data-type="alipay" style="display: none;">
+                            <img src="${Utils.escapeHtml(this.qrCodes.alipay)}" alt="支付宝">
+                        </div>
+                        <div class="qrcode-content" data-type="help" style="display: none;">
                             <div class="help-content-container">
                                 <div class="help-inner">
                                     <div class="help-title">📖 使用说明</div>
@@ -287,66 +562,137 @@ class AboutModule {
                         </div>
                     </div>
                 </div>
-                <div class="supporters-wrapper" style="margin:0 16px 16px 16px;">
+                <div class="supporters-wrapper" style="margin: 0 16px 16px 16px;">
                     <div class="supporters-header">
                         <div class="supporters-title">🎖️ 支持者名单</div>
                         <div class="supporters-thanks">✨ 感谢您的每一份支持 ✨</div>
                     </div>
                     <div class="supporters-list-scroll">
-                        ${this.supporters.map(name => `<span class="supporter-name">${esc(name)}</span>`).join('')}
+                        ${this.supporters.map(name => `<span class="supporter-name">${Utils.escapeHtml(name)}</span>`).join('')}
                     </div>
                 </div>
             </div>
-            <button class="donate-close-btn-bottom" style="margin-top:12px;background:${colors.bgCard};border:1px solid ${colors.borderColor};border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:${colors.textSecondary};font-size:16px;transition:all 0.2s;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:1;"><i class="fas fa-times"></i></button>
+            <button class="donate-close-btn-bottom" style="
+                margin-top: 12px;
+                background: ${colors.bgCard};
+                border: 1px solid ${colors.borderColor};
+                border-radius: 50%;
+                width: 36px;
+                height: 36px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                color: ${colors.textSecondary};
+                font-size: 16px;
+                transition: all 0.2s;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                z-index: 1;
+            "><i class="fas fa-times"></i></button>
         `;
 
-        document.body.appendChild(modal);
-        setTimeout(() => { modal.style.opacity = '1'; const content = modal.querySelector('.donate-modal-content'); if (content) content.style.transform = 'scale(1)'; }, 10);
-        this.bindDonateEvents(modal);
+        document.body.appendChild(donateModal);
+        setTimeout(() => {
+            donateModal.style.opacity = '1';
+            const content = donateModal.querySelector('.donate-modal-content');
+            content.style.transform = 'scale(1)';
+        }, 10);
+        this.bindNewDonateEvents(donateModal);
     }
 
-    bindDonateEvents(donateModal) {
+    bindNewDonateEvents(donateModal) {
         const closeBtn = donateModal.querySelector('.donate-close-btn-bottom');
-        const hideModal = () => {
+        const hideDonateModal = () => {
             donateModal.style.opacity = '0';
             const content = donateModal.querySelector('.donate-modal-content');
-            if (content) content.style.transform = 'scale(0.8)';
-            setTimeout(() => donateModal.remove(), 300);
+            content.style.transform = 'scale(0.8)';
+            setTimeout(() => {
+                if (donateModal.parentNode) donateModal.parentNode.removeChild(donateModal);
+            }, 300);
         };
-        closeBtn?.addEventListener('click', hideModal);
-        donateModal.addEventListener('click', (e) => { if (e.target === donateModal) hideModal(); });
-
-        const escHandler = (e) => { if (e.key === 'Escape') { hideModal(); document.removeEventListener('keydown', escHandler); } };
-        document.addEventListener('keydown', escHandler);
-
+        closeBtn.addEventListener('click', hideDonateModal);
+        donateModal.addEventListener('click', (e) => { if (e.target === donateModal) hideDonateModal(); });
+        const handleKeydown = (e) => {
+            if (e.key === 'Escape') {
+                hideDonateModal();
+                document.removeEventListener('keydown', handleKeydown);
+            }
+        };
+        document.addEventListener('keydown', handleKeydown);
         const buttons = donateModal.querySelectorAll('.donate-method-btn-left');
         const contents = donateModal.querySelectorAll('.qrcode-content');
         const setActive = (activeBtn) => {
-            buttons.forEach(b => b.classList.remove('active'));
+            buttons.forEach(b => {
+                b.classList.remove('active');
+                b.style.background = '';
+            });
             activeBtn.classList.add('active');
         };
-
-        // 默认激活 QQ
         const defaultBtn = donateModal.querySelector('.donate-method-btn-left[data-type="qq"]');
         if (defaultBtn) setActive(defaultBtn);
-
         buttons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const type = btn.dataset.type;
                 setActive(btn);
                 contents.forEach(content => {
-                    if (content.dataset.type === type) { content.style.display = 'flex'; content.classList.add('active'); }
-                    else { content.style.display = 'none'; content.classList.remove('active'); }
+                    if (content.dataset.type === type) {
+                        content.style.display = 'flex';
+                        content.classList.add('active');
+                    } else {
+                        content.style.display = 'none';
+                        content.classList.remove('active');
+                    }
                 });
             });
         });
     }
 
-    // ---------- 其他方法 ----------
+    handleKeydown(e) {
+        if (e.key === 'Escape' && this.isShowing) this.hide();
+    }
+
+    bindGlobalEvents() {
+        const aboutBtn = document.getElementById('aboutBtn');
+        if (aboutBtn) aboutBtn.addEventListener('click', () => this.show());
+    }
+
+    show() {
+        if (!this.modalElement) this.createModal();
+        if (this.isShowing) return;
+        if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible?.()) {
+            window.Starlink.sidebar.hide();
+        } else if (window.sidebar && window.sidebar.isVisible?.()) {
+            window.sidebar.hide();
+        }
+        this.isShowing = true;
+        this.modalElement.style.display = 'flex';
+        this.modalElement.offsetHeight;
+        setTimeout(() => {
+            this.modalElement.style.opacity = '1';
+            const content = this.modalElement.querySelector('.about-modal-content');
+            content.style.transform = 'scale(1)';
+        }, 10);
+        if (window.Starlink?.app) window.Starlink.app.registerModal(this);
+        else if (window.app) window.app.registerModal(this);
+    }
+
+    hide() {
+        if (!this.isShowing || !this.modalElement) return;
+        this.modalElement.style.opacity = '0';
+        const content = this.modalElement.querySelector('.about-modal-content');
+        content.style.transform = 'scale(0.8)';
+        setTimeout(() => {
+            this.modalElement.style.display = 'none';
+            this.isShowing = false;
+            if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
+            else if (window.app) window.app.unregisterModal(this);
+        }, 300);
+    }
+
     destroy() {
         this.hide();
         document.removeEventListener('keydown', this.handleKeydown.bind(this));
-        this.modalElement?.remove();
+        if (this.modalElement && this.modalElement.parentNode) this.modalElement.parentNode.removeChild(this.modalElement);
         this.modalElement = null;
         this.isShowing = false;
         this.isInitialized = false;
@@ -359,7 +705,10 @@ class AboutModule {
             modalElement: !!this.modalElement,
             version: this.version,
             updateDate: this.updateDate,
-            developer: this.developer
+            developer: this.developer,
+            wallpaperUrl: this.wallpaperUrl,
+            logoUrl: this.logoUrl,
+            qrCodes: this.qrCodes
         };
     }
 
@@ -379,17 +728,20 @@ class AboutModule {
     }
 }
 
-// 自动初始化
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         if (!window.Starlink) window.Starlink = {};
-        if (!window.Starlink.about) window.Starlink.about = new AboutModule();
+        if (!window.Starlink.about) {
+            window.Starlink.about = new AboutModule();
+        }
         window.aboutModule = window.Starlink.about;
         window.aboutModule.init();
     });
 } else {
     if (!window.Starlink) window.Starlink = {};
-    if (!window.Starlink.about) window.Starlink.about = new AboutModule();
+    if (!window.Starlink.about) {
+        window.Starlink.about = new AboutModule();
+    }
     window.aboutModule = window.Starlink.about;
     window.aboutModule.init();
 }
