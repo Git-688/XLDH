@@ -12,7 +12,10 @@
             this.introContainer = document.querySelector('.partner-intro p');
             this.isVisible = false;
             this.partners = [];
-            this.apiBase = Utils.getApiBase();
+            // 增强：安全获取 API 基础 URL
+            this.apiBase = (typeof Utils !== 'undefined' && Utils.getApiBase) 
+                ? Utils.getApiBase() 
+                : (window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc');
             this.init();
             if (window.Starlink) window.Starlink.partner = this;
             window.partnerModule = this;
@@ -61,7 +64,6 @@
         renderList() {
             if (!this.listContainer) return;
             if (!this.partners || !this.partners.length) {
-                // ===== 修改：空状态显示 🎉期待你的加入... =====
                 this.listContainer.innerHTML = '<div style="text-align:center;padding:30px 20px;color:var(--text-secondary);font-size:14px;">🎉 期待你的加入...</div>';
                 return;
             }
