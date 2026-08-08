@@ -72,9 +72,7 @@ class CommentModule {
         level4: '论坛元老',
         level5: '至尊传说'
       },
-      // 评论预处理（可添加成就徽章等，现已移除后端成就，此处保留为空）
       comment: (comment) => {
-        // 如需前端展示成就，可在此处添加逻辑
         return comment;
       }
     }
