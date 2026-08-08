@@ -196,3 +196,25 @@
     a { text-decoration: none; color: black; }
     a[href]:after { content: " (" attr(href) ")"; font-size: 10pt; }
 }
+
+/* ===== 壁纸顶部间距适配屏幕左右边距 ===== */
+@media (min-width: 576px) {
+    .wallpaper-container {
+        margin-top: 20px;
+    }
+}
+@media (min-width: 768px) {
+    .wallpaper-container {
+        margin-top: 24px;
+    }
+}
+@media (min-width: 992px) {
+    .wallpaper-container {
+        margin-top: 28px;
+    }
+}
+@media (min-width: 1200px) {
+    .wallpaper-container {
+        margin-top: 32px;
+    }
+}
