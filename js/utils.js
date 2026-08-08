@@ -306,6 +306,7 @@
         };
     };
 
+    // ===== 新增：获取 API 基础 URL（从 APP_CONFIG 读取，支持动态推导） =====
     Utils.getApiBase = function() {
         return (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     };
