@@ -12,7 +12,8 @@
     min-height: 130px;
     border-radius: 12px !important;
     overflow: hidden;
-    margin: 0 !important;
+    margin: 0;
+    margin-top: 16px;              /* 默认与最小屏幕左右内边距一致 */
     background: var(--bg-secondary, #f8f9fa);
     user-select: none;
 }
@@ -110,6 +111,7 @@
         height: 26vh;
         min-height: 130px;
         border-radius: 10px !important;
+        margin-top: 16px; /* 保持一致 */
     }
     .carousel-arrow { width: 30px; height: 30px; font-size: 1rem; }
     .wallpaper-info { bottom: 8px; left: 12px; right: 12px; }
@@ -121,6 +123,7 @@
         height: 26vh;
         min-height: 130px;
         border-radius: 8px !important;
+        margin-top: 16px;
     }
     .wallpaper-info { bottom: 6px; left: 10px; right: 10px; }
     .wallpaper-title { font-size: 12px; }
