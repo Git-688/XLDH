@@ -116,18 +116,61 @@
     .music-player { left: 12px; right: 12px; width: auto; max-width: none; bottom: 12px; }
 }
 
-/* ===== 移动端模态框间距 ===== */
+/* ===== 移动端模态框间距（键盘适配） ===== */
 @media (max-width: 768px) {
-    #commentModal.feedback-modal,
-    #submitModal.feedback-modal {
-        padding: var(--container-padding-xs, 16px) !important;
+    .feedback-modal,
+    #notebookModal,
+    #rankModal,
+    #partnerModal,
+    #commentModal,
+    #submitModal {
+        padding: 60px var(--container-padding-xs, 16px) var(--container-padding-xs, 16px) !important;
+        align-items: flex-start !important;
     }
+    .feedback-modal-content,
+    #notebookModal .feedback-modal-content,
+    #rankModal .feedback-modal-content,
+    #partnerModal .feedback-modal-content,
     #commentModal .feedback-modal-content,
     #submitModal .feedback-modal-content {
         max-width: 100% !important;
-        max-height: calc(100vh - 32px) !important;
-        margin: 0 !important;
+        max-height: calc(100vh - 60px - 2 * var(--container-padding-xs, 16px)) !important;
+        margin: auto 0 !important;
         border-radius: 8px !important;
+    }
+    .feedback-modal-body {
+        max-height: calc(100vh - 60px - 2 * var(--container-padding-xs, 16px) - 60px) !important;
+    }
+    .announcement-modal-simple {
+        padding: 60px var(--container-padding-xs, 16px) var(--container-padding-xs, 16px) !important;
+        align-items: flex-start !important;
+    }
+    .announcement-modal-container {
+        max-width: 100% !important;
+        max-height: calc(100vh - 60px - 2 * var(--container-padding-xs, 16px)) !important;
+        margin: auto 0 !important;
+    }
+    .weather-modal-card {
+        padding: 60px var(--container-padding-xs, 16px) var(--container-padding-xs, 16px) !important;
+        align-items: flex-start !important;
+    }
+    .weather-modal-content {
+        max-width: 100% !important;
+        max-height: calc(100vh - 60px - 2 * var(--container-padding-xs, 16px)) !important;
+        margin: auto 0 !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .feedback-modal,
+    #notebookModal,
+    #rankModal,
+    #partnerModal,
+    #commentModal,
+    #submitModal,
+    .announcement-modal-simple,
+    .weather-modal-card {
+        padding: 56px var(--container-padding-xs, 16px) var(--container-padding-xs, 16px) !important;
     }
 }
 
