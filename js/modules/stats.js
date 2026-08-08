@@ -1,5 +1,5 @@
 /* stats.js - 访客实时在线统计增强（页面离开信号 + 停留时长） */
-const WORKER_URL = (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
+const WORKER_URL = (typeof Utils !== 'undefined' && Utils.getApiBase) ? Utils.getApiBase() : (window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc');
 
 const SESSION_KEY = 'visitor_session_id';
 let pageEnterTime = Date.now();
