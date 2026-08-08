@@ -5,7 +5,7 @@
     left: 0;
     right: 0;
     background: var(--bg-primary);
-    border-bottom: none;
+    border-bottom: none !important;
     box-shadow: none !important;
     z-index: 1000;
     height: 60px;
