@@ -85,7 +85,7 @@ p { margin-bottom: 1em; }
 /* ===== 导航栏 ===== */
 .navbar {
     position: fixed; top: 0; left: 0; width: 100%; height: 60px;
-    background: var(--bg-primary); border-bottom: none; box-shadow: none !important;
+    background: var(--bg-primary); border-bottom: none !important; box-shadow: none !important;
     z-index: var(--z-navbar);
 }
 .nav-container {
