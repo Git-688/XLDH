@@ -15,7 +15,8 @@ class SubmitModule {
         this.submitSaveBtn = document.getElementById('submitSaveBtn');
         this.urlCheckResult = document.getElementById('urlCheckResult');
 
-        this.apiBase = Utils.getApiBase();
+        // ===== 修改：使用 Utils.getApiBase() 获取 API 基础 URL =====
+        this.apiBase = (typeof Utils !== 'undefined' && Utils.getApiBase) ? Utils.getApiBase() : (window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc');
         this.statsBadge = null;
         this.submitting = false;
         this.cachedTotalCount = null;
@@ -417,7 +418,7 @@ class SubmitModule {
                     this.displaySecurityReport(status.result);
                     if (status.result.canSubmit !== false) {
                         this.securityPassed = true;
-                        this.hasFetchedInfo = true; // 标记已获取
+                        this.hasFetchedInfo = true;
                     } else {
                         this.securityPassed = false;
                         this.hasFetchedInfo = false;
