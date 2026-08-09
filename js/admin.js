@@ -2,7 +2,8 @@
 (function() {
     'use strict';
 
-    const API_BASE = (window.APP_CONFIG?.API_BASE) || 'https://api.xjdh688.ccwu.cc';
+    // ===== 修改：使用动态获取的 API_BASE =====
+    const API_BASE = window.ADMIN_API_BASE || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
     const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
 
@@ -368,9 +369,7 @@
             sites = siteData;
             updateStats();
             notifyNavRefresh();
-        } catch (e) {
-            // 静默处理
-        }
+        } catch (e) {}
     }
 
     function selectCat(cid, selectFirst = true) {
@@ -560,7 +559,6 @@
         updateSelectedCount();
     }
 
-    // ===== 批量操作优化：仅更新本地数据，不重新加载全部 =====
     async function batchDeleteSites() {
         if (selectedSiteIds.size === 0) { showToast('请先选择要删除的站点', 'warning'); return; }
         if (!confirm(`确定要删除选中的 ${selectedSiteIds.size} 个站点吗？此操作不可恢复！`)) return;
@@ -574,11 +572,9 @@
                 body: JSON.stringify({ siteIds: ids })
             });
             showToast(result.message || '删除成功', 'success');
-            // 本地更新：从 sites 数组中移除这些 ID
             const idSet = new Set(ids);
             sites = sites.filter(s => !idSet.has(s.id));
             selectedSiteIds.clear();
-            // 重新渲染当前子分类的站点列表（使用本地数据）
             const currentSites = sites.filter(s => s.subcategory_id === currentSub);
             renderSitesWithCheckboxes(currentSites);
             updateSelectedCount();
@@ -629,7 +625,6 @@
                     body: JSON.stringify({ siteIds: ids, targetSubcategoryId: targetId })
                 });
                 showToast(result.message || '移动成功', 'success');
-                // 本地更新：更新这些站点的 subcategory_id
                 const idSet = new Set(ids);
                 for (const site of sites) {
                     if (idSet.has(site.id)) {
@@ -637,7 +632,6 @@
                     }
                 }
                 selectedSiteIds.clear();
-                // 重新渲染当前子分类（可能目标子分类不是当前选中的，需要判断）
                 let currentSites = sites.filter(s => s.subcategory_id === currentSub);
                 renderSitesWithCheckboxes(currentSites);
                 updateSelectedCount();
@@ -683,7 +677,6 @@
                 body: JSON.stringify({ siteIds: ids, isValid })
             });
             showToast(result.message || '操作成功', 'success');
-            // 本地更新
             const idSet = new Set(ids);
             const newStatus = isValid ? 1 : 0;
             for (const site of sites) {
@@ -884,7 +877,6 @@
                     icon: document.getElementById('mIcon').value, display_order: +document.getElementById('mSort').value
                 })});
                 showToast('修改成功');
-                // 本地更新
                 const updatedSite = sites.find(s => s.id === id);
                 if (updatedSite) {
                     updatedSite.title = title;
@@ -900,7 +892,6 @@
             async () => {
                 const subId = site.subcategory_id;
                 await apiFetch(`/admin/sites/${id}`, { method:'DELETE' });
-                // 本地删除
                 sites = sites.filter(s => s.id !== id);
                 showToast('删除成功');
                 loadAdminSites(true);
@@ -978,7 +969,6 @@
                 })});
                 showToast('添加成功', 'success');
                 closeModal();
-                // 本地添加
                 const newSite = {
                     id: Date.now(),
                     subcategory_id: currentSub,
@@ -1072,7 +1062,6 @@
                     body: JSON.stringify({ reportId, siteId, newUrl, newTitle, newDescription: document.getElementById('mDesc').value, newIcon: document.getElementById('mIcon').value })
                 });
                 showToast('链接已更新', 'success');
-                // 本地更新
                 const updatedSite = sites.find(s => s.id === siteId);
                 if (updatedSite) {
                     updatedSite.url = newUrl;
@@ -1446,6 +1435,7 @@
         } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
     }
 
+    // ===== CustomSelect 类（已修复内存泄漏） =====
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -1572,10 +1562,16 @@
             if (valueSpan) valueSpan.textContent = this.getSelectedText();
         }
 
+        // ===== 修改：修复内存泄漏，从 Map 中删除当前实例 =====
         destroy() {
             this.close();
             if (this.wrapper && this.wrapper.parentNode) {
                 this.wrapper.parentNode.removeChild(this.wrapper);
+            }
+            // 从 customSelectInstances Map 中删除当前实例
+            const id = this.select.id || this.select.name;
+            if (id && customSelectInstances.has(id)) {
+                customSelectInstances.delete(id);
             }
             this.select.style.display = '';
             this.select = null;
@@ -1721,7 +1717,6 @@
         }
     }
 
-    // ===== 合作伙伴管理 =====
     async function loadPartnerSettings() {
         try {
             const data = await apiFetch('/admin/partner-settings');
@@ -1845,7 +1840,6 @@
         }
     }
 
-    // ===== 事件绑定 =====
     function setupEventDelegation() {
         document.getElementById('catBar').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
