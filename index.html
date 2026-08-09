@@ -25,6 +25,31 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="星聚导航 - 您的个人导航中心">
     <meta name="twitter:description" content="现代化的个人导航网站">
+
+    <!-- ===== JSON-LD 结构化数据（新增） ===== -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "星聚导航",
+      "url": "https://xjdh688.ccwu.cc",
+      "description": "现代化的个人导航网站，提供便捷的上网导航体验和各种实用工具",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://xjdh688.ccwu.cc/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "星聚导航",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://xjdh688.ccwu.cc/assets/logo.png"
+        }
+      }
+    }
+    </script>
+
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:;
@@ -39,6 +64,7 @@
         base-uri 'none';
         form-action 'self';
         upgrade-insecure-requests;
+        report-uri /csp-report;
     ">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="theme-color" content="#4361ee">
@@ -119,6 +145,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
 
     <style>
+        /* 内联样式（与之前相同） */
         .scroll-progress {
             position: fixed;
             top: 0;
@@ -491,6 +518,7 @@
         .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
         .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
 
+        /* ===== 合作伙伴按钮和模态框 ===== */
         .partner-trigger-btn {
             background: none;
             border: none;
@@ -624,6 +652,7 @@
             background: rgba(255,255,255,0.2);
         }
 
+        /* ===== 图标降级样式 ===== */
         .icon-fallback-text {
             font-size: 16px;
             font-weight: 700;
@@ -657,6 +686,7 @@
         }
     </style>
 
+    <!-- ===== 本地脚本（带版本号） ===== -->
     <script defer src="./js/constants.js?v=20260208"></script>
     <script defer src="./js/utils.js?v=20260208"></script>
     <script defer src="./js/toast.js?v=20260208"></script>
