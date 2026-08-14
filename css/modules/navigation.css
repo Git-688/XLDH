@@ -317,7 +317,9 @@
     padding: 0;
 }
 
+/* +++++ 修复层级：为图标容器添加相对定位，让伪元素的 z-index 生效 +++++ */
 .icon-container {
+    position: relative;          /* 新增 */
     width: 28px;
     height: 28px;
     border-radius: 6px;
@@ -341,15 +343,12 @@
 }
 .site-card:hover .icon-container { border-color: var(--primary-color); }
 
-/* ===== 图标占位（移除流光动画） ===== */
+/* ===== 图标占位（带流光动画，但位于图标下方） ===== */
 .icon-container.icon-placeholder {
     background: #f0f2f5;
     border: 1px solid #e4e7ec;
-    position: relative;
-    overflow: hidden;
 }
-/* 流光动画已注释，避免干扰 */
-/*
+/* 伪元素作为背景动画，z-index: -1 使其在图标和文字之下 */
 .icon-container.icon-placeholder::after {
     content: '';
     position: absolute;
@@ -357,11 +356,12 @@
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
     animation: placeholder-shimmer 1.5s infinite;
     transform: translateX(-100%);
+    z-index: -1;               /* 新增：沉到背景层 */
 }
 @keyframes placeholder-shimmer {
     100% { transform: translateX(100%); }
 }
-*/
+
 /* 深色模式占位适配 */
 .dark-mode .icon-container.icon-placeholder {
     background: #2d2d2d;
@@ -369,6 +369,7 @@
 }
 .dark-mode .icon-container.icon-placeholder::after {
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+    z-index: -1;               /* 同样处理 */
 }
 
 .card-top .site-title {
