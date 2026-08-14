@@ -341,13 +341,15 @@
 }
 .site-card:hover .icon-container { border-color: var(--primary-color); }
 
-/* ===== 新增：图标占位懒加载样式 ===== */
+/* ===== 图标占位（移除流光动画） ===== */
 .icon-container.icon-placeholder {
     background: #f0f2f5;
     border: 1px solid #e4e7ec;
     position: relative;
     overflow: hidden;
 }
+/* 流光动画已注释，避免干扰 */
+/*
 .icon-container.icon-placeholder::after {
     content: '';
     position: absolute;
@@ -359,6 +361,7 @@
 @keyframes placeholder-shimmer {
     100% { transform: translateX(100%); }
 }
+*/
 /* 深色模式占位适配 */
 .dark-mode .icon-container.icon-placeholder {
     background: #2d2d2d;
