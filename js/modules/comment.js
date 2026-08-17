@@ -1,4 +1,4 @@
-/* comment.js - 完整版（支持自定义表情、GIF搜索、草稿保存、弹窗控制） */
+/* comment.js - 完整版（支持自定义表情、GIF搜索、草稿保存、弹窗控制 + 防重复初始化 + 草稿区分页面） */
 class CommentModule {
   static CONFIG = {
     serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://pl688.ccwu.cc',
@@ -16,7 +16,6 @@ class CommentModule {
         'bold', 'italic', 'link', 'image', 'code', 'blockquote',
         'heading', 'ul', 'ol', 'hr', 'strike', 'spoiler'
       ],
-      // 表情包列表（CDN 和自定义）
       emoji: [
         'https://cdn.jsdelivr.net/gh/walinejs/emojis/weibo',
         'https://cdn.jsdelivr.net/gh/walinejs/emojis/bmoji',
@@ -28,7 +27,6 @@ class CommentModule {
         'https://unpkg.com/@waline/emojis@1.4.0/soul-emoji',
         'https://tc688.ccwu.cc/file/plxt/Q_emoji/',
       ],
-      // GIF 搜索配置
       search: {
         default() {
           return fetch('https://oiapi.net/api/EmoticonPack?limit=20')
@@ -87,6 +85,7 @@ class CommentModule {
     this.searchObserver = null;
     this.draftObserver = null;
     this.isVisible = false;
+    this._initialized = false; // ===== 新增：防重复初始化标志 =====
     this._initDOM();
     this._bindEvents();
     this._initWaline();
@@ -115,9 +114,11 @@ class CommentModule {
     });
   }
 
+  // ===== 修复：增加防重复初始化 =====
   _initWaline() {
+    if (this._initialized) return;
     const { el, serverURL, walineOptions } = CommentModule.CONFIG;
-    
+
     console.log('[评论] 初始化 Waline，表情包配置:', walineOptions.emoji);
 
     if (typeof Waline === 'undefined') {
@@ -131,6 +132,7 @@ class CommentModule {
     if (!container) return;
     try {
       this.instance = Waline.init({ el, serverURL, ...walineOptions });
+      this._initialized = true;
       console.log('[评论] Waline 初始化成功');
     } catch (err) {
       console.error('[评论] 初始化失败', err);
@@ -174,25 +176,29 @@ class CommentModule {
     });
   }
 
+  // ===== 修复：草稿 key 加入页面路径区分 =====
   _initDraftAutoSave() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
+    const pagePath = window.location.pathname || '/';
+    const draftKey = `waline_draft_${pagePath}`;
+
     this.draftObserver = new MutationObserver(() => {
       const textarea = container.querySelector('.wl-editor textarea');
       if (textarea && !textarea.dataset.draftBound) {
         textarea.dataset.draftBound = 'true';
-        const draft = localStorage.getItem('waline_draft');
+        const draft = localStorage.getItem(draftKey);
         if (draft && textarea.value === '') {
           textarea.value = draft;
           textarea.dispatchEvent(new Event('input', { bubbles: true }));
         }
         textarea.addEventListener('input', (e) => {
-          localStorage.setItem('waline_draft', e.target.value);
+          localStorage.setItem(draftKey, e.target.value);
         });
         const form = container.querySelector('.wl-panel form');
         if (form) {
           form.addEventListener('submit', () => {
-            localStorage.removeItem('waline_draft');
+            localStorage.removeItem(draftKey);
           });
         }
       }
@@ -202,7 +208,10 @@ class CommentModule {
 
   open() {
     if (!this.modal) return;
-    if (!this.instance) { this._initWaline(); if (!this.instance) return; }
+    if (!this.instance) {
+      this._initWaline();
+      if (!this.instance) return;
+    }
     if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible?.()) {
       window.Starlink.sidebar.hide();
     } else if (window.sidebar && window.sidebar.isVisible?.()) {
@@ -229,16 +238,19 @@ class CommentModule {
     setTimeout(onTransitionEnd, 400);
   }
 
+  // ===== 修复：完善 destroy 方法 =====
   destroy() {
     clearTimeout(this.searchTimer);
     this.searchObserver?.disconnect();
     this.draftObserver?.disconnect();
-    this.instance?.destroy?.();
+    if (this.instance && typeof this.instance.destroy === 'function') {
+      this.instance.destroy();
+    }
     this.instance = null;
+    this._initialized = false;
   }
 }
 
-// 自动初始化
 document.addEventListener('DOMContentLoaded', () => {
   if (!window.Starlink) window.Starlink = {};
   if (!window.Starlink.comment) {
