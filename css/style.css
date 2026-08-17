@@ -1,4 +1,6 @@
-/* style.css - 精简版（含排行榜模态框样式与笔记一致，移动端间距统一，键盘适配） */
+/* style.css - 精简版（含主题切换过渡、移除重复变量、响应式统一） */
+
+/* ===== 基础变量（仅在 style.css 中定义，避免与内联重复） ===== */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
@@ -41,8 +43,17 @@
     --acrylic-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
     --acrylic-light-bg: rgba(255, 255, 255, 0.8);
     --acrylic-light-blur: blur(10px) saturate(110%);
+
+    /* ===== 新增：主题切换过渡变量 ===== */
+    --theme-transition-duration: 0.35s;
+    --theme-transition: background-color var(--theme-transition-duration) ease,
+                         color var(--theme-transition-duration) ease,
+                         border-color var(--theme-transition-duration) ease,
+                         box-shadow var(--theme-transition-duration) ease,
+                         background var(--theme-transition-duration) ease;
 }
 
+/* ===== 暗色模式（与 :root 变量一一对应，便于过渡） ===== */
 .dark-mode {
     --text-primary: #f8f9fa;
     --text-secondary: #adb5bd;
@@ -62,8 +73,10 @@
     --acrylic-light-bg: rgba(40, 40, 40, 0.7);
 }
 
+/* ===== 全局基础 ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; font-size: 16px; -webkit-overflow-scrolling: touch; }
+
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
     font-size: 13px;
@@ -74,9 +87,48 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+
+    /* ===== 主题切换过渡 ===== */
+    transition: var(--theme-transition);
 }
+
+/* ===== 所有使用 CSS 变量的主要元素也添加过渡 ===== */
+.navbar,
+.sidebar,
+.main-content,
+.footer,
+.container,
+.feedback-modal-content,
+.announcement-modal-container,
+.weather-modal-content,
+.music-player,
+.search-modal .modal-content,
+.about-modal-content,
+.category-group,
+.stat-card,
+.site-card,
+.minimal-tag,
+.fish-btn,
+.bookmark-btn,
+.toast-item,
+.floating-btn,
+.nav-btn,
+.footer-btn,
+.level1-btn,
+.level2-btn,
+.song-item,
+.custom-select-trigger,
+.engine-dropdown-item,
+.suggestion-item,
+.history-item,
+.category-item,
+.weather-icon-btn {
+    transition: var(--theme-transition);
+}
+
 h1, h2, h3, h4, h5, h6 { font-weight: 600; line-height: 1.3; margin-bottom: 0.5em; }
 p { margin-bottom: 1em; }
+
 .stat-number, .view-count, .time-text {
     font-family: 'SF Mono', 'Roboto Mono', Consolas, 'Courier New', monospace;
     font-weight: 600;
@@ -135,10 +187,12 @@ p { margin-bottom: 1em; }
 .back-to-top { color: var(--error-color); opacity: 0; transform: translateY(10px); visibility: hidden; transition: all 0.3s ease; }
 .back-to-top.visible { opacity: 1; transform: translateY(0); visibility: visible; }
 .back-to-top:hover { color: #ff3333; }
+
 .dark-mode .floating-btn { background: #2d2d2d; color: rgba(255,255,255,0.9); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 .dark-mode .floating-btn:hover { background: #383838; }
 .dark-mode .back-to-top { color: #ff6b6b; }
 .dark-mode .back-to-top:hover { color: #ff5252; }
+
 @media (max-width: 768px) { .floating-buttons { bottom: 16px; right: 16px; gap: 10px; } .floating-btn { width: 44px; height: 44px; font-size: 18px; } }
 @media (max-width: 480px) { .floating-buttons { bottom: 12px; right: 12px; gap: 8px; } .floating-btn { width: 40px; height: 40px; font-size: 16px; } }
 
@@ -366,7 +420,7 @@ p { margin-bottom: 1em; }
 #submitModal .feedback-modal-content { max-height: 100%; max-width: 520px; }
 #submitModal .feedback-modal-header h3 i { color: #4361ee; }
 
-/* ===== 排行榜（与笔记模态框样式一致） ===== */
+/* ===== 排行榜 ===== */
 #rankModal {
     position: fixed;
     inset: 0;
