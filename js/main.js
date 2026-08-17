@@ -9,6 +9,11 @@ class App {
         this.notebookModalHideRef = null;
         this._cleanupErrorHandler = null;
         this._storageListenerBound = false;
+        this._navPollingTimer = null;
+        this._isDestroyed = false;
+
+        // ===== 新增：防重复加载错误遮罩 =====
+        this._errorOverlayShown = false;
 
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => { this.init(); });
@@ -23,9 +28,14 @@ class App {
     }
 
     showErrorFallback(message = '页面加载失败，请刷新重试') {
+        // ===== 修复：防重复添加 =====
+        if (this._errorOverlayShown) return;
+        if (document.getElementById('error-fallback-overlay')) return;
+
         const container = document.querySelector('.main-content');
         if (!container) return;
-        if (document.getElementById('error-fallback-overlay')) return;
+
+        this._errorOverlayShown = true;
         const overlay = document.createElement('div');
         overlay.id = 'error-fallback-overlay';
         overlay.style.cssText = `
@@ -60,6 +70,7 @@ class App {
     hideErrorFallback() {
         const overlay = document.getElementById('error-fallback-overlay');
         if (overlay) overlay.remove();
+        this._errorOverlayShown = false;
     }
 
     async loadNotebookData() {
@@ -237,6 +248,14 @@ class App {
                 }
             }
         });
+
+        // ===== 新增：页面卸载时清理定时器 =====
+        window.addEventListener('beforeunload', () => {
+            if (this._navPollingTimer) {
+                clearInterval(this._navPollingTimer);
+                this._navPollingTimer = null;
+            }
+        });
     }
 
     refreshNavigationIfReady() {
@@ -259,32 +278,29 @@ class App {
         }
     }
 
-    // ===== 新增：初始化合作伙伴模块 =====
+    // ===== 修复：合作伙伴模块初始化增加最大重试次数 =====
     initPartnerModule() {
-        // partner.js 会自动初始化，这里只需确保 window.Starlink.partner 存在
-        // 但为了兼容，如果 partner.js 未加载，可以手动创建
         if (!window.Starlink) window.Starlink = {};
         if (!window.Starlink.partner) {
-            // 如果 partner.js 未加载，等待加载完成后再初始化
-            if (typeof PartnerModule !== 'undefined') {
-                window.Starlink.partner = new PartnerModule();
-            } else {
-                // 如果 partner.js 尚未加载，监听加载完成
-                const checkPartner = () => {
-                    if (typeof PartnerModule !== 'undefined') {
-                        window.Starlink.partner = new PartnerModule();
-                    } else {
-                        setTimeout(checkPartner, 200);
-                    }
-                };
-                checkPartner();
-            }
+            let retryCount = 0;
+            const maxRetries = 10;
+            const checkPartner = () => {
+                if (typeof PartnerModule !== 'undefined') {
+                    window.Starlink.partner = new PartnerModule();
+                } else if (retryCount < maxRetries) {
+                    retryCount++;
+                    setTimeout(checkPartner, 200);
+                } else {
+                    console.warn('[App] PartnerModule 加载失败，已重试', maxRetries, '次');
+                }
+            };
+            checkPartner();
         }
         window.partnerModule = window.Starlink.partner;
     }
 
     init() {
-        if (this.isInitialized) return;
+        if (this.isInitialized || this._isDestroyed) return;
 
         this.setupGlobalErrorHandling();
 
@@ -299,7 +315,6 @@ class App {
             this.initFloatingButtonsEffect();
             this.initServiceWorkerMessageListener();
             this.setupNavRefreshListener();
-            // ===== 初始化合作伙伴模块 =====
             this.initPartnerModule();
             this.isInitialized = true;
             this.hideErrorFallback();
@@ -537,7 +552,6 @@ class App {
         if (this.modules.search?.isModalOpen && this.modules.search.hide) this.modules.search.hide();
         this.hideNotebookModal();
         if (window.walineFeedback?.isVisible) window.walineFeedback.hide();
-        // 关闭合作伙伴模态框
         if (window.partnerModule && window.partnerModule.isVisible) {
             window.partnerModule.close();
         }
@@ -683,31 +697,45 @@ class App {
         this.showToast('应用状态已重置', 'success');
     }
 
+    // ===== 修复：完善 destroy 方法 =====
     destroy() {
+        if (this._isDestroyed) return;
+        this._isDestroyed = true;
+
         this.closeAllModals();
+
+        // 清理错误处理
         if (this._cleanupErrorHandler) {
             this._cleanupErrorHandler();
             this._cleanupErrorHandler = null;
         }
+
+        // 清理导航轮询定时器
         if (this._navPollingTimer) {
             clearInterval(this._navPollingTimer);
             this._navPollingTimer = null;
         }
+
+        // 清理组件
         Object.entries(this.components).forEach(([name, component]) => {
             if (component && typeof component.destroy === 'function') {
                 try { component.destroy(); } catch (error) { console.error(`销毁组件 ${name} 失败:`, error); }
             }
         });
+
+        // 清理模块
         Object.entries(this.modules).forEach(([name, module]) => {
             if (module && typeof module.destroy === 'function') {
                 try { module.destroy(); } catch (error) { console.error(`销毁模块 ${name} 失败:`, error); }
             }
         });
+
         this.components = {};
         this.modules = {};
         this.activeModals = [];
         this.isInitialized = false;
         this._storageListenerBound = false;
+        this._errorOverlayShown = false;
     }
 }
 
