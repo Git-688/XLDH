@@ -1,8 +1,8 @@
-/* submit.js - 完整修改版（符合4点需求 + 修复获取信息时清空字段） */
+/* submit.js - 完整修改版（符合4点需求 + 修复获取信息时清空字段 + 轮询最大重试） */
 class SubmitModule {
     constructor() {
         if (window.Starlink && window.Starlink.submit) return window.Starlink.submit;
-        
+
         this.modal = document.getElementById('submitModal');
         this.form = document.getElementById('submitSiteForm');
         this.urlInput = document.getElementById('submitUrl');
@@ -15,7 +15,6 @@ class SubmitModule {
         this.submitSaveBtn = document.getElementById('submitSaveBtn');
         this.urlCheckResult = document.getElementById('urlCheckResult');
 
-        // ===== 修改：使用 Utils.getApiBase() 获取 API 基础 URL =====
         this.apiBase = (typeof Utils !== 'undefined' && Utils.getApiBase) ? Utils.getApiBase() : (window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc');
         this.statsBadge = null;
         this.submitting = false;
@@ -27,18 +26,19 @@ class SubmitModule {
         this.lastSecurityDetail = null;
         this.currentTaskId = null;
         this.pollingTimer = null;
+        // ===== 新增：轮询最大重试次数 =====
+        this.pollingRetries = 0;
+        this.MAX_POLLING_RETRIES = 30;
         this.isVisible = false;
-
-        // 标志：是否已成功获取过信息（用于避免重复自动获取）
         this.hasFetchedInfo = false;
 
         this.DRAFT_KEY = 'submit_draft';
-        this.CONTACT_KEY = 'submit_contact'; // 独立保存联系方式
+        this.CONTACT_KEY = 'submit_contact';
         this.draftSaveTimer = null;
         this.isRestoringDraft = false;
 
         this.init();
-        
+
         if (window.Starlink) window.Starlink.submit = this;
         window.submitModule = this;
     }
@@ -94,10 +94,14 @@ class SubmitModule {
                 this.autoResizeDesc();
             }
             if (draft.contact && this.contactInput) this.contactInput.value = draft.contact;
-            // 单独保存的联系方式也同步
             if (draft.contact) localStorage.setItem(this.CONTACT_KEY, draft.contact);
             this.isRestoringDraft = false;
-            // 只有在未获取过信息时才自动获取
+
+            // ===== 新增：恢复草稿时清除旧安全状态 =====
+            this.resetSecurityCheck();
+            this.securityPassed = false;
+            this.hasFetchedInfo = false;
+
             if (draft.url && this.isVisible && !this.hasFetchedInfo) {
                 setTimeout(() => this.fetchSiteInfo(), 500);
             }
@@ -131,7 +135,6 @@ class SubmitModule {
         this.bindEvents();
         if (this.descInput) this.descInput.maxLength = 200;
 
-        // 尝试恢复独立的联系方式
         const savedContact = localStorage.getItem(this.CONTACT_KEY);
         if (savedContact && this.contactInput) {
             this.contactInput.value = savedContact;
@@ -147,7 +150,6 @@ class SubmitModule {
                     this.loadGlobalTotalCount();
                     if (!this.loadDraft()) {
                         this.resetSecurityCheck();
-                        // 如果有独立的联系方式，恢复
                         const savedContact = localStorage.getItem(this.CONTACT_KEY);
                         if (savedContact && this.contactInput) {
                             this.contactInput.value = savedContact;
@@ -156,6 +158,8 @@ class SubmitModule {
                     this.updateSubmitButton();
                 } else if (mutation.attributeName === 'class' && !this.modal.classList.contains('active')) {
                     this.isVisible = false;
+                    // ===== 新增：模态框关闭时重置获取信息标志 =====
+                    this.hasFetchedInfo = false;
                 }
             });
         });
@@ -231,7 +235,7 @@ class SubmitModule {
 
         this.urlInput.addEventListener('input', () => {
             this.resetSecurityCheck();
-            this.hasFetchedInfo = false; // 修改URL后标记为未获取
+            this.hasFetchedInfo = false;
             this.updateSubmitButton();
             this.scheduleDraftSave();
         });
@@ -251,7 +255,6 @@ class SubmitModule {
         this.contactInput?.addEventListener('input', () => {
             this.updateSubmitButton();
             this.scheduleDraftSave();
-            // 单独保存联系方式
             localStorage.setItem(this.CONTACT_KEY, this.contactInput.value);
         });
 
@@ -274,6 +277,7 @@ class SubmitModule {
             clearInterval(this.pollingTimer);
             this.pollingTimer = null;
         }
+        this.pollingRetries = 0;
     }
 
     resetSecurityCheck() {
@@ -281,6 +285,7 @@ class SubmitModule {
         this.securityPassed = false;
         this.lastSecurityDetail = null;
         this.currentTaskId = null;
+        this.pollingRetries = 0;
         if (this.urlCheckResult) {
             this.urlCheckResult.style.display = 'none';
             this.urlCheckResult.className = 'url-check-result';
@@ -333,7 +338,6 @@ class SubmitModule {
         this.urlCheckResult.className = 'url-check-result safe';
     }
 
-    // ===== 修改：获取信息时不清空已有字段，只填充空字段 =====
     async fetchSiteInfo() {
         const url = this.urlInput.value.trim();
         if (!url || !Utils.isValidUrl(url)) {
@@ -341,7 +345,6 @@ class SubmitModule {
             return;
         }
 
-        // 重置安全检测状态，但不清除已有字段
         this.resetSecurityCheck();
         this.hasFetchedInfo = false;
         this.fetchInfoBtn.disabled = true;
@@ -349,7 +352,7 @@ class SubmitModule {
         this.urlCheckResult.style.display = 'block';
         this.urlCheckResult.className = 'url-check-result checking';
         this.urlCheckResult.innerHTML = '正在获取网站信息，安全检测后台进行中...';
-        
+
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
             const response = await Utils.safeFetch(`${this.apiBase}/fetch-site-info`, {
@@ -358,8 +361,7 @@ class SubmitModule {
                 body: JSON.stringify({ url: safeUrl })
             });
             const data = await response.json();
-            
-            // ===== 修改：只在字段为空时填充 =====
+
             if (data.title && !this.titleInput.value.trim()) {
                 this.titleInput.value = data.title;
             }
@@ -371,9 +373,10 @@ class SubmitModule {
                 this.descInput.value = data.description.slice(0, 200);
                 this.autoResizeDesc();
             }
-            
+
             if (data.taskId) {
                 this.currentTaskId = data.taskId;
+                this.pollingRetries = 0;
                 this.startPolling();
             } else {
                 this.lastSecurityDetail = data;
@@ -384,7 +387,7 @@ class SubmitModule {
                     this.securityPassed = false;
                 } else {
                     this.securityPassed = true;
-                    this.hasFetchedInfo = true; // 标记已获取成功
+                    this.hasFetchedInfo = true;
                 }
                 this.updateSubmitButton();
             }
@@ -405,10 +408,27 @@ class SubmitModule {
         }
     }
 
+    // ===== 修复：轮询增加最大重试次数 =====
     startPolling() {
         if (this.pollingTimer) clearInterval(this.pollingTimer);
+        this.pollingRetries = 0;
+
         this.pollingTimer = setInterval(async () => {
             if (!this.currentTaskId) return;
+            this.pollingRetries++;
+
+            // ===== 新增：超过最大重试次数，停止轮询 =====
+            if (this.pollingRetries > this.MAX_POLLING_RETRIES) {
+                this.stopPolling();
+                this.urlCheckResult.className = 'url-check-result checking';
+                this.urlCheckResult.innerHTML = '安全检测超时，请稍后重试';
+                this.securityPassed = false;
+                this.hasFetchedInfo = false;
+                this.updateSubmitButton();
+                window.toast.show('安全检测超时，请重新获取信息', 'warning');
+                return;
+            }
+
             try {
                 const res = await Utils.safeFetch(`${this.apiBase}/security-status?taskId=${this.currentTaskId}`);
                 const status = await res.json();
@@ -432,20 +452,20 @@ class SubmitModule {
                     this.hasFetchedInfo = false;
                     this.updateSubmitButton();
                 } else {
-                    // 仍在进行中
-                    this.urlCheckResult.innerHTML = '安全检测进行中，请稍候...';
+                    this.urlCheckResult.innerHTML = `安全检测进行中 (${this.pollingRetries}/${this.MAX_POLLING_RETRIES})...`;
                 }
             } catch (err) {
                 if (window.errorHandler) {
                     window.errorHandler.report(err, 'submit.startPolling');
                 }
-                // 网络错误时停止轮询并提示
-                this.stopPolling();
-                this.urlCheckResult.className = 'url-check-result checking';
-                this.urlCheckResult.innerHTML = '网络错误，请重试';
-                this.securityPassed = false;
-                this.hasFetchedInfo = false;
-                this.updateSubmitButton();
+                if (this.pollingRetries >= this.MAX_POLLING_RETRIES) {
+                    this.stopPolling();
+                    this.urlCheckResult.className = 'url-check-result checking';
+                    this.urlCheckResult.innerHTML = '网络错误，请重试';
+                    this.securityPassed = false;
+                    this.hasFetchedInfo = false;
+                    this.updateSubmitButton();
+                }
             }
         }, 2000);
     }
@@ -554,8 +574,7 @@ class SubmitModule {
         this.submitting = false;
         this.securityPassed = false;
         this.lastSecurityDetail = null;
-        this.hasFetchedInfo = false; // 重置标志
-        // 不清除联系方式，让草稿或独立存储保留
+        this.hasFetchedInfo = false;
     }
 
     show() {
@@ -567,7 +586,6 @@ class SubmitModule {
         }
         this.modal.classList.add('active');
         this.isVisible = true;
-        // 加载草稿，但不会自动获取（由 hasFetchedInfo 控制）
         this.loadDraft();
         this.updateSubmitButton();
         if (window.Starlink?.app) window.Starlink.app.registerModal(this);
@@ -580,10 +598,10 @@ class SubmitModule {
         this.modal.classList.remove('active');
         const onTransitionEnd = () => {
             this.isVisible = false;
+            this.hasFetchedInfo = false; // ===== 新增：关闭时重置 =====
             if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
             else if (window.app) window.app.unregisterModal(this);
             this.modal.removeEventListener('transitionend', onTransitionEnd);
-            // 不重置表单，保留数据
         };
         this.modal.addEventListener('transitionend', onTransitionEnd, { once: true });
         setTimeout(onTransitionEnd, 400);
