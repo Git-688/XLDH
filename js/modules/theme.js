@@ -2,7 +2,7 @@
 class ThemeModule {
     constructor() {
         if (window.Starlink && window.Starlink.theme) return window.Starlink.theme;
-        
+
         this.THEME_KEY = 'starlink_theme';
         this.DARK_CLASS = 'dark-mode';
         this.availableThemes = ['light', 'dark', 'auto'];
@@ -11,7 +11,7 @@ class ThemeModule {
         this.isInitialized = false;
         this.systemThemeQuery = null;
         this.systemThemeHandler = null;
-        
+
         if (window.Starlink) window.Starlink.theme = this;
         window.themeModule = this;
     }
@@ -37,9 +37,8 @@ class ThemeModule {
 
     applyTheme() {
         const htmlElement = document.documentElement;
-        // 添加过渡效果
         htmlElement.style.transition = 'background-color 0.3s ease, color 0.3s ease';
-        
+
         let shouldBeDark = false;
         if (this.currentTheme === 'dark') {
             shouldBeDark = true;
@@ -48,16 +47,16 @@ class ThemeModule {
         } else if (this.currentTheme === 'auto') {
             shouldBeDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         }
-        
+
         if (shouldBeDark) {
             htmlElement.classList.add(this.DARK_CLASS);
         } else {
             htmlElement.classList.remove(this.DARK_CLASS);
         }
-        
+
         this.updateButtonIcon(shouldBeDark);
         localStorage.setItem(this.THEME_KEY, this.currentTheme);
-        
+
         setTimeout(() => {
             htmlElement.style.transition = '';
         }, 300);
@@ -94,25 +93,23 @@ class ThemeModule {
 
     bindEvents() {
         this.themeToggleBtn.addEventListener('click', () => this.toggleTheme());
-        // ===== 新增：监听系统主题变化 =====
         if (window.matchMedia) {
             this.systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
             this.systemThemeHandler = (e) => {
-                // 只有在自动模式下才响应系统变化
                 if (this.currentTheme === 'auto') {
                     this.applyTheme();
-                    // 可选的提示（避免频繁打扰，可注释）
-                    // const toast = window.Starlink?.toast || window.toast;
-                    // if (toast && toast.show) toast.show('已跟随系统切换主题', 'info');
                 }
             };
             this.systemThemeQuery.addEventListener('change', this.systemThemeHandler);
         }
     }
 
+    // ===== 修复：完善 destroy 方法，移除系统主题监听 =====
     destroy() {
         if (this.systemThemeQuery && this.systemThemeHandler) {
             this.systemThemeQuery.removeEventListener('change', this.systemThemeHandler);
+            this.systemThemeQuery = null;
+            this.systemThemeHandler = null;
         }
         if (this.themeToggleBtn) {
             this.themeToggleBtn.removeEventListener('click', this.toggleTheme);
