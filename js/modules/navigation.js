@@ -25,6 +25,8 @@ class OptimizedNavigation {
 
         // 图标缓存（持久化到 localStorage）
         this.iconCache = this.loadIconCache();
+        // ===== 新增：图标缓存容量限制 =====
+        this.MAX_ICON_CACHE_SIZE = 200;
 
         // DOM 元素
         this.level1Nav = document.getElementById('level1Nav');
@@ -35,6 +37,7 @@ class OptimizedNavigation {
 
         this.intersectionObserver = null;
         this.loadMoreTrigger = null;
+        this._isDestroyed = false;
 
         if (window.Starlink) window.Starlink.navigation = this;
         window.optimizedNavigation = this;
@@ -56,6 +59,16 @@ class OptimizedNavigation {
 
     saveIconCache() {
         try {
+            // ===== 新增：限制缓存大小 =====
+            const keys = Object.keys(this.iconCache);
+            if (keys.length > this.MAX_ICON_CACHE_SIZE) {
+                const sorted = keys.sort((a, b) => {
+                    // 优先保留已保存时间较新的（如果有时间戳字段）
+                    return 0;
+                });
+                const toRemove = sorted.slice(0, sorted.length - this.MAX_ICON_CACHE_SIZE);
+                toRemove.forEach(key => delete this.iconCache[key]);
+            }
             localStorage.setItem('nav_icon_cache', JSON.stringify({
                 map: this.iconCache,
                 timestamp: Date.now()
@@ -81,7 +94,7 @@ class OptimizedNavigation {
         try { return new URL(url).hostname; } catch { return ''; }
     }
 
-    // ===== 创建图标元素（直接加载，不依赖懒加载） =====
+    // ===== 创建图标元素 =====
     _createIconElement(site) {
         const container = document.createElement('span');
         container.className = 'icon-container';
@@ -95,11 +108,10 @@ class OptimizedNavigation {
         const img = document.createElement('img');
         img.loading = 'lazy';
         img.alt = '';
-        img.style.display = 'none'; // 初始隐藏，加载后显示
+        img.style.display = 'none';
         img.className = 'site-icon-img';
         img.dataset.domain = this._getDomain(site.url) || '';
 
-        // 收集图标源
         const domain = img.dataset.domain;
         const iconSources = [];
         if (site.icon && (site.icon.startsWith('http://') || site.icon.startsWith('https://'))) {
@@ -114,24 +126,19 @@ class OptimizedNavigation {
             );
         }
 
-        // 检查缓存
         if (domain && this._getCachedIcon(domain)) {
-            // 有缓存，立即加载
             img.src = this._getCachedIcon(domain);
             img.style.display = 'block';
         } else if (iconSources.length > 0) {
-            // 无缓存，直接尝试加载第一个源
             const firstSrc = iconSources.shift();
-            img.dataset.sources = JSON.stringify(iconSources); // 保留剩余源供onerror使用
+            img.dataset.sources = JSON.stringify(iconSources);
             img.src = firstSrc;
             img.style.display = 'block';
         } else {
-            // 无任何源，直接显示降级
             img.style.display = 'none';
             fallbackText.style.display = 'flex';
         }
 
-        // 加载完成后的处理
         img.onload = () => {
             img.style.display = 'block';
             fallbackText.style.display = 'none';
@@ -139,7 +146,6 @@ class OptimizedNavigation {
             if (domain && img.src) {
                 this._setCachedIcon(domain, img.src);
             }
-            // 检查图片实际尺寸，若为无效图片则触发降级
             setTimeout(() => {
                 if (img.naturalWidth <= 1 && img.naturalHeight <= 1) {
                     img.onerror();
@@ -148,7 +154,6 @@ class OptimizedNavigation {
         };
 
         img.onerror = () => {
-            // 尝试下一个源或降级
             const sources = JSON.parse(img.dataset.sources || '[]');
             if (sources.length > 0) {
                 const nextSrc = sources.shift();
@@ -208,7 +213,7 @@ class OptimizedNavigation {
             titleSpan.textContent = site.title;
             cardTop.appendChild(titleSpan);
 
-            // 点击事件：乐观更新 + 同步校正
+            // ===== 修复：click 事件增加错误回滚 =====
             card.addEventListener('click', async (e) => {
                 if (e.target.closest('.report-dead-link-btn')) return;
                 const viewEl = card.querySelector('.view-count');
@@ -219,6 +224,8 @@ class OptimizedNavigation {
                 viewEl.textContent = this._formatViews(optimisticViews);
                 viewEl.classList.add('increasing');
                 setTimeout(() => viewEl.classList.remove('increasing'), 300);
+
+                let updateSuccess = false;
                 try {
                     const response = await Utils.safeFetch(`${this.apiBase}/click`, {
                         method: 'POST',
@@ -241,12 +248,19 @@ class OptimizedNavigation {
                                     this.siteCache.set(cacheKey, cached);
                                 }
                             }
+                            updateSuccess = true;
                         }
                     }
                 } catch (err) {
                     if (window.errorHandler) {
                         window.errorHandler.report(err, 'navigation.clickUpdate');
                     }
+                }
+
+                // ===== 新增：请求失败时回滚视图 =====
+                if (!updateSuccess) {
+                    viewEl.dataset.views = oldViews;
+                    viewEl.textContent = this._formatViews(oldViews);
                 }
             });
 
@@ -290,7 +304,6 @@ class OptimizedNavigation {
         this.updateLoadMoreTrigger();
     }
 
-    // ===== 追加站点卡片（用于滚动加载更多） =====
     _appendSites(sites) {
         const container = this.level3Content;
         if (!container) return;
@@ -333,7 +346,6 @@ class OptimizedNavigation {
             titleSpan.textContent = site.title;
             cardTop.appendChild(titleSpan);
 
-            // 点击事件（与 _renderSites 一致）
             card.addEventListener('click', async (e) => {
                 if (e.target.closest('.report-dead-link-btn')) return;
                 const viewEl = card.querySelector('.view-count');
@@ -344,6 +356,8 @@ class OptimizedNavigation {
                 viewEl.textContent = this._formatViews(optimisticViews);
                 viewEl.classList.add('increasing');
                 setTimeout(() => viewEl.classList.remove('increasing'), 300);
+
+                let updateSuccess = false;
                 try {
                     const response = await Utils.safeFetch(`${this.apiBase}/click`, {
                         method: 'POST',
@@ -366,12 +380,18 @@ class OptimizedNavigation {
                                     this.siteCache.set(cacheKey, cached);
                                 }
                             }
+                            updateSuccess = true;
                         }
                     }
                 } catch (err) {
                     if (window.errorHandler) {
                         window.errorHandler.report(err, 'navigation.clickUpdate');
                     }
+                }
+
+                if (!updateSuccess) {
+                    viewEl.dataset.views = oldViews;
+                    viewEl.textContent = this._formatViews(oldViews);
                 }
             });
 
@@ -414,7 +434,6 @@ class OptimizedNavigation {
         this.updateLoadMoreTrigger();
     }
 
-    // ===== 显示骨架屏 =====
     _showSkeleton() {
         const container = this.level3Content;
         if (!container) return;
@@ -432,7 +451,6 @@ class OptimizedNavigation {
         container.innerHTML = html;
     }
 
-    // ===== 显示错误状态 =====
     _showError(message = '加载失败，请点击重试') {
         const container = this.level3Content;
         if (!container) return;
@@ -453,7 +471,6 @@ class OptimizedNavigation {
         }
     }
 
-    // ===== 更新加载更多触发器 =====
     updateLoadMoreTrigger() {
         const container = this.level3Content;
         if (!container) return;
@@ -485,10 +502,11 @@ class OptimizedNavigation {
         this.setupIntersectionObserver(trigger);
     }
 
-    // ===== 设置 IntersectionObserver =====
+    // ===== 修复：增强 IntersectionObserver 清理 =====
     setupIntersectionObserver(trigger) {
         if (this.intersectionObserver) {
             this.intersectionObserver.disconnect();
+            this.intersectionObserver = null;
         }
 
         this.intersectionObserver = new IntersectionObserver((entries) => {
@@ -508,7 +526,6 @@ class OptimizedNavigation {
         }
     }
 
-    // ===== 加载更多站点 =====
     async loadMoreSites() {
         if (this.isLoadingMore || !this.hasMoreData || !this.currentLevel2 || this.isSearching) return;
         this.isLoadingMore = true;
@@ -551,7 +568,6 @@ class OptimizedNavigation {
         }
     }
 
-    // ===== 加载子分类站点（调用 API） =====
     async loadSubcategorySites(subId, page) {
         const url = `${this.apiBase}/navigation/sites?subcategory_id=${subId}&page=${page}&limit=${this.pageSize}`;
         const response = await Utils.safeFetch(url, { timeout: 10000 });
@@ -560,7 +576,6 @@ class OptimizedNavigation {
         return data;
     }
 
-    // ===== 刷新当前子分类 =====
     async refreshCurrentSubcategory() {
         if (!this.currentLevel2) return;
         const keysToDelete = [];
@@ -577,7 +592,6 @@ class OptimizedNavigation {
         await this.updateStats();
     }
 
-    // ===== 选择一级分类 =====
     async selectLevel1(categoryName, isUserClick = false) {
         if (this.currentLevel1 === categoryName && !isUserClick) return;
         this.currentLevel1 = categoryName;
@@ -605,7 +619,6 @@ class OptimizedNavigation {
         await this.updateStats();
     }
 
-    // ===== 加载一级分类数据（含缓存） =====
     async loadCategoryData(categoryName, forceRefresh = false) {
         const cacheKey = `nav_data_${categoryName}`;
         const cached = localStorage.getItem(cacheKey);
@@ -628,7 +641,6 @@ class OptimizedNavigation {
         return json;
     }
 
-    // ===== 渲染二级导航 =====
     renderLevel2(categoryName) {
         const subs = this.categoryCache[categoryName] || [];
         if (!subs.length) {
@@ -671,7 +683,6 @@ class OptimizedNavigation {
         });
     }
 
-    // ===== 获取子分类计数 =====
     async fetchSubcategoryCounts(subIds) {
         if (!subIds || !subIds.length) return {};
         const url = `${this.apiBase}/subcategory/counts?ids=${subIds.join(',')}`;
@@ -684,7 +695,6 @@ class OptimizedNavigation {
         }
     }
 
-    // ===== 选择二级分类 =====
     async selectLevel2(subId, forceRefresh = false) {
         if (this.currentLevel2 === subId && !forceRefresh) return;
 
@@ -719,7 +729,6 @@ class OptimizedNavigation {
         }
     }
 
-    // ===== 搜索功能 =====
     createSearchBox() {
         const navHeader = document.querySelector('.navigation-header');
         if (!navHeader || navHeader.querySelector('.nav-search-box')) return;
@@ -799,7 +808,6 @@ class OptimizedNavigation {
         }
     }
 
-    // ===== 更新统计 =====
     async updateStats() {
         await this.fetchTotalSitesCount();
     }
@@ -821,7 +829,6 @@ class OptimizedNavigation {
         }
     }
 
-    // ===== 初始化 =====
     async init() {
         if (this.isInitialized) return;
 
@@ -849,7 +856,6 @@ class OptimizedNavigation {
 
             await this.updateStats();
 
-            // 预加载所有一级分类数据（空闲时执行）
             if ('requestIdleCallback' in window) {
                 requestIdleCallback(() => this.preloadAllCategories());
             } else {
@@ -862,7 +868,6 @@ class OptimizedNavigation {
         }
     }
 
-    // ===== 预加载所有一级分类结构 =====
     async preloadAllCategories() {
         try {
             const resp = await Utils.safeFetch(`${this.apiBase}/navigation/structure`, { timeout: 5000 });
@@ -872,12 +877,23 @@ class OptimizedNavigation {
         } catch (e) {}
     }
 
-    // ===== 销毁 =====
+    // ===== 修复：完善 destroy 方法 =====
     destroy() {
+        this._isDestroyed = true;
         if (this.intersectionObserver) {
             this.intersectionObserver.disconnect();
             this.intersectionObserver = null;
         }
+        if (this.loadMoreTrigger) {
+            this.loadMoreTrigger = null;
+        }
+        if (this.searchTimer) {
+            clearTimeout(this.searchTimer);
+            this.searchTimer = null;
+        }
+        this.siteCache.clear();
+        this._batchCache?.clear();
+        this.iconCache = {};
     }
 }
 
