@@ -1,4 +1,4 @@
-/* sidebar.js - 侧边栏底部福利替换为投稿 + 修复投稿按钮依赖 + QQ号持久化 */
+/* sidebar.js - 侧边栏底部福利替换为投稿 + 修复投稿按钮依赖 + QQ号持久化 + 模态框复用 + 壁纸缓存 */
 (function() {
     const CATEGORIES_DATA = [
         { name: '常用工具', icon: 'fas fa-tools', expanded: true, items: [
@@ -51,6 +51,8 @@
             this.categories = JSON.parse(JSON.stringify(CATEGORIES_DATA));
             this.userConfig = null;
             this._savedScrollY = 0;
+            this._profileModal = null; // ===== 新增：复用模态框 =====
+            this._wallpaperCache = null; // ===== 新增：壁纸缓存 =====
             this.init();
             if (window.Starlink) window.Starlink.sidebar = this;
             window.sidebar = this;
@@ -85,9 +87,9 @@
                 const diffX = touchEndX - touchStartX;
                 const absDiff = Math.abs(diffX);
                 const duration = Date.now() - touchStartTime;
-                
+
                 const isFastSwipe = duration < 300 && absDiff > threshold;
-                
+
                 if (isFastSwipe && diffX < -threshold && this.isOpen) {
                     this.hide();
                     e.preventDefault();
@@ -249,19 +251,16 @@
             }
         }
 
-        // ===== 修改：通过全局App获取submit模块，增加降级 =====
         handleFooterAction(action) {
             switch (action) {
                 case 'notebook':
                     if (window.showNotebookModal) window.showNotebookModal();
                     break;
                 case 'submit': {
-                    // 优先从全局App实例获取submit模块
                     const submitModule = window.Starlink?.app?.modules?.submit || window.submitModule;
                     if (submitModule && typeof submitModule.show === 'function') {
                         submitModule.show();
                     } else {
-                        // 降级：直接操作DOM
                         const submitModal = document.getElementById('submitModal');
                         if (submitModal) {
                             submitModal.classList.add('active');
@@ -324,9 +323,26 @@
             }
         }
 
+        // ===== 修复：壁纸加载增加缓存 =====
         async loadWallpaperBackground() {
             const wallpaperDiv = document.getElementById('sidebarWallpaper');
             if (!wallpaperDiv) return;
+
+            // 检查缓存
+            const cacheKey = 'sidebar_wallpaper_cache';
+            const cached = localStorage.getItem(cacheKey);
+            if (cached) {
+                try {
+                    const data = JSON.parse(cached);
+                    if (data.url && (Date.now() - data.timestamp) < 3600000) {
+                        wallpaperDiv.style.backgroundImage = `url(${data.url})`;
+                        wallpaperDiv.style.backgroundSize = 'cover';
+                        wallpaperDiv.style.backgroundPosition = 'center';
+                        return;
+                    }
+                } catch (e) {}
+            }
+
             try {
                 const response = await fetch('https://bing.biturl.top/?resolution=1366&format=json&index=0');
                 if (response.ok) {
@@ -335,6 +351,11 @@
                         wallpaperDiv.style.backgroundImage = `url(${data.url})`;
                         wallpaperDiv.style.backgroundSize = 'cover';
                         wallpaperDiv.style.backgroundPosition = 'center';
+                        // 缓存
+                        localStorage.setItem(cacheKey, JSON.stringify({
+                            url: data.url,
+                            timestamp: Date.now()
+                        }));
                     }
                 }
             } catch (e) {
@@ -342,75 +363,96 @@
             }
         }
 
-        // ===== 修改：增加QQ号持久化（读取和保存） =====
+        // ===== 修复：openProfileModal 复用单例模态框 =====
         openProfileModal() {
+            // 如果已有模态框，先移除
+            if (this._profileModal && this._profileModal.parentNode) {
+                this._profileModal.remove();
+                this._profileModal = null;
+            }
+
             const currentAvatar = (this.userConfig && this.userConfig.avatar) ? this.userConfig.avatar : './assets/logo.png';
             const currentQQ = (this.userConfig && this.userConfig.qq) ? this.userConfig.qq : '';
             const containerPadding = getComputedStyle(document.documentElement).getPropertyValue('--container-padding-xs').trim() || '16px';
-            const modalHtml = `
-                <div id="profileModal" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:10002;display:flex;align-items:center;justify-content:center;">
-                    <div class="profile-modal-card" style="
-                        background: #ffffff;
-                        border: 1px solid #e0e0e0;
-                        border-radius: 8px;
-                        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-                        width: 360px;
-                        max-width: calc(100% - 2 * ${containerPadding});
-                        padding: 0;
-                        overflow: hidden;
+
+            const modal = document.createElement('div');
+            modal.id = 'profileModal';
+            modal.style.cssText = `
+                position:fixed; top:0; left:0; width:100%; height:100%;
+                z-index:10002; display:flex; align-items:center; justify-content:center;
+                background: rgba(0,0,0,0.15);
+                backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
+                animation: fadeIn 0.2s ease;
+            `;
+
+            modal.innerHTML = `
+                <div class="profile-modal-card" style="
+                    background: var(--bg-card, #ffffff);
+                    border: 1px solid var(--border-color, #e0e0e0);
+                    border-radius: 8px;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+                    width: 360px;
+                    max-width: calc(100% - 2 * ${containerPadding});
+                    padding: 0;
+                    overflow: hidden;
+                    animation: scaleIn 0.25s ease;
+                ">
+                    <div style="
+                        padding: 10px 14px 8px;
+                        border-bottom: 1px solid rgba(0,0,0,0.08);
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
                     ">
-                        <div style="
-                            padding: 10px 14px 8px;
-                            border-bottom: 1px solid rgba(0,0,0,0.08);
-                            display: flex;
-                            align-items: center;
-                            justify-content: space-between;
-                        ">
-                            <h3 style="margin:0;font-size:16px;font-weight:600;color:var(--text-primary, #1e293b);">个人资料</h3>
-                            <div style="width:32px;height:32px;border-radius:8px;overflow:hidden;background:#f0f0f0;flex-shrink:0;">
-                                <img id="profileAvatarPreview" src="${this.escapeHtml(currentAvatar)}" alt="头像预览" style="width:100%;height:100%;object-fit:cover;">
-                            </div>
+                        <h3 style="margin:0;font-size:16px;font-weight:600;color:var(--text-primary, #1e293b);">个人资料</h3>
+                        <div style="width:32px;height:32px;border-radius:8px;overflow:hidden;background:#f0f0f0;flex-shrink:0;">
+                            <img id="profileAvatarPreview" src="${this.escapeHtml(currentAvatar)}" alt="头像预览" style="width:100%;height:100%;object-fit:cover;">
                         </div>
-                        <div style="padding:16px 20px;">
-                            <div style="margin-bottom:16px;">
-                                <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary, #64748b);">QQ号码（自动获取头像）</label>
-                                <input type="text" id="profileQQ" placeholder="输入QQ号" value="${this.escapeHtml(currentQQ)}" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e0e0e0;background:#ffffff;font-size:13px;">
-                                <div id="qqAvatarStatus" style="font-size:11px;margin-top:6px;color:#666;"></div>
+                    </div>
+                    <div style="padding:16px 20px;">
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary, #64748b);">QQ号码（自动获取头像）</label>
+                            <input type="text" id="profileQQ" placeholder="输入QQ号" value="${this.escapeHtml(currentQQ)}" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e0e0e0;background:#ffffff;font-size:13px;">
+                            <div id="qqAvatarStatus" style="font-size:11px;margin-top:6px;color:#666;"></div>
+                        </div>
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary, #64748b);">昵称</label>
+                            <input type="text" id="profileNickname" placeholder="昵称" value="${this.escapeHtml(this.userConfig?.nickname || '')}" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e0e0e0;background:#ffffff;font-size:13px;">
+                        </div>
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary, #64748b);">个性签名</label>
+                            <input type="text" id="profileSignature" placeholder="个性签名" value="${this.escapeHtml(this.userConfig?.signature || '')}" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e0e0e0;background:#ffffff;font-size:13px;">
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+                            <div style="font-size:11px;color:#ef4444;background:rgba(239,68,68,0.1);padding:4px 8px;border-radius:6px;">
+                                <i class="fas fa-info-circle"></i> QQ号仅供获取头像！
                             </div>
-                            <div style="margin-bottom:16px;">
-                                <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary, #64748b);">昵称</label>
-                                <input type="text" id="profileNickname" placeholder="昵称" value="${this.escapeHtml(this.userConfig?.nickname || '')}" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e0e0e0;background:#ffffff;font-size:13px;">
-                            </div>
-                            <div style="margin-bottom:16px;">
-                                <label style="display:block;font-size:12px;margin-bottom:6px;color:var(--text-secondary, #64748b);">个性签名</label>
-                                <input type="text" id="profileSignature" placeholder="个性签名" value="${this.escapeHtml(this.userConfig?.signature || '')}" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #e0e0e0;background:#ffffff;font-size:13px;">
-                            </div>
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
-                                <div style="font-size:11px;color:#ef4444;background:rgba(239,68,68,0.1);padding:4px 8px;border-radius:6px;">
-                                    <i class="fas fa-info-circle"></i> QQ号仅供获取头像！
-                                </div>
-                                <div style="display:flex;gap:12px;">
-                                    <button id="profileCancelBtn" style="padding:8px 20px;background:#f8f9fa;border:1px solid #e0e0e0;border-radius:30px;cursor:pointer;font-size:13px;">取消</button>
-                                    <button id="profileSaveBtn" style="padding:8px 20px;background:#4361ee;color:white;border:none;border-radius:30px;cursor:pointer;font-size:13px;">保存</button>
-                                </div>
+                            <div style="display:flex;gap:12px;">
+                                <button id="profileCancelBtn" style="padding:8px 20px;background:#f8f9fa;border:1px solid #e0e0e0;border-radius:30px;cursor:pointer;font-size:13px;">取消</button>
+                                <button id="profileSaveBtn" style="padding:8px 20px;background:#4361ee;color:white;border:none;border-radius:30px;cursor:pointer;font-size:13px;">保存</button>
                             </div>
                         </div>
                     </div>
                 </div>
             `;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-            const modal = document.getElementById('profileModal');
+
+            document.body.appendChild(modal);
+            this._profileModal = modal;
+
+            // 点击背景关闭
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    this._closeProfileModal();
+                }
+            });
+
+            // 绑定事件
             const qqInput = document.getElementById('profileQQ');
             const statusDiv = document.getElementById('qqAvatarStatus');
             const saveBtn = document.getElementById('profileSaveBtn');
             const cancelBtn = document.getElementById('profileCancelBtn');
             const avatarPreview = document.getElementById('profileAvatarPreview');
-
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            });
 
             if (qqInput) {
                 qqInput.addEventListener('blur', async () => {
@@ -454,17 +496,33 @@
                 const userConfig = Storage.get('userConfig') || {};
                 userConfig.nickname = newName;
                 userConfig.signature = newSig;
-                userConfig.qq = newQQ;  // 保存QQ号
+                userConfig.qq = newQQ;
                 if (this.userConfig.avatar) userConfig.avatar = this.userConfig.avatar;
                 Storage.set('userConfig', userConfig);
                 this.loadUserData();
-                modal?.remove();
+                this._closeProfileModal();
                 if (window.toast) window.toast.show('个人信息已保存', 'success');
             });
 
             cancelBtn?.addEventListener('click', () => {
-                modal?.remove();
+                this._closeProfileModal();
             });
+
+            // ESC 关闭
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    this._closeProfileModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        }
+
+        _closeProfileModal() {
+            if (this._profileModal && this._profileModal.parentNode) {
+                this._profileModal.remove();
+                this._profileModal = null;
+            }
         }
 
         setFixedTop() {
@@ -483,26 +541,25 @@
         closeOtherModals() {
             if (window.Starlink?.search && typeof window.Starlink.search.hide === 'function') window.Starlink.search.hide();
             else if (window.newSearchModule && typeof window.newSearchModule.hide === 'function') window.newSearchModule.hide();
-            
+
             if (window.Starlink?.announcement && typeof window.Starlink.announcement.hide === 'function') window.Starlink.announcement.hide();
             else if (window.announcementModule && typeof window.announcementModule.hide === 'function') window.announcementModule.hide();
-            
+
             if (window.Starlink?.navbar?.hideMusicPlayer) window.Starlink.navbar.hideMusicPlayer();
             else if (window.app?.components?.navbar) window.app.components.navbar.hideMusicPlayer();
-            
+
             if (window.Starlink?.weather && typeof window.Starlink.weather.hide === 'function') window.Starlink.weather.hide();
             else if (window.app?.modules?.weather && typeof window.app.modules.weather.hide === 'function') window.app.modules.weather.hide();
-            
+
             if (window.Starlink?.about && typeof window.Starlink.about.hide === 'function') window.Starlink.about.hide();
             else if (window.aboutModule && typeof window.aboutModule.hide === 'function') window.aboutModule.hide();
-            
+
             if (window.Starlink?.app?.hideNotebookModal && typeof window.Starlink.app.hideNotebookModal === 'function') window.Starlink.app.hideNotebookModal();
             else if (window.hideNotebookModal && typeof window.hideNotebookModal === 'function') window.hideNotebookModal();
-            
+
             const submitModal = document.getElementById('submitModal');
             if (submitModal && submitModal.classList.contains('active')) submitModal.classList.remove('active');
-            const profileModal = document.getElementById('profileModal');
-            if (profileModal && profileModal.parentNode) profileModal.remove();
+            this._closeProfileModal();
         }
 
         saveExpandedState() {
@@ -563,6 +620,10 @@
 
         destroy() {
             this.hide();
+            this._closeProfileModal();
+            if (this._wallpaperCache) {
+                this._wallpaperCache = null;
+            }
         }
     }
 
