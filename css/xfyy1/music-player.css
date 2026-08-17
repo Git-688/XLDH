@@ -1,4 +1,6 @@
-/* music-player.css - 精简版 */
+/* music-player.css - 精简版（移除 !important 滥用） */
+
+/* ===== 主容器 ===== */
 .music-player {
     position: fixed;
     bottom: 20px;
@@ -36,6 +38,7 @@
     transition: opacity .3s ease, visibility .3s ease, transform .3s ease;
 }
 
+/* ===== 音乐按钮 ===== */
 #musicBtn {
     position: relative;
     transition: all .3s ease;
@@ -76,7 +79,7 @@
     100% { left:100%; }
 }
 
-/* 入场动画 */
+/* ===== 入场动画 ===== */
 .music-player .player-top,
 .music-player .progress-section,
 .music-player .lyrics-section,
@@ -90,7 +93,7 @@
 .music-player.show .lyrics-section { opacity:1; transform:translateY(0); transition-delay:.2s; }
 .music-player.show .bottom-section { opacity:1; transform:translateY(0); transition-delay:.25s; }
 
-/* 顶部 */
+/* ===== 顶部 ===== */
 .player-top { display:flex; padding:12px 15px 8px; border-bottom:1px solid rgba(0,0,0,.08); }
 .cover-section { display:flex; align-items:center; flex:1; }
 .album-cover {
@@ -124,7 +127,7 @@
     100% { transform:translateX(-100%); }
 }
 
-/* 控制面板 */
+/* ===== 控制面板 ===== */
 .control-panel { display:flex; flex-direction:column; gap:8px; }
 .playback-controls { display:flex; align-items:center; justify-content:center; gap:8px; }
 .play-mode-controls { display:flex; align-items:center; justify-content:center; gap:8px; }
@@ -166,7 +169,7 @@
     background:var(--secondary-color,#3a0ca3); transform:scale(1.2);
 }
 
-/* 进度条 */
+/* ===== 进度条 ===== */
 .progress-section {
     padding:8px 15px 10px; border-bottom:1px solid rgba(0,0,0,.08);
     display:flex; align-items:center; gap:10px; min-height:35px;
@@ -188,7 +191,7 @@
     border-radius:3px; width:0%; transition:width .1s ease;
     will-change:width; z-index:2; box-shadow:0 0 4px rgba(67,97,238,.5);
 }
-.progress.no-transition { transition:none !important; }
+.progress.no-transition { transition:none; }
 .progress-handle {
     position:absolute; top:50%; transform:translate(-50%,-50%);
     width:12px; height:12px; background:var(--bg-card,#fff);
@@ -200,9 +203,9 @@
 .progress-actions { display:flex; align-items:center; gap:8px; }
 .speed-control { display:flex; align-items:center; position:relative; }
 .speed-selector { width:65px; }
-.music-player select { display:none !important; }
+.music-player select { display:none; }
 
-/* 自定义下拉 */
+/* ===== 自定义下拉 ===== */
 .custom-select {
     position:relative; width:100%; user-select:none;
 }
@@ -245,10 +248,10 @@
 }
 .custom-select-option.selected::before { content:'✓'; position:absolute; right:12px; font-size:12px; }
 .speed-control .custom-select-dropdown {
-    z-index:100002 !important; width:auto; min-width:65px;
+    z-index:100002; width:auto; min-width:65px;
 }
 
-/* 歌词 */
+/* ===== 歌词 ===== */
 .lyrics-section {
     padding:0 15px; border-bottom:1px solid rgba(0,0,0,.08);
     height:56px; display:flex; align-items:center; overflow:hidden;
@@ -265,7 +268,7 @@
     transition:opacity .35s ease,transform .35s ease;
 }
 
-/* 底部 */
+/* ===== 底部 ===== */
 .bottom-section { max-height:500px; overflow:hidden; transition:max-height .3s ease; background:inherit; }
 .music-player.collapsed .bottom-section { max-height:0; }
 .bottom-tabs {
@@ -294,7 +297,7 @@
 .playlist-container { max-height:380px; overflow-y:auto; }
 .loading { text-align:center; color:var(--text-secondary,#6c757d); padding:20px; font-size:12px; }
 
-/* 歌单项 */
+/* ===== 歌单项 ===== */
 .song-item {
     display:flex; align-items:center; justify-content:space-between;
     padding:8px 12px; border-radius:6px; cursor:pointer;
@@ -307,7 +310,7 @@
 .song-item-title { font-weight:500; margin-bottom:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:12px; }
 .song-item-artist { color:var(--text-secondary,#6c757d); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:11px; }
 
-/* 搜索 */
+/* ===== 搜索 ===== */
 .music-player .search-container { display:flex; flex-direction:column; gap:6px; }
 .music-player .search-header { padding:0; margin-bottom:6px; position:sticky; top:0; background:inherit; z-index:5; margin-top:8px; }
 .music-player .search-input-group {
@@ -380,7 +383,7 @@
     transition:width .3s ease; border-radius:2px;
 }
 
-/* 响应式 */
+/* ===== 响应式 ===== */
 @media (max-width:480px) {
     .music-player { width:auto; left:var(--container-padding-xs,16px); right:var(--container-padding-xs,16px); bottom:20px; max-height:80vh; }
     .playlist-header { flex-direction:row; gap:10px; padding:10px 12px 8px; }
@@ -406,7 +409,7 @@
     #search-toggle-btn .back-icon { width:16px; height:16px; }
 }
 
-/* 深色模式 */
+/* ===== 深色模式 ===== */
 .dark-mode .music-player {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
