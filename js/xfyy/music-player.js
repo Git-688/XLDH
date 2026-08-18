@@ -1,4 +1,4 @@
-/* music-player.js - 精简版（仅保留网易云、QQ、本地音乐） */
+/* music-player.js - 精简版（仅保留网易云、QQ、本地音乐，已修复内存泄漏与用户手势超时） */
 let currentOpenCustomSelect = null;
 let customSelectInstances = new Map();
 
@@ -170,6 +170,7 @@ class CustomSelect {
         if (valueSpan) valueSpan.textContent = this.getSelectedText();
     }
 
+    // ===== 修复：完善 destroy，从 Map 中删除 =====
     destroy() {
         this.closeDropdown();
         if (this.container.parentNode) this.container.remove();
@@ -198,12 +199,12 @@ function initCustomSelects() {
 class MusicPlayer {
     constructor() {
         if (window.Starlink?.musicPlayer) return window.Starlink.musicPlayer;
-        
+
         this.audio = document.getElementById('audio-element');
         this.cacheManager = new CacheManager();
         this.lyricParser = new LyricParser();
         this.pluginManager = new PluginManager(this.cacheManager);
-        
+
         this.initializeProperties();
         this.initializeElements();
         this.bindEvents();
@@ -211,7 +212,9 @@ class MusicPlayer {
 
         this.userGestureResolved = false;
         this.userGesturePromise = null;
-        
+        // ===== 新增：用户手势超时定时器 =====
+        this._userGestureTimeout = null;
+
         if (!window.Starlink) window.Starlink = {};
         if (!window.Starlink.musicPlayer) {
             window.Starlink.musicPlayer = this;
@@ -219,12 +222,24 @@ class MusicPlayer {
         window.musicPlayer = window.Starlink.musicPlayer;
     }
 
+    // ===== 修复：waitForUserGesture 添加 10 秒超时 =====
     waitForUserGesture() {
         if (this.userGestureResolved) return Promise.resolve();
         if (this.userGesturePromise) return this.userGesturePromise;
+
         this.userGesturePromise = new Promise((resolve) => {
+            // 10 秒超时自动 resolve
+            this._userGestureTimeout = setTimeout(() => {
+                this.userGestureResolved = true;
+                document.removeEventListener('click', handler);
+                document.removeEventListener('touchstart', handler);
+                document.removeEventListener('keydown', handler);
+                resolve();
+            }, 10000);
+
             const handler = () => {
                 this.userGestureResolved = true;
+                clearTimeout(this._userGestureTimeout);
                 document.removeEventListener('click', handler);
                 document.removeEventListener('touchstart', handler);
                 document.removeEventListener('keydown', handler);
@@ -256,13 +271,16 @@ class MusicPlayer {
         this.consecutiveErrors = 0;
         this.maxConsecutiveErrors = 3;
         this.maxErrorShown = false;
-        
+
         this.dragPercent = 0;
         this.clickPending = false;
         this.dragRAF = null;
         this.updateAnimationFrame = null;
         this.lastTimeUpdate = 0;
         this.scrollAnimationId = null;
+
+        // ===== 新增：跟踪 CustomSelect 实例，便于清理 =====
+        this._customSelectInstances = new Map();
 
         this.restorePlaylistState();
     }
@@ -310,6 +328,7 @@ class MusicPlayer {
         } catch(e) {}
     }
 
+    // ===== 修复：restorePlaybackProgress 监听 loadedmetadata =====
     restorePlaybackProgress() {
         try {
             const progress = localStorage.getItem('music_player_progress');
@@ -319,8 +338,18 @@ class MusicPlayer {
                 const checkAndRestore = () => {
                     const song = this.currentPlaylist[this.currentIndex];
                     if (song && song.id === data.songId) {
-                        this.audio.currentTime = data.currentTime;
-                        if (data.isPlaying) this.play();
+                        const setTime = () => {
+                            this.audio.currentTime = data.currentTime;
+                            if (data.isPlaying) this.play();
+                            this.audio.removeEventListener('loadedmetadata', setTime);
+                        };
+                        this.audio.addEventListener('loadedmetadata', setTime);
+                        // 如果已经加载完成，直接设置
+                        if (this.audio.readyState >= 1) {
+                            this.audio.removeEventListener('loadedmetadata', setTime);
+                            this.audio.currentTime = data.currentTime;
+                            if (data.isPlaying) this.play();
+                        }
                     }
                 };
                 setTimeout(checkAndRestore, 500);
@@ -977,12 +1006,12 @@ class MusicPlayer {
             if (!downloadUrl) throw new Error('无法获取有效的下载地址');
             window.toast?.show(`开始下载: ${song.title}`, 'info');
             progress = this.createDownloadProgress();
-            
+
             const apiBase = Utils.getApiBase();
             const proxyUrl = `${apiBase}/music-proxy?url=${encodeURIComponent(downloadUrl)}`;
             const response = await fetch(proxyUrl);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            
+
             const contentLength = response.headers.get('content-length');
             const totalBytes = contentLength ? parseInt(contentLength, 10) : 0;
             const reader = response.body.getReader();
@@ -990,7 +1019,7 @@ class MusicPlayer {
             let loadedBytes = 0;
             const isIndeterminate = totalBytes === 0;
             if (isIndeterminate) this.setIndeterminateProgress(progress);
-            
+
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
@@ -1001,7 +1030,7 @@ class MusicPlayer {
                     this.updateDownloadProgress(progress, percent);
                 }
             }
-            
+
             const blob = new Blob(chunks);
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1235,7 +1264,7 @@ class MusicPlayer {
             this.elements['cover-img'].onerror = () => { this.elements['cover-img'].src = defaultLogo; };
         }
         this.loadApiPlaylist(this.currentApi);
-        
+
         setTimeout(() => {
             if (document.querySelector('.music-player.show')) {
                 if (typeof initCustomSelects === 'function') initCustomSelects();
@@ -1243,7 +1272,7 @@ class MusicPlayer {
                 setTimeout(initCustomSelects, 300);
             }
         }, 500);
-        
+
         setInterval(() => this.cacheManager.cleanup(), 30 * 60 * 1000);
         this.hasInitialized = true;
         this.restorePlaybackProgress();
@@ -1263,6 +1292,7 @@ class MusicPlayer {
         if (this.isVolumeSliderVisible) this.hideVolumeSlider();
     }
 
+    // ===== 修复：cleanup 中销毁所有 CustomSelect 实例 =====
     cleanup() {
         if (this.updateAnimationFrame) cancelAnimationFrame(this.updateAnimationFrame);
         if (this.dragRAF) cancelAnimationFrame(this.dragRAF);
@@ -1270,7 +1300,19 @@ class MusicPlayer {
         if (this.boundResizeListener) window.removeEventListener('resize', this.boundResizeListener);
         if (this.boundScrollListener) window.removeEventListener('scroll', this.boundScrollListener, true);
         if (this.boundHandleOutsideClick) document.removeEventListener('click', this.boundHandleOutsideClick);
-        
+        if (this._userGestureTimeout) {
+            clearTimeout(this._userGestureTimeout);
+            this._userGestureTimeout = null;
+        }
+
+        // ===== 新增：销毁所有 CustomSelect 实例 =====
+        if (customSelectInstances) {
+            customSelectInstances.forEach((instance) => {
+                try { instance.destroy(); } catch(e) {}
+            });
+            customSelectInstances.clear();
+        }
+
         if (this.audio) {
             this.audio.pause();
             this.audio.src = '';
@@ -1279,15 +1321,10 @@ class MusicPlayer {
             this.audio.parentNode?.replaceChild(newAudio, this.audio);
             this.audio = newAudio;
         }
-        
+
         if (this.cacheManager) this.cacheManager.cleanup();
         this.hasNotifiedLocal = false;
-        
-        if (customSelectInstances) {
-            customSelectInstances.forEach((instance) => instance.destroy());
-            customSelectInstances.clear();
-        }
-        
+
         this.clearPlaylistState();
         try { localStorage.removeItem('music_player_progress'); } catch(e) {}
         if (window.Starlink?.musicPlayer === this) window.Starlink.musicPlayer = null;
