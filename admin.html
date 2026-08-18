@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>星聚导航后台管理</title>
-    <!-- ===== 修复：收紧 CSP，移除 'unsafe-eval'，保留 'unsafe-inline' 用于内联样式/脚本 ===== -->
+    <!-- ===== 修复1：收紧 CSP，移除 'unsafe-eval'，保留 'unsafe-inline' 用于内联样式/脚本 ===== -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai 'unsafe-inline' https://cdn.jsdelivr.net;
@@ -52,7 +52,7 @@
         .login-header p { font-size: 11px; color: #64748b; }
         .login-form .input-group { margin-bottom: 16px; }
         .login-form label { display: block; font-size: 11px; font-weight: 500; color: #475569; margin-bottom: 6px; }
-        /* ===== 修复：密码框添加 maxlength ===== */
+        /* ===== 修复2：密码框添加 maxlength ===== */
         .login-form input { width: 100%; padding: 8px 12px; font-size: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; transition: all 0.2s; outline: none; }
         .login-form input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
         .captcha-row { display: flex; gap: 8px; align-items: center; }
@@ -222,6 +222,39 @@
         .batch-toolbar .batch-count { font-size: 12px; color: #3b82f6; font-weight: 600; flex-shrink: 0; }
         .batch-toolbar button { flex-shrink: 0; padding: 4px 12px; font-size: 11px; border-radius: 6px; }
         .batch-toolbar button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ===== 新增：登录密码框可见性切换按钮样式 ===== */
+        .password-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-input-wrapper input {
+            padding-right: 36px;
+        }
+        .password-toggle-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+            border-radius: 4px;
+            transition: color 0.2s;
+        }
+        .password-toggle-btn:hover {
+            color: #475569;
+        }
+        .dark-mode .password-toggle-btn {
+            color: #64748b;
+        }
+        .dark-mode .password-toggle-btn:hover {
+            color: #94a3b8;
+        }
     </style>
 </head>
 <body>
@@ -245,8 +278,13 @@
                 <div class="login-form">
                     <div class="input-group">
                         <label>管理Token</label>
-                        <!-- ===== 修复：添加 maxlength ===== -->
-                        <input type="password" id="tokenInput" placeholder="请输入管理Token" autocomplete="off" maxlength="128">
+                        <!-- ===== 修复2：密码框添加 maxlength ===== -->
+                        <div class="password-input-wrapper">
+                            <input type="password" id="tokenInput" placeholder="请输入管理Token" autocomplete="off" maxlength="128">
+                            <button type="button" class="password-toggle-btn" id="tokenToggleBtn" aria-label="显示/隐藏密码">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="input-group" id="captchaGroup" style="display: none;">
                         <label>验证码</label>
@@ -323,6 +361,7 @@
 
             <div id="announcementTab" class="tab-panel hidden">
                 <div class="announcement-form-container">
+                    <!-- ===== 修复2：添加 maxlength ===== -->
                     <div class="form-row"><label>公告标题</label><input type="text" id="annTitle" placeholder="请输入公告标题" maxlength="200"></div>
                     <div class="form-row"><label>重要内容（醒目提示）</label><textarea id="annImportant" rows="2" placeholder="例如：系统升级通知、重要变更等..." maxlength="500"></textarea></div>
                     <div class="form-row"><label>详细内容</label><textarea id="annContent" rows="4" placeholder="详细公告内容..." maxlength="10000"></textarea></div>
@@ -386,7 +425,7 @@
         </div>
     </div>
 
-    <!-- ===== 修复：为 jQuery 和 FontAwesome 添加 SRI ===== -->
+    <!-- ===== 修复3：为 jQuery 和 FontAwesome 添加 SRI ===== -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"
             integrity="sha384-4JgM1jUeM5eDxG2kXRw6iP1Cw4M6uKyj7JZx2K5Hmvh8Kc14D0tJtVj3r+gMnGVX"
             crossorigin="anonymous">
@@ -397,16 +436,13 @@
     </script>
 
     <script>
-        /* admin.js - 完整版（批量操作优化 + 修复内存泄漏 + 重试上限 + 错误区分 + UI同步） */
+        /* admin.js - 完整版（包含密码可见性切换） */
         (function() {
             'use strict';
 
-            // ===== 修改：使用动态获取的 API_BASE =====
             const API_BASE = window.ADMIN_API_BASE || 'https://api.xjdh688.ccwu.cc';
             const TOKEN_EXPIRE_HOURS = 1;
             const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
-
-            // ===== 新增：API 重试配置 =====
             const API_MAX_RETRIES = 3;
 
             let token = '';
@@ -428,6 +464,25 @@
 
             let partnersData = [];
             let partnerIntroText = '';
+
+            // ===== 修复4：密码可见性切换 =====
+            function initPasswordToggle() {
+                const toggleBtn = document.getElementById('tokenToggleBtn');
+                const tokenInput = document.getElementById('tokenInput');
+                if (!toggleBtn || !tokenInput) return;
+
+                toggleBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isPassword = tokenInput.type === 'password';
+                    tokenInput.type = isPassword ? 'text' : 'password';
+                    const icon = this.querySelector('i');
+                    if (icon) {
+                        icon.className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+                    }
+                    tokenInput.focus();
+                });
+            }
 
             function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
             function showToast(msg, type = 'success') { const toast = document.getElementById('toast'); if (!toast) return; toast.textContent = msg; toast.className = `toast ${type} show`; clearTimeout(toast._timeout); toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300); }
@@ -461,7 +516,6 @@
                 if (feedbackEl) feedbackEl.textContent = feedbackData ? feedbackData.length : 0;
             }
 
-            // ===== 修复：apiFetch 添加重试上限 =====
             async function apiFetch(endpoint, opt = {}, retryCount = 0) {
                 const headers = { 'Content-Type': 'application/json', ...opt.headers };
                 if (token) headers.Authorization = `Bearer ${token}`;
@@ -725,7 +779,6 @@
                 finally { if (btn) { btn.disabled = false; btn.textContent = '获取信息'; } }
             }
 
-            // ===== 修复：loadAllData 错误区分 =====
             async function loadAllData() {
                 try {
                     const [catData, subData, siteData, subDataList, feedbackDataList] = await Promise.all([
@@ -1881,7 +1934,6 @@
                 } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
             }
 
-            // ===== CustomSelect 类 =====
             class CustomSelect {
                 constructor(selectElement, onChange) {
                     this.select = selectElement;
@@ -2412,6 +2464,9 @@
             }
 
             injectGlobalStyles();
+
+            // ===== 初始化密码可见性切换 =====
+            initPasswordToggle();
 
             loginLocked = localStorage.getItem('login_locked') === 'true';
             updateLockMessage(loginLocked);
