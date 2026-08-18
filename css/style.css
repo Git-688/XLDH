@@ -1,5 +1,6 @@
 /* style.css - 精简版（含主题切换过渡、移除重复变量、响应式统一） */
 
+/* ===== 基础变量（仅在 style.css 中定义，避免与内联重复） ===== */
 :root {
     --primary-color: #4361ee;
     --secondary-color: #3a0ca3;
@@ -43,6 +44,7 @@
     --acrylic-light-bg: rgba(255, 255, 255, 0.8);
     --acrylic-light-blur: blur(10px) saturate(110%);
 
+    /* 主题切换过渡变量 */
     --theme-transition-duration: 0.35s;
     --theme-transition: background-color var(--theme-transition-duration) ease,
                          color var(--theme-transition-duration) ease,
@@ -51,6 +53,7 @@
                          background var(--theme-transition-duration) ease;
 }
 
+/* ===== 暗色模式 ===== */
 .dark-mode {
     --text-primary: #f8f9fa;
     --text-secondary: #adb5bd;
@@ -70,6 +73,7 @@
     --acrylic-light-bg: rgba(40, 40, 40, 0.7);
 }
 
+/* ===== 全局基础 ===== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; font-size: 16px; -webkit-overflow-scrolling: touch; }
 
@@ -83,9 +87,12 @@ body {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+
+    /* 主题切换过渡 */
     transition: var(--theme-transition);
 }
 
+/* ===== 所有使用 CSS 变量的主要元素也添加过渡 ===== */
 .navbar,
 .sidebar,
 .main-content,
@@ -121,6 +128,7 @@ body {
 
 h1, h2, h3, h4, h5, h6 { font-weight: 600; line-height: 1.3; margin-bottom: 0.5em; }
 p { margin-bottom: 1em; }
+
 .stat-number, .view-count, .time-text {
     font-family: 'SF Mono', 'Roboto Mono', Consolas, 'Courier New', monospace;
     font-weight: 600;
@@ -930,7 +938,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
 }
 .icon-container img { width: 100%; height: 100%; object-fit: contain; object-position: center; }
 
-/* ===== 页脚样式（含底部间距） ===== */
+/* ========== 页脚样式（底部间距已加大） ========== */
 .footer {
     width: 100%;
     padding: 0;
@@ -942,7 +950,8 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 var(--container-padding-xs, 16px);
-    padding-bottom: 20px;          /* 底部留白，避免紧贴屏幕底部 */
+    /* ===== 底部内边距：移动端默认 30px，桌面端更大 ===== */
+    padding-bottom: 30px;
     box-sizing: border-box;
 }
 
@@ -950,31 +959,76 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     .footer-compact-container {
         padding-left: var(--container-padding-sm, 20px);
         padding-right: var(--container-padding-sm, 20px);
-        padding-bottom: 20px;
+        padding-bottom: 34px;
     }
 }
 @media (min-width: 768px) {
     .footer-compact-container {
         padding-left: var(--container-padding-md, 24px);
         padding-right: var(--container-padding-md, 24px);
-        padding-bottom: 24px;
+        padding-bottom: 40px;
     }
 }
 @media (min-width: 992px) {
     .footer-compact-container {
         padding-left: var(--container-padding-lg, 28px);
         padding-right: var(--container-padding-lg, 28px);
-        padding-bottom: 28px;
+        padding-bottom: 48px;
     }
 }
 @media (min-width: 1200px) {
     .footer-compact-container {
         padding-left: var(--container-padding-xl, 32px);
         padding-right: var(--container-padding-xl, 32px);
-        padding-bottom: 32px;
+        padding-bottom: 56px;
     }
 }
 
+/* ===== 移动端额外底部安全区适配（全面屏手势条） ===== */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .footer-compact-container {
+        padding-bottom: calc(30px + env(safe-area-inset-bottom));
+    }
+    @media (min-width: 768px) {
+        .footer-compact-container {
+            padding-bottom: calc(40px + env(safe-area-inset-bottom));
+        }
+    }
+    @media (min-width: 992px) {
+        .footer-compact-container {
+            padding-bottom: calc(48px + env(safe-area-inset-bottom));
+        }
+    }
+    @media (min-width: 1200px) {
+        .footer-compact-container {
+            padding-bottom: calc(56px + env(safe-area-inset-bottom));
+        }
+    }
+}
+
+/* 小屏手机专用（底部工具栏占用空间大） */
+@media (max-width: 767px) {
+    .footer-compact-container {
+        padding-bottom: 40px;
+    }
+}
+@media (max-width: 480px) {
+    .footer-compact-container {
+        padding-bottom: 36px;
+    }
+}
+@media (max-width: 375px) {
+    .footer-compact-container {
+        padding-bottom: 32px;
+    }
+}
+@media (max-width: 320px) {
+    .footer-compact-container {
+        padding-bottom: 28px;
+    }
+}
+
+/* ===== 免责声明卡片和统计卡片 ===== */
 .footer-disclaimer-card {
     background: var(--bg-card, #ffffff);
     border: 1px solid var(--border-color, #e9ecef);
@@ -1115,7 +1169,7 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
 #todayCount { color: #4cd964; }
 #totalCount { color: var(--primary-color, #4361ee); }
 
-/* ===== 页脚响应式调整 ===== */
+/* ===== 页脚响应式微调 ===== */
 @media (max-width: 767px) {
     .stat-number { font-size: 13px; }
     .stat-card { padding: 8px; }
@@ -1131,7 +1185,9 @@ img:not(.lazy-icon):not(.js-img-fallback) { max-width: 100%; height: auto; }
     .stat-number { font-size: 12px; }
     .stat-name { font-size: 9px; }
 }
-@media (min-width: 1025px) { .footer-compact-container { padding-top: 0; } }
+@media (min-width: 1025px) {
+    .footer-compact-container { padding-top: 0; }
+}
 
 .floating-btn { width: 40px; height: 40px; font-size: 14px; }
 
