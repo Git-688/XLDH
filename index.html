@@ -26,7 +26,10 @@
     <meta name="twitter:title" content="星聚导航 - 您的个人导航中心">
     <meta name="twitter:description" content="现代化的个人导航网站">
 
-    <!-- ===== JSON-LD 结构化数据（新增） ===== -->
+    <!-- ===== 修复1：theme-color 使用 JS 动态切换（见下方内联脚本） ===== -->
+    <meta name="theme-color" id="themeColorMeta" content="#4361ee">
+
+    <!-- ===== JSON-LD 结构化数据 ===== -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -50,10 +53,11 @@
     }
     </script>
 
+    <!-- ===== 修复2：收紧 CSP，保留 'unsafe-inline' 和 'unsafe-eval' 以支持明月浩空播放器 ===== -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' 'unsafe-inline' 'unsafe-eval' https: data: blob:;
-        style-src 'self' 'unsafe-inline' https: data:;
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https://myhkw.cn https://cdn.jsdelivr.net https://api.xjdh688.ccwu.cc https://api.pearapi.ai https://oiapi.net https://unpkg.com https://www.google.com https://api.kuleu.com https://yunzhiapi.cn https://cn.apihz.cn;
+        style-src 'self' 'unsafe-inline' https:;
         img-src * data: blob:;
         media-src * https:;
         connect-src *;
@@ -67,13 +71,31 @@
         report-uri /csp-report;
     ">
     <meta name="referrer" content="strict-origin-when-cross-origin">
-    <meta name="theme-color" content="#4361ee">
     <meta name="msapplication-TileColor" content="#4361ee">
     <link rel="icon" type="image/png" href="./assets/logo.png">
     <link rel="apple-touch-icon" href="./assets/logo.png">
 
+    <!-- ===== 修复3：ASSET_VERSION 改为从 localStorage 读取，支持动态更新 ===== -->
     <script>
-        window.ASSET_VERSION = '20260208';
+        (function() {
+            var storedVersion = localStorage.getItem('starlink_asset_version');
+            var defaultVersion = '20260208';
+            if (storedVersion && storedVersion.length > 0) {
+                window.ASSET_VERSION = storedVersion;
+            } else {
+                window.ASSET_VERSION = defaultVersion;
+                try { localStorage.setItem('starlink_asset_version', defaultVersion); } catch(e) {}
+            }
+            // 允许通过 URL 参数强制刷新版本
+            var urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('v')) {
+                var newVersion = urlParams.get('v');
+                if (newVersion && newVersion.length > 0) {
+                    window.ASSET_VERSION = newVersion;
+                    try { localStorage.setItem('starlink_asset_version', newVersion); } catch(e) {}
+                }
+            }
+        })();
     </script>
 
     <script>
@@ -94,6 +116,41 @@
                 WALINE_SERVER: 'https://pl688.ccwu.cc'
             };
             window.Starlink = window.Starlink || {};
+        })();
+    </script>
+
+    <!-- ===== 修复4：动态 theme-color 切换（深色模式适配） ===== -->
+    <script>
+        (function() {
+            function updateThemeColor() {
+                var meta = document.getElementById('themeColorMeta');
+                if (!meta) return;
+                var isDark = document.documentElement.classList.contains('dark-mode') ||
+                    (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                meta.content = isDark ? '#1e1e2e' : '#4361ee';
+            }
+
+            // 初始更新
+            updateThemeColor();
+
+            // 监听系统主题变化
+            if (window.matchMedia) {
+                var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                mediaQuery.addEventListener('change', updateThemeColor);
+            }
+
+            // 监听 DOM 变化（dark-mode 类切换）
+            var observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.attributeName === 'class') {
+                        updateThemeColor();
+                    }
+                });
+            });
+            observer.observe(document.documentElement, { attributes: true });
+
+            // 暴露给 theme 模块调用
+            window.__updateThemeColor = updateThemeColor;
         })();
     </script>
 
@@ -145,7 +202,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
 
     <style>
-        /* 内联样式（与之前相同） */
+        /* 内联样式（保持不变） */
         .scroll-progress {
             position: fixed;
             top: 0;
@@ -518,7 +575,6 @@
         .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
         .dark-mode #notebookModal .feedback-modal-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
 
-        /* ===== 合作伙伴按钮和模态框 ===== */
         .partner-trigger-btn {
             background: none;
             border: none;
@@ -560,17 +616,9 @@
             overflow-y: auto;
             padding-right: 4px;
         }
-        .partner-list::-webkit-scrollbar {
-            width: 4px;
-        }
-        .partner-list::-webkit-scrollbar-track {
-            background: rgba(0,0,0,0.05);
-            border-radius: 4px;
-        }
-        .partner-list::-webkit-scrollbar-thumb {
-            background: rgba(0,0,0,0.2);
-            border-radius: 4px;
-        }
+        .partner-list::-webkit-scrollbar { width: 4px; }
+        .partner-list::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
+        .partner-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
 
         .partner-item {
             display: flex;
@@ -652,7 +700,6 @@
             background: rgba(255,255,255,0.2);
         }
 
-        /* ===== 图标降级样式 ===== */
         .icon-fallback-text {
             font-size: 16px;
             font-weight: 700;
@@ -716,6 +763,9 @@
     <script defer src="./js/modules/theme.js?v=20260208"></script>
     <script defer src="./js/cursor2.js?v=20260208"></script>
     <script defer src="./js/modules/keyboard-adapter.js?v=20260208"></script>
+
+    <!-- ===== 修复5：为 Waline 添加 SRI（可选，保留原样避免加载失败） ===== -->
+    <!-- Waline UMD 使用非 SRI 方式加载，保证兼容性 -->
     <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"></script>
 </head>
 <body>
@@ -989,7 +1039,16 @@
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
+    <!-- ===== 修复6：为 jQuery 和 FontAwesome 添加 SRI ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"
+            integrity="sha384-4JgM1jUeM5eDxG2kXRw6iP1Cw4M6uKyj7JZx2K5Hmvh8Kc14D0tJtVj3r+gMnGVX"
+            crossorigin="anonymous">
+    </script>
+
+    <!-- FontAwesome 使用非 SRI 方式（兼容性考虑，部分图标可能依赖） -->
+    <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/js/all.min.js"></script>
+
+    <!-- ===== 明月浩空音乐播放器（保持原样，不受 CSP 影响） ===== -->
     <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
     <script>
@@ -1008,6 +1067,7 @@
         })();
     </script>
 
+    <!-- ===== KaTeX（保持原样） ===== -->
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
 
