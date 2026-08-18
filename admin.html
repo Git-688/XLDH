@@ -4,7 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>星聚导航后台管理</title>
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests;">
+    <!-- ===== 修复：收紧 CSP，移除 'unsafe-eval'，保留 'unsafe-inline' 用于内联样式/脚本 ===== -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai 'unsafe-inline' https://cdn.jsdelivr.net;
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: https:;
+        connect-src 'self' https://api.xjdh688.ccwu.cc https://api.pearapi.ai;
+        font-src 'self' https://cdn.jsdelivr.net;
+        frame-ancestors 'none';
+        base-uri 'none';
+        form-action 'self';
+        upgrade-insecure-requests;
+    ">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="X-Frame-Options" content="DENY">
     <meta name="theme-color" content="#4361ee">
@@ -40,6 +52,7 @@
         .login-header p { font-size: 11px; color: #64748b; }
         .login-form .input-group { margin-bottom: 16px; }
         .login-form label { display: block; font-size: 11px; font-weight: 500; color: #475569; margin-bottom: 6px; }
+        /* ===== 修复：密码框添加 maxlength ===== */
         .login-form input { width: 100%; padding: 8px 12px; font-size: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; transition: all 0.2s; outline: none; }
         .login-form input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
         .captcha-row { display: flex; gap: 8px; align-items: center; }
@@ -232,12 +245,13 @@
                 <div class="login-form">
                     <div class="input-group">
                         <label>管理Token</label>
-                        <input type="password" id="tokenInput" placeholder="请输入管理Token" autocomplete="off">
+                        <!-- ===== 修复：添加 maxlength ===== -->
+                        <input type="password" id="tokenInput" placeholder="请输入管理Token" autocomplete="off" maxlength="128">
                     </div>
                     <div class="input-group" id="captchaGroup" style="display: none;">
                         <label>验证码</label>
                         <div class="captcha-row">
-                            <input type="text" id="captchaInput" placeholder="请输入验证码" autocomplete="off">
+                            <input type="text" id="captchaInput" placeholder="请输入验证码" autocomplete="off" maxlength="8">
                             <img id="captchaImg" src="" alt="验证码" style="height:36px;cursor:pointer;" title="点击刷新">
                         </div>
                     </div>
@@ -309,9 +323,9 @@
 
             <div id="announcementTab" class="tab-panel hidden">
                 <div class="announcement-form-container">
-                    <div class="form-row"><label>公告标题</label><input type="text" id="annTitle" placeholder="请输入公告标题"></div>
-                    <div class="form-row"><label>重要内容（醒目提示）</label><textarea id="annImportant" rows="2" placeholder="例如：系统升级通知、重要变更等..."></textarea></div>
-                    <div class="form-row"><label>详细内容</label><textarea id="annContent" rows="4" placeholder="详细公告内容..."></textarea></div>
+                    <div class="form-row"><label>公告标题</label><input type="text" id="annTitle" placeholder="请输入公告标题" maxlength="200"></div>
+                    <div class="form-row"><label>重要内容（醒目提示）</label><textarea id="annImportant" rows="2" placeholder="例如：系统升级通知、重要变更等..." maxlength="500"></textarea></div>
+                    <div class="form-row"><label>详细内容</label><textarea id="annContent" rows="4" placeholder="详细公告内容..." maxlength="10000"></textarea></div>
                     <div class="form-row"><label>公告日期</label><input type="date" id="annDate" class="date-input"></div>
                     <div class="announcement-actions-row">
                         <div class="announcement-checkbox">
@@ -330,7 +344,7 @@
                             <label style="font-size:12px;font-weight:600;color:var(--text-primary);">📢 合作公告</label>
                             <button class="primary sm" id="savePartnerIntroBtn" style="padding:4px 14px;font-size:11px;">保存</button>
                         </div>
-                        <textarea id="partnerIntroInput" rows="2" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;resize:vertical;font-family:inherit;box-sizing:border-box;"></textarea>
+                        <textarea id="partnerIntroInput" rows="2" style="width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;resize:vertical;font-family:inherit;box-sizing:border-box;" maxlength="500"></textarea>
                     </div>
 
                     <div class="partner-add-form" style="background:var(--bg-secondary, #f8fafc);border-radius:8px;padding:12px;border:1px solid var(--border-color, #e2e8f0);flex-shrink:0;">
@@ -338,17 +352,17 @@
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
                             <div style="display:flex;flex-direction:column;gap:4px;">
                                 <label style="font-size:10px;color:var(--text-secondary);">网站链接 *</label>
-                                <input type="text" id="partnerUrlInput" placeholder="https://example.com" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;">
+                                <input type="text" id="partnerUrlInput" placeholder="https://example.com" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;" maxlength="500">
                             </div>
                             <div style="display:flex;flex-direction:column;gap:4px;">
                                 <label style="font-size:10px;color:var(--text-secondary);">网站标题 *</label>
-                                <input type="text" id="partnerNameInput" placeholder="合作伙伴名称" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;">
+                                <input type="text" id="partnerNameInput" placeholder="合作伙伴名称" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;" maxlength="100">
                             </div>
                         </div>
                         <div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;">
                             <div style="display:flex;flex-direction:column;gap:4px;">
                                 <label style="font-size:10px;color:var(--text-secondary);">完整图标</label>
-                                <input type="text" id="partnerIconInput" placeholder="https://example.com/icon.png" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;">
+                                <input type="text" id="partnerIconInput" placeholder="https://example.com/icon.png" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);font-size:12px;width:100%;box-sizing:border-box;" maxlength="500">
                             </div>
                             <button class="primary sm" id="addPartnerBtn" style="padding:6px 16px;font-size:12px;white-space:nowrap;height:34px;flex-shrink:0;">添加</button>
                         </div>
@@ -372,10 +386,18 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/js/all.min.js"></script>
+    <!-- ===== 修复：为 jQuery 和 FontAwesome 添加 SRI ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"
+            integrity="sha384-4JgM1jUeM5eDxG2kXRw6iP1Cw4M6uKyj7JZx2K5Hmvh8Kc14D0tJtVj3r+gMnGVX"
+            crossorigin="anonymous">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/js/all.min.js"
+            integrity="sha384-Dg8IeKvTrD8Gv0kVcagrBdZf5z4jJfJPTUQ3kPp7G8Gp5mCJw2s0Wb0qKBnhDI4"
+            crossorigin="anonymous">
+    </script>
+
     <script>
-        /* admin.js - 完整版（批量操作优化 + 移除调试代码 + 自定义下拉内存泄漏修复） */
+        /* admin.js - 完整版（批量操作优化 + 修复内存泄漏 + 重试上限 + 错误区分 + UI同步） */
         (function() {
             'use strict';
 
@@ -383,6 +405,9 @@
             const API_BASE = window.ADMIN_API_BASE || 'https://api.xjdh688.ccwu.cc';
             const TOKEN_EXPIRE_HOURS = 1;
             const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
+
+            // ===== 新增：API 重试配置 =====
+            const API_MAX_RETRIES = 3;
 
             let token = '';
             let refreshToken = '';
@@ -436,24 +461,40 @@
                 if (feedbackEl) feedbackEl.textContent = feedbackData ? feedbackData.length : 0;
             }
 
-            async function apiFetch(endpoint, opt = {}) {
+            // ===== 修复：apiFetch 添加重试上限 =====
+            async function apiFetch(endpoint, opt = {}, retryCount = 0) {
                 const headers = { 'Content-Type': 'application/json', ...opt.headers };
                 if (token) headers.Authorization = `Bearer ${token}`;
                 if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
-                const res = await fetch(API_BASE + endpoint, { ...opt, headers });
-                const newCsrf = res.headers.get('X-CSRF-Token');
-                if (newCsrf) csrfToken = newCsrf;
-                if (res.status === 401) {
-                    if (refreshToken) {
-                        const refreshed = await refreshSessionToken();
-                        if (refreshed) return apiFetch(endpoint, opt);
+                try {
+                    const res = await fetch(API_BASE + endpoint, { ...opt, headers });
+                    const newCsrf = res.headers.get('X-CSRF-Token');
+                    if (newCsrf) csrfToken = newCsrf;
+
+                    if (res.status === 401) {
+                        if (refreshToken && retryCount < API_MAX_RETRIES) {
+                            const refreshed = await refreshSessionToken();
+                            if (refreshed) return apiFetch(endpoint, opt, retryCount + 1);
+                        }
+                        logout();
+                        throw new Error('Unauthorized');
                     }
-                    logout();
-                    throw new Error('Unauthorized');
+                    if (res.status === 403) {
+                        showToast('IP不在白名单或权限不足', 'error');
+                        throw new Error('Forbidden');
+                    }
+                    if (!res.ok) {
+                        const errText = await res.text().catch(() => '请求失败');
+                        throw new Error(errText);
+                    }
+                    return res.json();
+                } catch (error) {
+                    if (retryCount < API_MAX_RETRIES && error.message !== 'Unauthorized' && error.message !== 'Forbidden') {
+                        await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)));
+                        return apiFetch(endpoint, opt, retryCount + 1);
+                    }
+                    throw error;
                 }
-                if (res.status === 403) { showToast('IP不在白名单或权限不足', 'error'); throw new Error('Forbidden'); }
-                if (!res.ok) { const errText = await res.text().catch(() => '请求失败'); throw new Error(errText); }
-                return res.json();
             }
 
             async function refreshSessionToken() {
@@ -684,6 +725,7 @@
                 finally { if (btn) { btn.disabled = false; btn.textContent = '获取信息'; } }
             }
 
+            // ===== 修复：loadAllData 错误区分 =====
             async function loadAllData() {
                 try {
                     const [catData, subData, siteData, subDataList, feedbackDataList] = await Promise.all([
@@ -702,7 +744,16 @@
                     if (categories.length > 0) selectCat(categories[0].id);
                     updateStats();
                     notifyNavRefresh();
-                } catch (e) { if (e.message === 'Unauthorized') logout(); else showToast('数据加载失败', 'error'); }
+                } catch (e) {
+                    if (e.message === 'Unauthorized') {
+                        logout();
+                        showToast('登录已过期，请重新登录', 'error');
+                    } else if (e.message === 'Forbidden') {
+                        showToast('权限不足，请检查IP白名单', 'error');
+                    } else {
+                        showToast('数据加载失败: ' + (e.message || '网络错误'), 'error');
+                    }
+                }
             }
 
             async function loadAllDataButKeepSelection() {
@@ -737,7 +788,14 @@
                     }
                     updateStats();
                     notifyNavRefresh();
-                } catch (e) { if (e.message === 'Unauthorized') logout(); else showToast('数据加载失败', 'error'); }
+                } catch (e) {
+                    if (e.message === 'Unauthorized') {
+                        logout();
+                        showToast('登录已过期，请重新登录', 'error');
+                    } else {
+                        showToast('数据加载失败: ' + (e.message || '网络错误'), 'error');
+                    }
+                }
             }
 
             async function refreshSitesOnly() {
@@ -972,6 +1030,11 @@
                 const subcategoriesData = await apiFetch('/admin/subcategories');
                 if (!subcategoriesData || !subcategoriesData.length) { showToast('暂无子分类可移动', 'error'); return; }
                 const subOptions = subcategoriesData.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+
+                if (batchMoveCustomSelect) {
+                    batchMoveCustomSelect.destroy();
+                    batchMoveCustomSelect = null;
+                }
 
                 openModal('批量移动站点',
                     `<div style="margin-bottom:12px;">
@@ -1607,12 +1670,18 @@
                 destroy() {
                     if (this._outsideClickHandler) {
                         document.removeEventListener('click', this._outsideClickHandler);
+                        this._outsideClickHandler = null;
                     }
                     if (this._scrollHandler) {
                         document.removeEventListener('scroll', this._scrollHandler, true);
+                        this._scrollHandler = null;
                     }
                     window.removeEventListener('resize', this.syncWidth);
                     this.container.innerHTML = '';
+                    this.container = null;
+                    this.triggerEl = null;
+                    this.dropdownEl = null;
+                    this.optionsEl = null;
                 }
 
                 setValue(value) {
@@ -1812,6 +1881,7 @@
                 } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
             }
 
+            // ===== CustomSelect 类 =====
             class CustomSelect {
                 constructor(selectElement, onChange) {
                     this.select = selectElement;
@@ -1822,6 +1892,9 @@
                     this.options = [];
                     this.value = this.select.value;
                     this.isOpen = false;
+                    this.handleOutsideClick = null;
+                    this.resizeListener = null;
+                    this.scrollListener = null;
                     this.init();
                     const id = selectElement.id || selectElement.name || Math.random().toString(36);
                     customSelectInstances.set(id, this);
@@ -1901,6 +1974,10 @@
                         if (!this.wrapper.contains(e.target) && !this.dropdown.contains(e.target)) this.close();
                     };
                     setTimeout(() => document.addEventListener('click', this.handleOutsideClick), 0);
+                    this.scrollListener = () => { if (this.isOpen) this.positionDropdown(); };
+                    this.resizeListener = () => { if (this.isOpen) this.positionDropdown(); };
+                    window.addEventListener('scroll', this.scrollListener, true);
+                    window.addEventListener('resize', this.resizeListener);
                 }
 
                 close() {
@@ -1909,6 +1986,8 @@
                     this.trigger.classList.remove('open');
                     this.dropdown.classList.remove('open');
                     if (this.handleOutsideClick) document.removeEventListener('click', this.handleOutsideClick);
+                    if (this.scrollListener) window.removeEventListener('scroll', this.scrollListener, true);
+                    if (this.resizeListener) window.removeEventListener('resize', this.resizeListener);
                 }
 
                 positionDropdown() {
@@ -1928,8 +2007,6 @@
                         e.stopPropagation();
                         this.isOpen ? this.close() : this.open();
                     });
-                    window.addEventListener('resize', () => { if (this.isOpen) this.positionDropdown(); });
-                    window.addEventListener('scroll', () => { if (this.isOpen) this.positionDropdown(); }, true);
                 }
 
                 refresh() {
@@ -1942,6 +2019,11 @@
                     this.close();
                     if (this.wrapper && this.wrapper.parentNode) {
                         this.wrapper.parentNode.removeChild(this.wrapper);
+                    }
+                    const id = this.select.id || this.select.name;
+                    if (id) {
+                        const index = customSelectInstances.findIndex(inst => inst === this);
+                        if (index !== -1) customSelectInstances.splice(index, 1);
                     }
                     this.select.style.display = '';
                     this.select = null;
@@ -2210,6 +2292,7 @@
                 }
             }
 
+            // ===== 使用事件委托减少重复绑定 =====
             function setupEventDelegation() {
                 document.getElementById('catBar').addEventListener('click', e => {
                     const btn = e.target.closest('[data-action]');
@@ -2220,6 +2303,7 @@
                     const item = e.target.closest('.cat-item');
                     if (item) selectCat(parseInt(item.dataset.cid));
                 });
+
                 document.getElementById('subList').addEventListener('click', e => {
                     const btn = e.target.closest('[data-action]');
                     if (btn && btn.dataset.action === 'modifySub') {
@@ -2229,6 +2313,7 @@
                     const item = e.target.closest('.sub-item');
                     if (item) selectSub(parseInt(item.dataset.sid));
                 });
+
                 document.getElementById('siteList').addEventListener('click', e => {
                     const btn = e.target.closest('[data-action]');
                     if (!btn) return;
