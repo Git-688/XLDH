@@ -1,4 +1,4 @@
-/* partner.js - 合作伙伴模块（从接口获取数据，空状态显示🎉期待你的加入...） */
+/* partner.js - 合作伙伴模块（加入请求重试机制，解决 503 数据库初始化问题） */
 (function() {
     'use strict';
 
@@ -12,7 +12,7 @@
             this.introContainer = document.querySelector('.partner-intro p');
             this.isVisible = false;
             this.partners = [];
-            // 增强：安全获取 API 基础 URL
+            // 安全获取 API 基础 URL
             this.apiBase = (typeof Utils !== 'undefined' && Utils.getApiBase) 
                 ? Utils.getApiBase() 
                 : (window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc');
@@ -27,22 +27,34 @@
                 return;
             }
             this.bindEvents();
-            this.loadData();
+            // 首次加载数据，带重试（5 次，间隔 2 秒）
+            this.loadData(5, 2000);
         }
 
-        async loadData() {
+        /**
+         * 加载合作伙伴数据（支持自动重试）
+         * @param {number} retries - 剩余重试次数
+         * @param {number} delay - 重试间隔（毫秒）
+         */
+        async loadData(retries = 3, delay = 2000) {
             try {
                 const [partnersRes, settingsRes] = await Promise.all([
                     Utils.safeFetch(`${this.apiBase}/partners`, { timeout: 8000 }),
                     Utils.safeFetch(`${this.apiBase}/partner-settings`, { timeout: 8000 })
                 ]);
 
+                // 处理合作伙伴列表
                 if (partnersRes.ok) {
                     this.partners = await partnersRes.json();
                 } else {
+                    // 如果是 503 或 5xx 错误，触发重试
+                    if (partnersRes.status >= 500 && retries > 0) {
+                        throw new Error(`HTTP ${partnersRes.status}: 服务暂时不可用`);
+                    }
                     this.partners = [];
                 }
 
+                // 处理合作公告
                 if (settingsRes.ok) {
                     const settings = await settingsRes.json();
                     if (settings.intro && this.introContainer) {
@@ -50,13 +62,31 @@
                     }
                 }
 
+                // 如果模态框已打开，刷新列表
                 if (this.isVisible) {
                     this.renderList();
                 }
             } catch (error) {
-                console.warn('加载合作伙伴数据失败:', error);
-                if (this.isVisible) {
-                    this.listContainer.innerHTML = '<div class="empty">加载失败，请刷新重试</div>';
+                // ===== 重试逻辑：仅对 5xx 错误或网络错误重试 =====
+                const isRetryable = error.message && (
+                    error.message.includes('503') ||
+                    error.message.includes('500') ||
+                    error.message.includes('502') ||
+                    error.message.includes('504') ||
+                    error.message.includes('fetch') ||
+                    error.message.includes('timeout')
+                );
+
+                if (retries > 0 && isRetryable) {
+                    console.warn(`合作伙伴数据加载失败（${error.message}），${retries} 次重试后重试，间隔 ${delay}ms...`);
+                    await new Promise(r => setTimeout(r, delay));
+                    // 递归重试，指数退避（逐步增加间隔）
+                    return this.loadData(retries - 1, Math.min(delay * 1.5, 5000));
+                } else {
+                    console.error('加载合作伙伴数据失败:', error);
+                    if (this.isVisible) {
+                        this.listContainer.innerHTML = `<div class="empty">加载失败，请<a href="javascript:void(0)" onclick="window.partnerModule?.refresh()" style="color:var(--primary-color);text-decoration:underline;">点击重试</a></div>`;
+                    }
                 }
             }
         }
@@ -85,7 +115,10 @@
         open() {
             if (this.isVisible) return;
             this.closeOtherModals();
-            this.renderList();
+            // 打开前重新加载数据（带重试）
+            this.loadData(3, 1500).then(() => {
+                this.renderList();
+            });
             this.modal.classList.add('active');
             this.isVisible = true;
             document.body.style.overflow = 'hidden';
@@ -133,8 +166,11 @@
             });
         }
 
+        /**
+         * 手动刷新数据（外部调用）
+         */
         async refresh() {
-            await this.loadData();
+            await this.loadData(3, 1500);
             if (this.isVisible) this.renderList();
         }
 
@@ -147,6 +183,7 @@
         }
     }
 
+    // ===== 在 DOM 就绪后初始化 =====
     document.addEventListener('DOMContentLoaded', () => {
         if (!window.Starlink) window.Starlink = {};
         if (!window.Starlink.partner) {
