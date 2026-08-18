@@ -1,4 +1,4 @@
-/* admin.js - 完整版（批量操作优化 + 移除调试代码 + 自定义下拉内存泄漏修复） */
+/* admin.js - 完整版（批量操作优化 + 修复内存泄漏 + 重试上限 + 错误区分 + UI同步） */
 (function() {
     'use strict';
 
@@ -6,6 +6,9 @@
     const API_BASE = window.ADMIN_API_BASE || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
     const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
+
+    // ===== 新增：API 重试配置 =====
+    const API_MAX_RETRIES = 3;
 
     let token = '';
     let refreshToken = '';
@@ -59,24 +62,40 @@
         if (feedbackEl) feedbackEl.textContent = feedbackData ? feedbackData.length : 0;
     }
 
-    async function apiFetch(endpoint, opt = {}) {
+    // ===== 修复：apiFetch 添加重试上限 =====
+    async function apiFetch(endpoint, opt = {}, retryCount = 0) {
         const headers = { 'Content-Type': 'application/json', ...opt.headers };
         if (token) headers.Authorization = `Bearer ${token}`;
         if (csrfToken) headers['X-CSRF-Token'] = csrfToken;
-        const res = await fetch(API_BASE + endpoint, { ...opt, headers });
-        const newCsrf = res.headers.get('X-CSRF-Token');
-        if (newCsrf) csrfToken = newCsrf;
-        if (res.status === 401) {
-            if (refreshToken) {
-                const refreshed = await refreshSessionToken();
-                if (refreshed) return apiFetch(endpoint, opt);
+        try {
+            const res = await fetch(API_BASE + endpoint, { ...opt, headers });
+            const newCsrf = res.headers.get('X-CSRF-Token');
+            if (newCsrf) csrfToken = newCsrf;
+
+            if (res.status === 401) {
+                if (refreshToken && retryCount < API_MAX_RETRIES) {
+                    const refreshed = await refreshSessionToken();
+                    if (refreshed) return apiFetch(endpoint, opt, retryCount + 1);
+                }
+                logout();
+                throw new Error('Unauthorized');
             }
-            logout();
-            throw new Error('Unauthorized');
+            if (res.status === 403) {
+                showToast('IP不在白名单或权限不足', 'error');
+                throw new Error('Forbidden');
+            }
+            if (!res.ok) {
+                const errText = await res.text().catch(() => '请求失败');
+                throw new Error(errText);
+            }
+            return res.json();
+        } catch (error) {
+            if (retryCount < API_MAX_RETRIES && error.message !== 'Unauthorized' && error.message !== 'Forbidden') {
+                await new Promise(r => setTimeout(r, 1000 * (retryCount + 1)));
+                return apiFetch(endpoint, opt, retryCount + 1);
+            }
+            throw error;
         }
-        if (res.status === 403) { showToast('IP不在白名单或权限不足', 'error'); throw new Error('Forbidden'); }
-        if (!res.ok) { const errText = await res.text().catch(() => '请求失败'); throw new Error(errText); }
-        return res.json();
     }
 
     async function refreshSessionToken() {
@@ -307,6 +326,7 @@
         finally { if (btn) { btn.disabled = false; btn.textContent = '获取信息'; } }
     }
 
+    // ===== 修复：loadAllData 错误区分 =====
     async function loadAllData() {
         try {
             const [catData, subData, siteData, subDataList, feedbackDataList] = await Promise.all([
@@ -325,7 +345,16 @@
             if (categories.length > 0) selectCat(categories[0].id);
             updateStats();
             notifyNavRefresh();
-        } catch (e) { if (e.message === 'Unauthorized') logout(); else showToast('数据加载失败', 'error'); }
+        } catch (e) {
+            if (e.message === 'Unauthorized') {
+                logout();
+                showToast('登录已过期，请重新登录', 'error');
+            } else if (e.message === 'Forbidden') {
+                showToast('权限不足，请检查IP白名单', 'error');
+            } else {
+                showToast('数据加载失败: ' + (e.message || '网络错误'), 'error');
+            }
+        }
     }
 
     async function loadAllDataButKeepSelection() {
@@ -360,7 +389,14 @@
             }
             updateStats();
             notifyNavRefresh();
-        } catch (e) { if (e.message === 'Unauthorized') logout(); else showToast('数据加载失败', 'error'); }
+        } catch (e) {
+            if (e.message === 'Unauthorized') {
+                logout();
+                showToast('登录已过期，请重新登录', 'error');
+            } else {
+                showToast('数据加载失败: ' + (e.message || '网络错误'), 'error');
+            }
+        }
     }
 
     async function refreshSitesOnly() {
@@ -574,6 +610,7 @@
             showToast(result.message || '删除成功', 'success');
             const idSet = new Set(ids);
             sites = sites.filter(s => !idSet.has(s.id));
+            // ===== 修复：清空 selectedSiteIds 并刷新 UI =====
             selectedSiteIds.clear();
             const currentSites = sites.filter(s => s.subcategory_id === currentSub);
             renderSitesWithCheckboxes(currentSites);
@@ -595,6 +632,12 @@
         const subcategoriesData = await apiFetch('/admin/subcategories');
         if (!subcategoriesData || !subcategoriesData.length) { showToast('暂无子分类可移动', 'error'); return; }
         const subOptions = subcategoriesData.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+
+        // ===== 修复：确保旧实例被销毁 =====
+        if (batchMoveCustomSelect) {
+            batchMoveCustomSelect.destroy();
+            batchMoveCustomSelect = null;
+        }
 
         openModal('批量移动站点',
             `<div style="margin-bottom:12px;">
@@ -655,6 +698,7 @@
                 batchMoveCustomSelect = new CustomSelect(select);
             },
             function() {
+                // ===== 修复：模态框关闭时销毁实例 =====
                 if (batchMoveCustomSelect) {
                     batchMoveCustomSelect.destroy();
                     batchMoveCustomSelect = null;
@@ -776,6 +820,7 @@
         } catch { return 0; }
     }
 
+    // ===== 修复：openModal 增加 onClose 回调，确保清理 =====
     function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null, onShow = null, onClose = null) {
         const modal = document.getElementById('modal');
         document.querySelector('#modal .modal-title').textContent = title;
@@ -1227,15 +1272,22 @@
             this.dropdownEl.classList.remove('open');
         }
 
+        // ===== 修复：完善 destroy =====
         destroy() {
             if (this._outsideClickHandler) {
                 document.removeEventListener('click', this._outsideClickHandler);
+                this._outsideClickHandler = null;
             }
             if (this._scrollHandler) {
                 document.removeEventListener('scroll', this._scrollHandler, true);
+                this._scrollHandler = null;
             }
             window.removeEventListener('resize', this.syncWidth);
             this.container.innerHTML = '';
+            this.container = null;
+            this.triggerEl = null;
+            this.dropdownEl = null;
+            this.optionsEl = null;
         }
 
         setValue(value) {
@@ -1446,6 +1498,9 @@
             this.options = [];
             this.value = this.select.value;
             this.isOpen = false;
+            this.handleOutsideClick = null;
+            this.resizeListener = null;
+            this.scrollListener = null;
             this.init();
             const id = selectElement.id || selectElement.name || Math.random().toString(36);
             customSelectInstances.set(id, this);
@@ -1525,6 +1580,11 @@
                 if (!this.wrapper.contains(e.target) && !this.dropdown.contains(e.target)) this.close();
             };
             setTimeout(() => document.addEventListener('click', this.handleOutsideClick), 0);
+            // 监听滚动和 resize 以更新位置
+            this.scrollListener = () => { if (this.isOpen) this.positionDropdown(); };
+            this.resizeListener = () => { if (this.isOpen) this.positionDropdown(); };
+            window.addEventListener('scroll', this.scrollListener, true);
+            window.addEventListener('resize', this.resizeListener);
         }
 
         close() {
@@ -1533,6 +1593,8 @@
             this.trigger.classList.remove('open');
             this.dropdown.classList.remove('open');
             if (this.handleOutsideClick) document.removeEventListener('click', this.handleOutsideClick);
+            if (this.scrollListener) window.removeEventListener('scroll', this.scrollListener, true);
+            if (this.resizeListener) window.removeEventListener('resize', this.resizeListener);
         }
 
         positionDropdown() {
@@ -1552,8 +1614,6 @@
                 e.stopPropagation();
                 this.isOpen ? this.close() : this.open();
             });
-            window.addEventListener('resize', () => { if (this.isOpen) this.positionDropdown(); });
-            window.addEventListener('scroll', () => { if (this.isOpen) this.positionDropdown(); }, true);
         }
 
         refresh() {
@@ -1562,16 +1622,17 @@
             if (valueSpan) valueSpan.textContent = this.getSelectedText();
         }
 
-        // ===== 修改：修复内存泄漏，从 Map 中删除当前实例 =====
+        // ===== 修复：完善 destroy，清理所有监听器和 DOM =====
         destroy() {
             this.close();
             if (this.wrapper && this.wrapper.parentNode) {
                 this.wrapper.parentNode.removeChild(this.wrapper);
             }
-            // 从 customSelectInstances Map 中删除当前实例
+            // 从 customSelectInstances Map 中删除
             const id = this.select.id || this.select.name;
-            if (id && customSelectInstances.has(id)) {
-                customSelectInstances.delete(id);
+            if (id) {
+                const index = customSelectInstances.findIndex(inst => inst === this);
+                if (index !== -1) customSelectInstances.splice(index, 1);
             }
             this.select.style.display = '';
             this.select = null;
@@ -1840,7 +1901,9 @@
         }
     }
 
+    // ===== 修复：使用事件委托减少重复绑定 =====
     function setupEventDelegation() {
+        // 分类栏事件委托
         document.getElementById('catBar').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
             if (btn && btn.dataset.action === 'modifyCat') {
@@ -1850,6 +1913,8 @@
             const item = e.target.closest('.cat-item');
             if (item) selectCat(parseInt(item.dataset.cid));
         });
+
+        // 子分类列表事件委托
         document.getElementById('subList').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
             if (btn && btn.dataset.action === 'modifySub') {
@@ -1859,12 +1924,15 @@
             const item = e.target.closest('.sub-item');
             if (item) selectSub(parseInt(item.dataset.sid));
         });
+
+        // 站点列表事件委托
         document.getElementById('siteList').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
             if (!btn) return;
             if (btn.dataset.action === 'editSite') handleEditSite(parseInt(btn.dataset.id));
         });
 
+        // Tab 切换
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const tabId = btn.dataset.tab;
@@ -1885,6 +1953,7 @@
             });
         });
 
+        // 登录、登出等
         document.getElementById('loginBtn').addEventListener('click', login);
         document.getElementById('logoutBtn').addEventListener('click', logout);
         document.getElementById('addCategoryBtn').addEventListener('click', handleAddCategory);
