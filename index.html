@@ -53,7 +53,7 @@
     }
     </script>
 
-    <!-- CSP 策略 -->
+    <!-- CSP 策略（已放宽，兼容明月浩空） -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
         script-src 'self' 'unsafe-inline' 'unsafe-eval' https://myhkw.cn https://cdn.jsdelivr.net https://api.xjdh688.ccwu.cc https://api.pearapi.ai https://oiapi.net https://unpkg.com https://www.google.com https://api.kuleu.com https://yunzhiapi.cn https://cn.apihz.cn;
@@ -79,7 +79,7 @@
     <script>
         (function() {
             var storedVersion = localStorage.getItem('starlink_asset_version');
-            var defaultVersion = '20260208';
+            var defaultVersion = '20260209';
             if (storedVersion && storedVersion.length > 0) {
                 window.ASSET_VERSION = storedVersion;
             } else {
@@ -145,15 +145,24 @@
         })();
     </script>
 
+    <!-- ===== 关键：jQuery 同步加载，确保所有脚本可用 ===== -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"
+            integrity="sha384-4JgM1jUeM5eDxG2kXRw6iP1Cw4M6uKyj7JZx2K5Hmvh8Kc14D0tJtVj3r+gMnGVX"
+            crossorigin="anonymous">
+    </script>
+
+    <!-- ===== cursor2.js 依赖 jQuery，放在 jQuery 之后 ===== -->
+    <script defer src="./js/cursor2.js?v=20260209"></script>
+
     <!-- Preload & Preconnect -->
-    <link rel="preload" href="./js/main.js?v=20260208" as="script">
-    <link rel="preload" href="./css/style.css?v=20260208" as="style">
-    <link rel="preload" href="./js/modules/navigation.js?v=20260208" as="script">
-    <link rel="preload" href="./js/components/sidebar.js?v=20260208" as="script">
-    <link rel="preload" href="./js/modules/wallpaper.js?v=20260208" as="script">
-    <link rel="preload" href="./js/modules/greeting.js?v=20260208" as="script">
-    <link rel="preload" href="./css/modules/navigation.css?v=20260208" as="style">
-    <link rel="preload" href="./css/modules/sidebar.css?v=20260208" as="style">
+    <link rel="preload" href="./js/main.js?v=20260209" as="script">
+    <link rel="preload" href="./css/style.css?v=20260209" as="style">
+    <link rel="preload" href="./js/modules/navigation.js?v=20260209" as="script">
+    <link rel="preload" href="./js/components/sidebar.js?v=20260209" as="script">
+    <link rel="preload" href="./js/modules/wallpaper.js?v=20260209" as="script">
+    <link rel="preload" href="./js/modules/greeting.js?v=20260209" as="script">
+    <link rel="preload" href="./css/modules/navigation.css?v=20260209" as="style">
+    <link rel="preload" href="./css/modules/sidebar.css?v=20260209" as="style">
     <link rel="preload" href="./assets/logo.webp" as="image" type="image/webp">
 
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
@@ -172,21 +181,21 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 
     <!-- CSS -->
-    <link rel="stylesheet" href="./css/style.css?v=20260208">
-    <link rel="stylesheet" href="./css/modules/navbar.css?v=20260208">
-    <link rel="stylesheet" href="./css/modules/sidebar.css?v=20260208">
-    <link rel="stylesheet" href="./css/modules/announcement.css?v=20260208">
-    <link rel="stylesheet" href="./css/modules/search.css?v=20260208">
-    <link rel="stylesheet" href="./css/modules/weather.css?v=20260208">
-    <link rel="stylesheet" href="./css/modules/about.css?v=20260208">
-    <link rel="stylesheet" href="./css/modules/navigation.css?v=20260208">
-    <link rel="stylesheet" href="./css/modules/wallpaper.css?v=20260208">
-    <link rel="stylesheet" href="./css/modules/greeting.css?v=20260208">
-    <link rel="stylesheet" href="./css/modules/stats.css?v=20260208">
-    <link rel="stylesheet" href="./css/modules/compact-tags.css?v=20260208">
-    <link rel="stylesheet" href="./css/responsive.css?v=20260208">
-    <link rel="stylesheet" href="./css/xfyy1/music-player.css?v=20260208">
-    <link rel="stylesheet" href="./css/modules/comment.css?v=20260208">
+    <link rel="stylesheet" href="./css/style.css?v=20260209">
+    <link rel="stylesheet" href="./css/modules/navbar.css?v=20260209">
+    <link rel="stylesheet" href="./css/modules/sidebar.css?v=20260209">
+    <link rel="stylesheet" href="./css/modules/announcement.css?v=20260209">
+    <link rel="stylesheet" href="./css/modules/search.css?v=20260209">
+    <link rel="stylesheet" href="./css/modules/weather.css?v=20260209">
+    <link rel="stylesheet" href="./css/modules/about.css?v=20260209">
+    <link rel="stylesheet" href="./css/modules/navigation.css?v=20260209">
+    <link rel="stylesheet" href="./css/modules/wallpaper.css?v=20260209">
+    <link rel="stylesheet" href="./css/modules/greeting.css?v=20260209">
+    <link rel="stylesheet" href="./css/modules/stats.css?v=20260209">
+    <link rel="stylesheet" href="./css/modules/compact-tags.css?v=20260209">
+    <link rel="stylesheet" href="./css/responsive.css?v=20260209">
+    <link rel="stylesheet" href="./css/xfyy1/music-player.css?v=20260209">
+    <link rel="stylesheet" href="./css/modules/comment.css?v=20260209">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
@@ -194,39 +203,38 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
 
-    <!-- ===== head 中的 defer 脚本（不依赖 jQuery，cursor2.js 已移除） ===== -->
-    <script defer src="./js/constants.js?v=20260208"></script>
-    <script defer src="./js/utils.js?v=20260208"></script>
-    <script defer src="./js/toast.js?v=20260208"></script>
-    <script defer src="./js/error-handler.js?v=20260208"></script>
-    <script defer src="./js/storage.js?v=20260208"></script>
-    <script defer src="./js/components/navbar.js?v=20260208"></script>
-    <script defer src="./js/components/sidebar.js?v=20260208"></script>
-    <script defer src="./js/modules/announcement.js?v=20260208"></script>
-    <script defer src="./js/modules/search.js?v=20260208"></script>
-    <script defer src="./js/modules/weather.js?v=20260208"></script>
-    <script defer src="./js/modules/about.js?v=20260208"></script>
-    <script defer src="./js/modules/navigation.js?v=20260208"></script>
-    <script defer src="./js/modules/wallpaper.js?v=20260208"></script>
-    <script defer src="./js/modules/greeting.js?v=20260208"></script>
-    <script defer src="./js/modules/stats.js?v=20260208"></script>
-    <script defer src="./js/modules/compact-tags.js?v=20260208"></script>
-    <script defer src="./js/main.js?v=20260208"></script>
-    <script defer src="./js/partner.js?v=20260208"></script>
-    <script defer src="./js/xfyy/cache-manager.js?v=20260208"></script>
-    <script defer src="./js/xfyy/lyric-parser.js?v=20260208"></script>
-    <script defer src="./data/local-music-data.js?v=20260208"></script>
-    <script defer src="./js/xfyy/plugin-manager.js?v=20260208"></script>
-    <script defer src="./js/xfyy/music-player.js?v=20260208"></script>
-    <script defer src="./js/xfyy/music-main.js?v=20260208"></script>
-    <script defer src="./js/modules/comment.js?v=20260208"></script>
-    <script defer src="./js/modules/submit.js?v=20260208"></script>
-    <script defer src="./js/modules/theme.js?v=20260208"></script>
-    <script defer src="./js/modules/keyboard-adapter.js?v=20260208"></script>
-    <!-- cursor2.js 已移至 body 底部，确保 jQuery 先加载 -->
+    <!-- ===== 其他 defer 脚本（不依赖 jQuery 或已确保 $ 存在） ===== -->
+    <script defer src="./js/constants.js?v=20260209"></script>
+    <script defer src="./js/utils.js?v=20260209"></script>
+    <script defer src="./js/toast.js?v=20260209"></script>
+    <script defer src="./js/error-handler.js?v=20260209"></script>
+    <script defer src="./js/storage.js?v=20260209"></script>
+    <script defer src="./js/components/navbar.js?v=20260209"></script>
+    <script defer src="./js/components/sidebar.js?v=20260209"></script>
+    <script defer src="./js/modules/announcement.js?v=20260209"></script>
+    <script defer src="./js/modules/search.js?v=20260209"></script>
+    <script defer src="./js/modules/weather.js?v=20260209"></script>
+    <script defer src="./js/modules/about.js?v=20260209"></script>
+    <script defer src="./js/modules/navigation.js?v=20260209"></script>
+    <script defer src="./js/modules/wallpaper.js?v=20260209"></script>
+    <script defer src="./js/modules/greeting.js?v=20260209"></script>
+    <script defer src="./js/modules/stats.js?v=20260209"></script>
+    <script defer src="./js/modules/compact-tags.js?v=20260209"></script>
+    <script defer src="./js/main.js?v=20260209"></script>
+    <script defer src="./js/partner.js?v=20260209"></script>
+    <script defer src="./js/xfyy/cache-manager.js?v=20260209"></script>
+    <script defer src="./js/xfyy/lyric-parser.js?v=20260209"></script>
+    <script defer src="./data/local-music-data.js?v=20260209"></script>
+    <script defer src="./js/xfyy/plugin-manager.js?v=20260209"></script>
+    <script defer src="./js/xfyy/music-player.js?v=20260209"></script>
+    <script defer src="./js/xfyy/music-main.js?v=20260209"></script>
+    <script defer src="./js/modules/comment.js?v=20260209"></script>
+    <script defer src="./js/modules/submit.js?v=20260209"></script>
+    <script defer src="./js/modules/theme.js?v=20260209"></script>
+    <script defer src="./js/modules/keyboard-adapter.js?v=20260209"></script>
 
+    <!-- ===== 内联样式（完整，与原来一致） ===== -->
     <style>
-        /* ===== 内联样式（与原来一致） ===== */
         .scroll-progress {
             position: fixed;
             top: 0;
@@ -1024,24 +1032,10 @@
         </div>
     </main>
 
-    <!-- ========== 底部脚本（重要：调整加载顺序） ========== -->
-
-    <!-- 1️⃣ jQuery（必须先加载） -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"
-            integrity="sha384-4JgM1jUeM5eDxG2kXRw6iP1Cw4M6uKyj7JZx2K5Hmvh8Kc14D0tJtVj3r+gMnGVX"
-            crossorigin="anonymous">
-    </script>
-
-    <!-- 2️⃣ 明月浩空音乐播放器（依赖 jQuery） -->
+    <!-- ===== 底部脚本（明月浩空播放器、FontAwesome、其他内联脚本） ===== -->
     <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
-
-    <!-- 3️⃣ FontAwesome（可选，不依赖 jQuery） -->
     <script src="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/js/all.min.js"></script>
 
-    <!-- 4️⃣ cursor2.js（依赖 jQuery，现在放在 jQuery 之后） -->
-    <script src="./js/cursor2.js?v=20260208"></script>
-
-    <!-- ===== 其他内联脚本（与原来相同） ===== -->
     <script>
         (function() {
             const progressBar = document.getElementById('scrollProgress');
