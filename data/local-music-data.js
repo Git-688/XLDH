@@ -1,22 +1,22 @@
 /* local-music-data.js */
 window.localMusicData = [
     {
-        id: 'local_001',
+        id: '1',
         title: 'All Rise',
         artist: 'Blue',
-        src: 'https://ak688.eu.cc/file/音乐目录/1776479332023_All_Rise.mp3',
-        cover: 'https://p1.music.126.net/diGAyEmpymX8G7JcnElncQ==/109951163699673355.jpg',
-        lrc: 'https://ak688.eu.cc/file/音乐目录/1776479334143_All_Rise.lrc',
+        src: 'https://tc688.ccwu.cc/file/本地音乐/All_Rise.mp3',
+        cover: 'https://tc688.ccwu.cc/file/本地音乐/All_Rise.webp',
+        lrc: 'https://tc688.ccwu.cc/file/本地音乐/All_Rise.lrc',
         isOnline: true,
         source: 'local'
     },
     {
-        id: 'local_002',
-        title: '星辰大海',
-        artist: '黄霄雲',
-        src: 'https://music.163.com/song/media/outer/url?id=1811924206.mp3',
-        cover: 'https://p1.music.126.net/6O0ZcO2KD3U-y7_6RfUO3Q==/109951165588832637.jpg',
-        lrc: '',
+        id: '2',
+        title: '夜色',
+        artist: '艺涛/梁剑东',
+        src: 'https://tc688.ccwu.cc/file/本地音乐/夜色.mp3',
+        cover: 'https://tc688.ccwu.cc/file/本地音乐/夜色.webp',
+        lrc: 'https://tc688.ccwu.cc/file/本地音乐/夜色.lrc',
         isOnline: true,
         source: 'local'
     },
