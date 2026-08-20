@@ -492,6 +492,7 @@ class MusicPlayer {
             this.lyricsLineEl.classList.remove('overflow');
             this.lyricsLineEl.style.transform = '';
         }
+        // ===== 修改点：区分无歌词和加载失败 =====
         if (!song.lrc) {
             this.lyricsLineEl.textContent = '暂无歌词';
             return;
@@ -500,6 +501,9 @@ class MusicPlayer {
             const apiBase = Utils.getApiBase();
             const proxyUrl = `${apiBase}/music-proxy?url=${encodeURIComponent(song.lrc)}`;
             const response = await fetch(proxyUrl);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
             const lyricsText = await response.text();
             this.lyricParser.parseLrc(lyricsText);
             this.lyricsData = this.lyricParser.lyrics;
