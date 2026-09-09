@@ -1,4 +1,5 @@
-/* navigation.css - 新增图标占位懒加载样式 */
+/* navigation.css - 完整修改版（电脑端一级、二级导航水平滚动） */
+
 .nav-search-box {
     display: block;
     width: 100%;
@@ -139,6 +140,7 @@
 
 .navigation-body {
     display: flex;
+    flex-direction: column;  /* 改为纵向排列，一级、二级各自一行 */
     width: 100%;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -149,9 +151,10 @@
 }
 
 .navigation-left {
-    width: 140px;
+    width: 100%;             /* 占满整行 */
     flex-shrink: 0;
-    border-right: 1px solid var(--border-color);
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
     background: var(--bg-card);
     display: flex;
     flex-direction: column;
@@ -159,13 +162,19 @@
 }
 .level1-nav {
     display: flex;
-    flex-direction: column;
-    padding: 8px 0;
+    flex-direction: row;     /* 水平排列 */
+    overflow-x: auto;        /* 允许横向滚动 */
+    white-space: nowrap;
+    padding: 4px 8px;
+    scrollbar-width: none;   /* 隐藏滚动条 */
+    -ms-overflow-style: none;
+}
+.level1-nav::-webkit-scrollbar {
+    display: none;
 }
 .level1-btn {
-    flex: 1 1 auto;
-    min-width: 0;
-    padding: 12px 8px;
+    flex: 0 0 auto;          /* 不伸缩，宽度自适应 */
+    padding: 0 16px;
     border: none;
     background: transparent;
     color: var(--text-primary);
@@ -177,19 +186,21 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color); /* 右侧分割线 */
     white-space: nowrap;
-    overflow: visible;
-    min-height: 44px;
+    min-height: 40px;
+    height: 40px;
+    line-height: 40px;
 }
 .level1-btn:hover { background: rgba(67, 97, 238, 0.06); }
 .level1-btn.active { background: transparent; color: var(--nav-level1-active); font-weight: 700; }
 .level1-btn-text { white-space: nowrap; font-size: 13px; text-align: center; }
 
 .navigation-middle {
-    width: 160px;
+    width: 100%;
     flex-shrink: 0;
-    border-right: 1px solid var(--border-color);
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
     background: var(--bg-card);
     display: flex;
     flex-direction: column;
@@ -197,13 +208,19 @@
 }
 .level2-nav {
     display: flex;
-    flex-direction: column;
-    padding: 8px 0;
+    flex-direction: row;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 4px 8px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.level2-nav::-webkit-scrollbar {
+    display: none;
 }
 .level2-btn {
-    flex: 1 1 auto;
-    min-width: 0;
-    padding: 12px 8px;
+    flex: 0 0 auto;
+    padding: 0 16px;
     border: none;
     background: transparent;
     color: var(--text-primary);
@@ -215,10 +232,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-bottom: 1px solid var(--border-color);
+    border-right: 1px solid var(--border-color);
     white-space: nowrap;
-    overflow: visible;
-    min-height: 44px;
+    min-height: 40px;
+    height: 40px;
+    line-height: 40px;
 }
 .level2-btn:hover { background: rgba(67, 97, 238, 0.06); }
 .level2-btn.active { background: transparent; color: var(--nav-level2-active); font-weight: 700; }
@@ -317,9 +335,8 @@
     padding: 0;
 }
 
-/* +++++ 修复层级：为图标容器添加相对定位，让伪元素的 z-index 生效 +++++ */
 .icon-container {
-    position: relative;          /* 新增 */
+    position: relative;
     width: 28px;
     height: 28px;
     border-radius: 6px;
@@ -343,12 +360,10 @@
 }
 .site-card:hover .icon-container { border-color: var(--primary-color); }
 
-/* ===== 图标占位（带流光动画，但位于图标下方） ===== */
 .icon-container.icon-placeholder {
     background: #f0f2f5;
     border: 1px solid #e4e7ec;
 }
-/* 伪元素作为背景动画，z-index: -1 使其在图标和文字之下 */
 .icon-container.icon-placeholder::after {
     content: '';
     position: absolute;
@@ -356,20 +371,19 @@
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
     animation: placeholder-shimmer 1.5s infinite;
     transform: translateX(-100%);
-    z-index: -1;               /* 新增：沉到背景层 */
+    z-index: -1;
 }
 @keyframes placeholder-shimmer {
     100% { transform: translateX(100%); }
 }
 
-/* 深色模式占位适配 */
 .dark-mode .icon-container.icon-placeholder {
     background: #2d2d2d;
     border-color: #3d3d3d;
 }
 .dark-mode .icon-container.icon-placeholder::after {
     background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
-    z-index: -1;               /* 同样处理 */
+    z-index: -1;
 }
 
 .card-top .site-title {
@@ -384,7 +398,6 @@
     text-align: center;
 }
 
-/* 描述：最多两行，超出省略，不强制拉伸 */
 .site-description {
     font-size: 11px;
     color: var(--text-secondary);
@@ -398,7 +411,6 @@
     flex: 0 1 auto;
 }
 
-/* 分割线 */
 .divider-line {
     height: 1px;
     background: repeating-linear-gradient(
@@ -414,7 +426,6 @@
     flex-shrink: 0;
 }
 
-/* 底部行：点击数左，感叹号右 */
 .card-bottom {
     display: flex;
     justify-content: space-between;
@@ -477,51 +488,21 @@
 .view-count.increasing { animation: pulseView 0.3s ease; }
 @keyframes pulseView { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
-/* 响应式调整 */
-@media (min-width: 1024px) {
-    .navigation-left { width: 140px; }
-    .navigation-middle { width: 160px; }
-    .level3-content { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; padding: 12px; }
-    .site-card { padding: 8px; }
-    .icon-container { width: 28px; height: 28px; font-size: 12px; }
-    .card-top .site-title { font-size: 12px; }
-    .site-description { font-size: 11px; }
-    .view-count { font-size: 12px; }
-}
-@media (min-width: 768px) and (max-width: 1023px) {
-    .navigation-body { flex-direction: column; }
-    .navigation-left, .navigation-middle { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border-color); overflow: visible; }
-    .level1-nav, .level2-nav { flex-direction: row; height: auto; padding: 0; overflow-x: auto; white-space: nowrap; }
-    .level1-btn, .level2-btn { flex: 1 0 auto; min-width: 0; padding: 0 14px; border-bottom: none; border-right: 1px solid var(--border-color); height: 46px; min-height: 46px; font-size: 13px; }
+/* ===== 响应式：桌面端（≥769px）已整合到上述通用规则，无需额外媒体查询 ===== */
+
+/* 平板（768px以下）保持水平滚动，卡片调整 */
+@media (max-width: 768px) {
     .level3-content { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding: 10px; }
     .site-card { padding: 6px; }
     .icon-container { width: 24px; height: 24px; font-size: 11px; }
     .card-top .site-title { font-size: 11px; }
     .site-description { font-size: 10px; }
     .view-count { font-size: 11px; }
+    .level1-btn, .level2-btn { font-size: 12px; min-height: 36px; height: 36px; line-height: 36px; padding: 0 14px; }
 }
-@media (max-width: 768px) {
-    .header-content { flex-wrap: wrap; gap: 8px; }
-    .navigation-title { font-size: 15px; }
-    .navigation-stats { flex: 1; justify-content: flex-end; }
-    .navigation-body { flex-direction: column; }
-    .navigation-left, .navigation-middle { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); }
-    .level1-nav, .level2-nav { flex-direction: row; height: auto; padding: 0; overflow-x: auto; white-space: nowrap; }
-    .level1-btn, .level2-btn { flex: 1 0 auto; padding: 0 12px; border-bottom: none; border-right: 1px solid var(--border-color); height: 40px; min-height: 40px; font-size: 12px; }
-    .level3-content { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px; padding: 8px; }
-    .site-card { padding: 6px; }
-    .icon-container { width: 22px; height: 22px; font-size: 10px; }
-    .card-top .site-title { font-size: 10px; }
-    .site-description { font-size: 9px; }
-    .view-count { font-size: 10px; }
-}
+
 @media (max-width: 480px) {
-    .navigation-title { font-size: 14px; }
-    .stat-item { font-size: 10px; }
-    .stat-number { font-size: 12px; }
-    .stat-label { font-size: 10px; }
-    .level1-btn, .level2-btn { padding: 0 10px; height: 36px; min-height: 36px; font-size: 11px; }
-    .level3-content { grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); gap: 4px; padding: 6px; }
+    .level3-content { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; padding: 8px; }
     .site-card { padding: 4px; border-radius: 6px; }
     .icon-container { width: 20px; height: 20px; font-size: 9px; }
     .card-top .site-title { font-size: 9px; }
@@ -529,6 +510,8 @@
     .view-count { font-size: 9px; }
     .report-dead-link-btn { width: 16px; height: 16px; font-size: 12px; }
     .report-dead-link-btn i { font-size: 12px; }
+    .level1-btn, .level2-btn { font-size: 11px; padding: 0 10px; min-height: 32px; height: 32px; line-height: 32px; }
+    .level1-nav, .level2-nav { padding: 2px 6px; }
 }
 
 /* 深色模式适配 */
