@@ -194,9 +194,12 @@ class OptimizedNavigation {
             const views = site.views || 0;
             const formattedViews = this._formatViews(views);
 
+            // ===== 修复：确保 description 有默认值 =====
+            const desc = site.description || '暂无描述';
+
             card.innerHTML = `
                 <div class="card-top"></div>
-                <div class="site-description">${this._escapeHtml(site.description || '暂无描述')}</div>
+                <div class="site-description">${this._escapeHtml(desc)}</div>
                 <div class="divider-line"></div>
                 <div class="card-bottom">
                     <span class="view-count" data-views="${views}">${formattedViews}</span>
@@ -327,9 +330,11 @@ class OptimizedNavigation {
             const views = site.views || 0;
             const formattedViews = this._formatViews(views);
 
+            const desc = site.description || '暂无描述';
+
             card.innerHTML = `
                 <div class="card-top"></div>
-                <div class="site-description">${this._escapeHtml(site.description || '暂无描述')}</div>
+                <div class="site-description">${this._escapeHtml(desc)}</div>
                 <div class="divider-line"></div>
                 <div class="card-bottom">
                     <span class="view-count" data-views="${views}">${formattedViews}</span>
@@ -465,6 +470,7 @@ class OptimizedNavigation {
         if (retryBtn) {
             retryBtn.addEventListener('click', () => {
                 if (this.currentLevel2) {
+                    // ===== 修复：强制刷新，清除该子分类缓存 =====
                     this.selectLevel2(this.currentLevel2, true);
                 }
             });
@@ -706,6 +712,17 @@ class OptimizedNavigation {
         document.querySelectorAll('.level2-btn').forEach(b => {
             b.classList.toggle('active', parseInt(b.dataset.level2) === subId);
         });
+
+        // ===== 修复：强制刷新时清除该子分类的所有缓存 =====
+        if (forceRefresh) {
+            const keysToDelete = [];
+            for (const key of this.siteCache.keys()) {
+                if (key.startsWith(`${subId}_`)) {
+                    keysToDelete.push(key);
+                }
+            }
+            keysToDelete.forEach(key => this.siteCache.delete(key));
+        }
 
         const cacheKey = `${subId}_1`;
         if (!forceRefresh && this.siteCache.has(cacheKey)) {
