@@ -1,4 +1,4 @@
-/* navigation.css - 完整修改版（电脑端一级、二级导航水平滚动） */
+/* navigation.css - 完整修改版（电脑端一级、二级导航水平滚动 + 简介兼容降级） */
 
 .nav-search-box {
     display: block;
@@ -398,17 +398,28 @@
     text-align: center;
 }
 
+/* ===== 修复：简介兼容性降级 ===== */
 .site-description {
     font-size: 11px;
     color: var(--text-secondary);
     line-height: 1.3;
     margin: 4px 0;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    flex: 0 1 auto;
+    word-break: break-word;
+    /* 默认显示两行（后备） */
+    display: block;
+    max-height: 2.6em;
+}
+
+/* 支持 -webkit-box 的浏览器使用更精确的两行截断 */
+@supports (display: -webkit-box) {
+    .site-description {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        max-height: none;
+    }
 }
 
 .divider-line {
