@@ -26,7 +26,7 @@
     <meta name="twitter:title" content="星聚导航 - 您的个人导航中心">
     <meta name="twitter:description" content="现代化的个人导航网站">
 
-    <!-- ===== JSON-LD 结构化数据（新增） ===== -->
+    <!-- ===== JSON-LD 结构化数据 ===== -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -145,7 +145,31 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
 
     <style>
-        /* 内联样式（与之前相同） */
+        /* ===== 新增：桌面端统计卡片和免责声明显示控制 ===== */
+        #desktopStatsSection {
+            display: none;
+        }
+        .mobile-stats-wrapper {
+            display: block;
+        }
+        @media (min-width: 769px) {
+            #desktopStatsSection {
+                display: block;
+                margin-top: 20px;
+            }
+            .mobile-stats-wrapper {
+                display: none;
+            }
+        }
+        @media (max-width: 768px) {
+            #desktopStatsSection {
+                display: none;
+            }
+            .mobile-stats-wrapper {
+                display: block;
+            }
+        }
+
         .scroll-progress {
             position: fixed;
             top: 0;
@@ -744,7 +768,7 @@
         <div class="sidebar-wallpaper" id="sidebarWallpaper">
             <div class="sidebar-wallpaper-overlay"></div>
             <div class="sidebar-wallpaper-user-info">
-                <div class="sidebar-wallpaper-avatar"><img id="sidebarWallpaperAvatar" src="" alt="用户头像" loading="lazy" width="56" height="56" class="js-img-fallback" data-fallback-type="defaultAvatar" data-default-svg="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik00MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo="></div>
+                <div class="sidebar-wallpaper-avatar"><img id="sidebarWallpaperAvatar" src="" alt="用户头像" loading="lazy" width="56" height="56" class="js-img-fallback" data-fallback-type="defaultAvatar" data-default-svg="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNDAiIGN5PSI0MCIgcj0iNDAiIGZpbGw9IiM0QTVGOTkiLz4KPHBhdGggZD0iTTQwIDQ0QzQ2LjYyODQgNDQgNTIgMzguNjI4NCA1MiAzMkM1MiAyNS4zNzE2IDQ2LjYyODQgMjAgNDAgMjBDMzMuMzcxNiAyMCAyOCAyNS4zNzE2IDI4IDMyQzI4IDM4LjYyODQgMzMuMzcxNiA0NCA0MCA0NFoiIGZpbGw9IndoaXRlIi8+CjxwYXRoIGQ9Ik40MCA1MEMzMCA1MCAxNiA1NCAxNiA2NFY4MEg2NFY1NkM2NCA1NCA1MCA1MCA0MCA1MFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo="></div>
                 <div class="sidebar-wallpaper-user-text">
                     <div class="sidebar-wallpaper-nickname" id="sidebarWallpaperNickname">访客用户</div>
                     <div class="sidebar-wallpaper-signature" id="sidebarWallpaperSignature">探索无限可能</div>
@@ -848,18 +872,35 @@
             </div>
         </section>
 
-        <!-- ===== 修改后的页脚（统计卡片在上，免责声明在下） ===== -->
-        <footer class="footer">
-            <div class="footer-compact-container">
-                <!-- 统计卡片（移至上方） -->
+        <!-- ===== 电脑端统计卡片和免责声明（桌面显示，移动隐藏） ===== -->
+        <section class="desktop-stats-section" id="desktopStatsSection">
+            <div class="container">
+                <!-- 统计卡片 -->
                 <div class="footer-stats-cards">
                     <div class="stat-card"><div class="stat-card-inner"><div class="stat-icon running-icon"><i class="fas fa-heartbeat heartbeat-enhanced"></i></div><div class="stat-content"><div class="stat-name">运行时间</div><div class="stat-number" id="uptime">0天 0时 0分 0秒</div></div></div></div>
                     <div class="stat-card"><div class="stat-card-inner"><div class="stat-icon online-icon"><i class="fas fa-users"></i></div><div class="stat-content"><div class="stat-name">在线人数</div><div class="stat-number" id="onlineCount">0</div></div></div></div>
                     <div class="stat-card"><div class="stat-card-inner"><div class="stat-icon today-icon"><i class="fas fa-user-plus"></i></div><div class="stat-content"><div class="stat-name">今日访客 (UV)</div><div class="stat-number" id="todayCount">0</div></div></div></div>
                     <div class="stat-card"><div class="stat-card-inner"><div class="stat-icon total-icon"><i class="fas fa-chart-line"></i></div><div class="stat-content"><div class="stat-name">总浏览量 (PV)</div><div class="stat-number" id="totalCount">0</div></div></div></div>
                 </div>
+                <!-- 免责声明（与统计卡片间距16px） -->
+                <div class="footer-disclaimer-card" style="margin-top: 16px;">
+                    <div class="disclaimer-header"><span class="disclaimer-title">免责声明：</span><span class="disclaimer-version">v2.0 · 生效于 2026.04.02至今</span></div>
+                    <div class="disclaimer-text">本站资源均搜集于公开网络，<strong>仅供个人学习与研究</strong>，不保证可用性及安全，使用者需自行承担风险。若涉及版权问题，请通过 <span class="email-text">1595126534@qq.com</span> 联系处理。严禁用于商业或非法目的。</div>
+                </div>
+            </div>
+        </section>
 
-                <!-- 免责声明（移至下方） -->
+        <!-- ===== 页脚（移动端显示统计卡片和免责声明，桌面隐藏） ===== -->
+        <footer class="footer">
+            <div class="footer-compact-container mobile-stats-wrapper">
+                <!-- 统计卡片 -->
+                <div class="footer-stats-cards">
+                    <div class="stat-card"><div class="stat-card-inner"><div class="stat-icon running-icon"><i class="fas fa-heartbeat heartbeat-enhanced"></i></div><div class="stat-content"><div class="stat-name">运行时间</div><div class="stat-number" id="uptime">0天 0时 0分 0秒</div></div></div></div>
+                    <div class="stat-card"><div class="stat-card-inner"><div class="stat-icon online-icon"><i class="fas fa-users"></i></div><div class="stat-content"><div class="stat-name">在线人数</div><div class="stat-number" id="onlineCount">0</div></div></div></div>
+                    <div class="stat-card"><div class="stat-card-inner"><div class="stat-icon today-icon"><i class="fas fa-user-plus"></i></div><div class="stat-content"><div class="stat-name">今日访客 (UV)</div><div class="stat-number" id="todayCount">0</div></div></div></div>
+                    <div class="stat-card"><div class="stat-card-inner"><div class="stat-icon total-icon"><i class="fas fa-chart-line"></i></div><div class="stat-content"><div class="stat-name">总浏览量 (PV)</div><div class="stat-number" id="totalCount">0</div></div></div></div>
+                </div>
+                <!-- 免责声明 -->
                 <div class="footer-disclaimer-card">
                     <div class="disclaimer-header"><span class="disclaimer-title">免责声明：</span><span class="disclaimer-version">v2.0 · 生效于 2026.04.02至今</span></div>
                     <div class="disclaimer-text">本站资源均搜集于公开网络，<strong>仅供个人学习与研究</strong>，不保证可用性及安全，使用者需自行承担风险。若涉及版权问题，请通过 <span class="email-text">1595126534@qq.com</span> 联系处理。严禁用于商业或非法目的。</div>
