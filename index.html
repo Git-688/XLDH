@@ -145,12 +145,16 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
 
     <style>
-        /* ===== 新增：桌面端统计卡片和免责声明显示控制 ===== */
+        /* ===== 桌面端统计卡片显示控制 ===== */
         #desktopStatsSection {
             display: none;
         }
         .mobile-stats-wrapper {
             display: block;
+        }
+        /* ===== 移动端免责声明上间距 ===== */
+        .mobile-stats-wrapper .footer-disclaimer-card {
+            margin-top: 16px;
         }
         @media (min-width: 769px) {
             #desktopStatsSection {
@@ -900,7 +904,7 @@
                     <div class="stat-card"><div class="stat-card-inner"><div class="stat-icon today-icon"><i class="fas fa-user-plus"></i></div><div class="stat-content"><div class="stat-name">今日访客 (UV)</div><div class="stat-number" id="todayCount">0</div></div></div></div>
                     <div class="stat-card"><div class="stat-card-inner"><div class="stat-icon total-icon"><i class="fas fa-chart-line"></i></div><div class="stat-content"><div class="stat-name">总浏览量 (PV)</div><div class="stat-number" id="totalCount">0</div></div></div></div>
                 </div>
-                <!-- 免责声明 -->
+                <!-- 免责声明（移动端上间距16px） -->
                 <div class="footer-disclaimer-card">
                     <div class="disclaimer-header"><span class="disclaimer-title">免责声明：</span><span class="disclaimer-version">v2.0 · 生效于 2026.04.02至今</span></div>
                     <div class="disclaimer-text">本站资源均搜集于公开网络，<strong>仅供个人学习与研究</strong>，不保证可用性及安全，使用者需自行承担风险。若涉及版权问题，请通过 <span class="email-text">1595126534@qq.com</span> 联系处理。严禁用于商业或非法目的。</div>
