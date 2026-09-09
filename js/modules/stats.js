@@ -1,4 +1,6 @@
-/* stats.js - 访客实时在线统计增强（页面离开信号 + 停留时长） */
+/* stats.js - 访客实时在线统计增强（页面离开信号 + 停留时长） 
+   修改：改用 querySelectorAll 支持多实例更新（电脑端和移动端同时更新） */
+
 const WORKER_URL = (typeof Utils !== 'undefined' && Utils.getApiBase) ? Utils.getApiBase() : (window.APP_CONFIG?.API_BASE || 'https://api.xjdh688.ccwu.cc');
 
 const SESSION_KEY = 'visitor_session_id';
@@ -24,8 +26,11 @@ function updateUptimeDisplay(startTimeMs) {
     if (!startTimeMs) return;
     const uptimeMs = Date.now() - startTimeMs;
     const formatted = formatUptime(uptimeMs);
-    const uptimeEl = document.getElementById('uptime');
-    if (uptimeEl) uptimeEl.textContent = formatted;
+    // 使用 querySelectorAll 更新所有 uptime 元素
+    const uptimeEls = document.querySelectorAll('#uptime');
+    uptimeEls.forEach(el => {
+        if (el) el.textContent = formatted;
+    });
 }
 
 async function fetchUptimeStart() {
@@ -36,8 +41,10 @@ async function fetchUptimeStart() {
         updateUptimeDisplay(data.startTime);
         setInterval(() => updateUptimeDisplay(data.startTime), 1000);
     } catch (e) {
-        const uptimeEl = document.getElementById('uptime');
-        if (uptimeEl) uptimeEl.textContent = '获取失败';
+        const uptimeEls = document.querySelectorAll('#uptime');
+        uptimeEls.forEach(el => {
+            if (el) el.textContent = '获取失败';
+        });
     }
 }
 
@@ -77,15 +84,19 @@ async function refreshStats() {
         const res = await fetch(`${WORKER_URL}/stats`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        const onlineEl = document.getElementById('onlineCount');
-        const todayEl = document.getElementById('todayCount');
-        const totalEl = document.getElementById('totalCount');
-        const siteCountEl = document.getElementById('siteCount');
-        if (onlineEl) onlineEl.textContent = data.online;
-        if (todayEl) todayEl.textContent = data.today_uv;
-        if (totalEl) totalEl.textContent = data.total_pv;
-        if (siteCountEl && data.total_sites !== undefined) {
-            siteCountEl.textContent = data.total_sites;
+        // 使用 querySelectorAll 更新所有统计卡片
+        const onlineEls = document.querySelectorAll('#onlineCount');
+        onlineEls.forEach(el => { if (el) el.textContent = data.online; });
+        
+        const todayEls = document.querySelectorAll('#todayCount');
+        todayEls.forEach(el => { if (el) el.textContent = data.today_uv; });
+        
+        const totalEls = document.querySelectorAll('#totalCount');
+        totalEls.forEach(el => { if (el) el.textContent = data.total_pv; });
+        
+        const siteCountEls = document.querySelectorAll('#siteCount');
+        if (siteCountEls.length && data.total_sites !== undefined) {
+            siteCountEls.forEach(el => { if (el) el.textContent = data.total_sites; });
         }
     } catch (e) {}
 }
