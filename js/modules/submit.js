@@ -1,4 +1,4 @@
-/* submit.js - 完整修改版（符合4点需求 + 修复获取信息时清空字段 + 轮询最大重试） */
+/* submit.js - 移除安全检测功能，简化为直接获取信息并提交 */
 class SubmitModule {
     constructor() {
         if (window.Starlink && window.Starlink.submit) return window.Starlink.submit;
@@ -22,13 +22,6 @@ class SubmitModule {
         this.cachedTotalCountTime = 0;
         this.cacheTTL = 60000;
 
-        this.securityPassed = false;
-        this.lastSecurityDetail = null;
-        this.currentTaskId = null;
-        this.pollingTimer = null;
-        // ===== 新增：轮询最大重试次数 =====
-        this.pollingRetries = 0;
-        this.MAX_POLLING_RETRIES = 30;
         this.isVisible = false;
         this.hasFetchedInfo = false;
 
@@ -97,11 +90,7 @@ class SubmitModule {
             if (draft.contact) localStorage.setItem(this.CONTACT_KEY, draft.contact);
             this.isRestoringDraft = false;
 
-            // ===== 新增：恢复草稿时清除旧安全状态 =====
-            this.resetSecurityCheck();
-            this.securityPassed = false;
             this.hasFetchedInfo = false;
-
             if (draft.url && this.isVisible && !this.hasFetchedInfo) {
                 setTimeout(() => this.fetchSiteInfo(), 500);
             }
@@ -149,7 +138,6 @@ class SubmitModule {
                     this.ensureStatsBadge();
                     this.loadGlobalTotalCount();
                     if (!this.loadDraft()) {
-                        this.resetSecurityCheck();
                         const savedContact = localStorage.getItem(this.CONTACT_KEY);
                         if (savedContact && this.contactInput) {
                             this.contactInput.value = savedContact;
@@ -158,7 +146,6 @@ class SubmitModule {
                     this.updateSubmitButton();
                 } else if (mutation.attributeName === 'class' && !this.modal.classList.contains('active')) {
                     this.isVisible = false;
-                    // ===== 新增：模态框关闭时重置获取信息标志 =====
                     this.hasFetchedInfo = false;
                 }
             });
@@ -234,7 +221,6 @@ class SubmitModule {
         this.fetchInfoBtn.addEventListener('click', () => this.fetchSiteInfo());
 
         this.urlInput.addEventListener('input', () => {
-            this.resetSecurityCheck();
             this.hasFetchedInfo = false;
             this.updateSubmitButton();
             this.scheduleDraftSave();
@@ -272,70 +258,10 @@ class SubmitModule {
         return fields.some(el => el && el.value && el.value.trim() !== '');
     }
 
-    stopPolling() {
-        if (this.pollingTimer) {
-            clearInterval(this.pollingTimer);
-            this.pollingTimer = null;
-        }
-        this.pollingRetries = 0;
-    }
-
-    resetSecurityCheck() {
-        this.stopPolling();
-        this.securityPassed = false;
-        this.lastSecurityDetail = null;
-        this.currentTaskId = null;
-        this.pollingRetries = 0;
-        if (this.urlCheckResult) {
-            this.urlCheckResult.style.display = 'none';
-            this.urlCheckResult.className = 'url-check-result';
-            this.urlCheckResult.textContent = '';
-        }
-    }
-
     autoResizeDesc() {
         if (!this.descInput) return;
         this.descInput.style.height = 'auto';
         this.descInput.style.height = this.descInput.scrollHeight + 'px';
-    }
-
-    displaySecurityReport(data) {
-        let html = '';
-        if (data.alreadySubmitted) {
-            html = `<div class="security-report unsafe">⚠️ ${this.escapeHtml(data.label || '该网站已收录或已在审核中，无法提交')}</div>`;
-            this.urlCheckResult.innerHTML = html;
-            this.urlCheckResult.style.display = 'block';
-            this.urlCheckResult.className = 'url-check-result unsafe';
-            return;
-        }
-        if (data.canSubmit === false) {
-            html = `<div class="security-report unsafe">❌ 安全检测不通过<br>${this.escapeHtml(data.label || '该链接存在安全风险，禁止提交')}</div>`;
-            if (data.details && data.details.riskLevel) {
-                html += `<div class="security-detail">风险等级：<span class="risk-high">高风险</span></div>`;
-            }
-            this.urlCheckResult.innerHTML = html;
-            this.urlCheckResult.style.display = 'block';
-            this.urlCheckResult.className = 'url-check-result unsafe';
-            return;
-        }
-        let detailHtml = '';
-        if (data.label) detailHtml += `<div class="security-summary">🔒 ${this.escapeHtml(data.label)}</div>`;
-        if (data.riskLevel) {
-            const riskText = data.riskLevel === 'low' ? '低风险' : (data.riskLevel === 'medium' ? '中风险' : '未知');
-            detailHtml += `<div class="security-detail">风险等级：<span class="risk-${data.riskLevel}">${riskText}</span></div>`;
-        }
-        if (data.details) {
-            if (data.details.vt && data.details.vt.stats) {
-                detailHtml += `<div class="security-detail">VirusTotal: 恶意 ${data.details.vt.stats.malicious || 0} / 可疑 ${data.details.vt.stats.suspicious || 0}</div>`;
-            }
-            if (data.details.safebrowsing && data.details.safebrowsing.available) {
-                detailHtml += `<div class="security-detail">Google SafeBrowsing: 已检测</div>`;
-            }
-        }
-        html = `<div class="security-report safe">✅ 安全检测通过</div>${detailHtml}<div class="security-hint">可安全提交</div>`;
-        this.urlCheckResult.innerHTML = html;
-        this.urlCheckResult.style.display = 'block';
-        this.urlCheckResult.className = 'url-check-result safe';
     }
 
     async fetchSiteInfo() {
@@ -345,21 +271,19 @@ class SubmitModule {
             return;
         }
 
-        this.resetSecurityCheck();
         this.hasFetchedInfo = false;
         this.fetchInfoBtn.disabled = true;
         this.fetchInfoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 获取信息...';
-        this.urlCheckResult.style.display = 'block';
-        this.urlCheckResult.className = 'url-check-result checking';
-        this.urlCheckResult.innerHTML = '正在获取网站信息，安全检测后台进行中...';
+        if (this.urlCheckResult) {
+            this.urlCheckResult.style.display = 'block';
+            this.urlCheckResult.className = 'url-check-result checking';
+            this.urlCheckResult.innerHTML = '正在获取网站信息...';
+        }
 
         try {
             const safeUrl = url.startsWith('http') ? url : `https://${url}`;
-            const response = await Utils.safeFetch(`${this.apiBase}/fetch-site-info`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: safeUrl })
-            });
+            // 使用 GET 接口获取信息，不触发安全检测
+            const response = await Utils.safeFetch(`${this.apiBase}/fetch-site-info?url=${encodeURIComponent(safeUrl)}`, { timeout: 10000 });
             const data = await response.json();
 
             if (data.title && !this.titleInput.value.trim()) {
@@ -374,32 +298,31 @@ class SubmitModule {
                 this.autoResizeDesc();
             }
 
-            if (data.taskId) {
-                this.currentTaskId = data.taskId;
-                this.pollingRetries = 0;
-                this.startPolling();
-            } else {
-                this.lastSecurityDetail = data;
-                this.displaySecurityReport(data);
-                if (data.alreadySubmitted) {
-                    this.securityPassed = false;
-                } else if (data.canSubmit === false) {
-                    this.securityPassed = false;
-                } else {
-                    this.securityPassed = true;
-                    this.hasFetchedInfo = true;
+            // 检查是否已收录
+            if (data.alreadySubmitted) {
+                if (this.urlCheckResult) {
+                    this.urlCheckResult.className = 'url-check-result unsafe';
+                    this.urlCheckResult.innerHTML = '⚠️ 该网站已收录或已在审核中，无法提交';
                 }
-                this.updateSubmitButton();
+                this.hasFetchedInfo = false;
+            } else {
+                if (this.urlCheckResult) {
+                    this.urlCheckResult.className = 'url-check-result safe';
+                    this.urlCheckResult.innerHTML = '✅ 信息获取成功，可提交';
+                }
+                this.hasFetchedInfo = true;
             }
+            this.updateSubmitButton();
             this.scheduleDraftSave();
         } catch (error) {
             if (window.errorHandler) {
                 window.errorHandler.report(error, 'submit.fetchSiteInfo');
             }
             Utils.handleApiError(error, '获取网站信息失败', true);
-            this.urlCheckResult.className = 'url-check-result checking';
-            this.urlCheckResult.innerHTML = '获取信息失败，请手动填写并重试检测';
-            this.securityPassed = false;
+            if (this.urlCheckResult) {
+                this.urlCheckResult.className = 'url-check-result checking';
+                this.urlCheckResult.innerHTML = '获取信息失败，请手动填写';
+            }
             this.hasFetchedInfo = false;
             this.updateSubmitButton();
         } finally {
@@ -408,85 +331,21 @@ class SubmitModule {
         }
     }
 
-    // ===== 修复：轮询增加最大重试次数 =====
-    startPolling() {
-        if (this.pollingTimer) clearInterval(this.pollingTimer);
-        this.pollingRetries = 0;
-
-        this.pollingTimer = setInterval(async () => {
-            if (!this.currentTaskId) return;
-            this.pollingRetries++;
-
-            // ===== 新增：超过最大重试次数，停止轮询 =====
-            if (this.pollingRetries > this.MAX_POLLING_RETRIES) {
-                this.stopPolling();
-                this.urlCheckResult.className = 'url-check-result checking';
-                this.urlCheckResult.innerHTML = '安全检测超时，请稍后重试';
-                this.securityPassed = false;
-                this.hasFetchedInfo = false;
-                this.updateSubmitButton();
-                window.toast.show('安全检测超时，请重新获取信息', 'warning');
-                return;
-            }
-
-            try {
-                const res = await Utils.safeFetch(`${this.apiBase}/security-status?taskId=${this.currentTaskId}`);
-                const status = await res.json();
-                if (status.status === 'completed') {
-                    this.stopPolling();
-                    this.lastSecurityDetail = status.result;
-                    this.displaySecurityReport(status.result);
-                    if (status.result.canSubmit !== false) {
-                        this.securityPassed = true;
-                        this.hasFetchedInfo = true;
-                    } else {
-                        this.securityPassed = false;
-                        this.hasFetchedInfo = false;
-                    }
-                    this.updateSubmitButton();
-                } else if (status.status === 'failed') {
-                    this.stopPolling();
-                    this.urlCheckResult.className = 'url-check-result unsafe';
-                    this.urlCheckResult.innerHTML = '安全检测失败，请稍后重试';
-                    this.securityPassed = false;
-                    this.hasFetchedInfo = false;
-                    this.updateSubmitButton();
-                } else {
-                    this.urlCheckResult.innerHTML = `安全检测进行中 (${this.pollingRetries}/${this.MAX_POLLING_RETRIES})...`;
-                }
-            } catch (err) {
-                if (window.errorHandler) {
-                    window.errorHandler.report(err, 'submit.startPolling');
-                }
-                if (this.pollingRetries >= this.MAX_POLLING_RETRIES) {
-                    this.stopPolling();
-                    this.urlCheckResult.className = 'url-check-result checking';
-                    this.urlCheckResult.innerHTML = '网络错误，请重试';
-                    this.securityPassed = false;
-                    this.hasFetchedInfo = false;
-                    this.updateSubmitButton();
-                }
-            }
-        }, 2000);
-    }
-
     updateSubmitButton() {
         const title = this.titleInput.value.trim();
         const url = this.urlInput.value.trim();
         const contact = this.contactInput ? this.contactInput.value.trim() : '';
         const urlValid = Utils.isValidUrl(url);
         const contactValid = contact && contact.includes('@');
-        const enable = !!(title && urlValid && this.securityPassed && contactValid);
+        // 不需要安全检测，只需标题、网址有效且联系邮箱有效即可启用提交按钮
+        const enable = !!(title && urlValid && contactValid);
         this.submitSaveBtn.disabled = !enable || this.submitting;
     }
 
     async handleSubmit(e) {
         e.preventDefault();
         if (this.submitting) return;
-        if (!this.securityPassed) {
-            window.toast.show('请先点击"获取信息"完成安全检测，且检测通过后才能提交', 'warning');
-            return;
-        }
+
         let title = this.titleInput.value.trim();
         let url = this.urlInput.value.trim();
         let contact = this.contactInput ? this.contactInput.value.trim() : '';
@@ -525,23 +384,14 @@ class SubmitModule {
             });
             const data = await response.json();
             if (response.ok) {
-                window.toast.show('投稿成功！已通过安全检测，等待管理员审核', 'success');
+                window.toast.show('投稿成功！等待管理员审核', 'success');
                 this.updateGlobalTotalCountIncrement();
                 this.clearDraft();
                 this.hide();
                 this.resetForm();
             } else {
                 let errorMsg = data.error || '提交失败';
-                if (data.details && data.details.label) {
-                    errorMsg = data.details.label;
-                }
                 window.toast.show(errorMsg, 'error');
-                if (this.urlCheckResult && data.details && data.details.label) {
-                    this.displaySecurityReport(data.details);
-                    this.securityPassed = false;
-                    this.hasFetchedInfo = false;
-                    this.updateSubmitButton();
-                }
             }
         } catch (error) {
             if (window.errorHandler) {
@@ -567,14 +417,16 @@ class SubmitModule {
 
     resetForm() {
         this.form.reset();
-        this.resetSecurityCheck();
         this.iconPreview.style.display = 'none';
         this.submitSaveBtn.disabled = true;
         if (this.descInput) this.descInput.style.height = 'auto';
         this.submitting = false;
-        this.securityPassed = false;
-        this.lastSecurityDetail = null;
         this.hasFetchedInfo = false;
+        if (this.urlCheckResult) {
+            this.urlCheckResult.style.display = 'none';
+            this.urlCheckResult.className = 'url-check-result';
+            this.urlCheckResult.textContent = '';
+        }
     }
 
     show() {
@@ -598,7 +450,7 @@ class SubmitModule {
         this.modal.classList.remove('active');
         const onTransitionEnd = () => {
             this.isVisible = false;
-            this.hasFetchedInfo = false; // ===== 新增：关闭时重置 =====
+            this.hasFetchedInfo = false;
             if (window.Starlink?.app) window.Starlink.app.unregisterModal(this);
             else if (window.app) window.app.unregisterModal(this);
             this.modal.removeEventListener('transitionend', onTransitionEnd);
