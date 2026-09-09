@@ -1,4 +1,4 @@
-/* navigation.css - 完整修改版（电脑端一级、二级导航水平滚动 + 简介兼容降级） */
+/* navigation.css - 完整修改版（电脑端一级、二级导航水平滚动 + 数字背景自适应） */
 
 .nav-search-box {
     display: block;
@@ -241,17 +241,21 @@
 .level2-btn:hover { background: rgba(67, 97, 238, 0.06); }
 .level2-btn.active { background: transparent; color: var(--nav-level2-active); font-weight: 700; }
 .level2-btn-text { white-space: nowrap; font-size: 13px; text-align: center; }
+
+/* ===== 修改：数字背景自适应，去掉固定宽度 ===== */
 .level2-btn-count {
     background: rgba(0, 0, 0, 0.05);
     color: var(--text-secondary);
     font-size: 11px;
     font-weight: 600;
-    padding: 1px 5px;
+    padding: 1px 6px;
     border-radius: 8px;
-    min-width: 18px;
+    /* min-width 移除，由 padding 撑开 */
     text-align: center;
     flex-shrink: 0;
     margin-left: 4px;
+    display: inline-block;
+    line-height: 1.2;
 }
 .level2-btn.active .level2-btn-count {
     background: var(--nav-level2-active);
@@ -398,7 +402,7 @@
     text-align: center;
 }
 
-/* ===== 修复：简介兼容性降级 ===== */
+/* ===== 简介兼容性降级 ===== */
 .site-description {
     font-size: 11px;
     color: var(--text-secondary);
