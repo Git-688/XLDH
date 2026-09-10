@@ -8,100 +8,33 @@ Disallow: /admin.html
 Disallow: /admin/
 
 # 禁止爬取敏感页面
+Disallow: /assets/
 Disallow: /pages/others/smkj.html
 
-# 禁止爬取 Service Worker
-Disallow: /sw.js
-
-# 禁止爬取动态 API
-Disallow: /navigation/
-Disallow: /stats
-Disallow: /uptime
-Disallow: /init
-Disallow: /batch-icons
-Disallow: /submit-site
-Disallow: /report-dead-link
-Disallow: /click
+# 禁止爬取动态API
+Disallow: /api/
 Disallow: /log
-Disallow: /icon
-Disallow: /image-proxy
-Disallow: /music-proxy
-Disallow: /weather/
-Disallow: /search
-Disallow: /security-status
-Disallow: /user/
-Disallow: /subcategory/
-Disallow: /global-submission-count
-Disallow: /total-sites-count
-Disallow: /fetch-site-info
-Disallow: /partners
-Disallow: /partner-settings
-Disallow: /announcement/
-Disallow: /topclicks
 
 # 禁止爬取临时文件和备份
 Disallow: /*.tmp$
 Disallow: /*.bak$
 Disallow: /*.old$
-Disallow: /*.log$
 
 # 允许爬取核心内容
 Allow: /pages/tools/
 Allow: /pages/chl/
-Allow: /index.html
-Allow: /$
 
-# 指定 Sitemap 位置
+# 指定Sitemap位置
 Sitemap: https://xjdh688.ccwu.cc/sitemap.xml
 
 # 爬取延迟
 Crawl-delay: 1
 
-# ===== Googlebot 专属规则 =====
 User-agent: Googlebot
 Crawl-delay: 2
-Disallow: /admin.html
-Disallow: /admin/
-Disallow: /sw.js
-Disallow: /navigation/
-Disallow: /stats
-Disallow: /init
 
-# ===== Baiduspider 专属规则 =====
 User-agent: Baiduspider
 Crawl-delay: 2
-Disallow: /admin.html
-Disallow: /admin/
-Disallow: /sw.js
-Disallow: /navigation/
-Disallow: /stats
-Disallow: /init
 
-# ===== Bingbot 专属规则 =====
 User-agent: Bingbot
 Crawl-delay: 2
-Disallow: /admin.html
-Disallow: /admin/
-Disallow: /sw.js
-Disallow: /navigation/
-Disallow: /stats
-Disallow: /init
-
-# ===== 恶意爬虫拉黑 =====
-User-agent: SemrushBot
-Disallow: /
-
-User-agent: AhrefsBot
-Disallow: /
-
-User-agent: MJ12bot
-Disallow: /
-
-User-agent: DotBot
-Disallow: /
-
-User-agent: PetalBot
-Disallow: /
-
-User-agent: Bytespider
-Disallow: /
