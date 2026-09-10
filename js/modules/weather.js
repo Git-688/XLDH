@@ -1,4 +1,4 @@
-/* weather.js - 完整版（增加错误上报，修复天气模态框头部图标颜色） */
+/* weather.js - 完整版（增加错误上报，修复天气模态框头部图标颜色，修复 GPS 重试状态残留） */
 class WeatherModule {
     static CONFIG = {
         get API_BASE() {
@@ -8,7 +8,7 @@ class WeatherModule {
 
     constructor() {
         if (window.Starlink && window.Starlink.weather) return window.Starlink.weather;
-        
+
         this.currentCity = '北京';
         this.weatherData = null;
         this.modalElement = null;
@@ -23,7 +23,7 @@ class WeatherModule {
         this.escHandler = null;
         this.showModalBound = this.showModal.bind(this);
         this.gpsAttempted = false;
-        
+
         if (window.Starlink) window.Starlink.weather = this;
         window.weatherModule = this;
     }
@@ -176,6 +176,8 @@ class WeatherModule {
                 window.errorHandler.report(error, 'weather.tryGpsLocation');
             }
             console.error('GPS 定位失败:', error.message);
+            // ===== 修复：GPS 失败后重置尝试标记，允许后续自动重试 =====
+            this.gpsAttempted = false;
             this.useAutoLocation = false;
             const toast = window.Starlink?.toast || window.toast;
             if (toast && toast.show) {
@@ -389,7 +391,7 @@ class WeatherModule {
         });
         if (window.Starlink?.app) window.Starlink.app.registerModal(this);
         else if (window.app) window.app.registerModal(this);
-        
+
         this.isLoading = true;
         this.loadWeatherData().then(() => {
             this.updateModalContent();
@@ -470,14 +472,14 @@ class WeatherModule {
 
         const { weatherData } = this;
         const esc = this._escapeHtml.bind(this);
-        
+
         const manualModeHint = !this.useAutoLocation ? `
             <div class="manual-mode-hint" style="background:rgba(245,158,11,0.1); border-radius:8px; padding:6px 10px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-size:12px; color:#d97706;"><i class="fas fa-map-marker-alt"></i> 当前为手动选择城市</span>
                 <button id="switchToAutoBtn" class="weather-action-btn" style="background:#4361ee; color:white; border:none; border-radius:6px; padding:4px 12px; font-size:11px;">📍 GPS定位</button>
             </div>
         ` : '';
-        
+
         let alarmsHtml = '';
         if (weatherData.alarms && weatherData.alarms.length > 0) {
             const firstAlarmTime = weatherData.alarms[0].effective || '';
@@ -677,9 +679,8 @@ class WeatherModule {
             const esc = this._escapeHtml.bind(this);
             const modal = document.createElement('div');
             modal.className = 'city-prompt-modal';
-            modal.classList.add('active');
             modal.style.display = 'flex';
-            modal.style.opacity = '1';
+            modal.style.opacity = '0';
 
             modal.innerHTML = `
                 <div class="city-prompt-content">
@@ -714,11 +715,16 @@ class WeatherModule {
 
             document.body.appendChild(modal);
 
-            const content = modal.querySelector('.city-prompt-content');
-            if (content) {
-                content.style.transform = 'scale(1)';
-                content.style.opacity = '1';
-            }
+            // ===== 修复：用 requestAnimationFrame 触发过渡动画 =====
+            requestAnimationFrame(() => {
+                modal.classList.add('active');
+                modal.style.opacity = '1';
+                const content = modal.querySelector('.city-prompt-content');
+                if (content) {
+                    content.style.transform = 'scale(1)';
+                    content.style.opacity = '1';
+                }
+            });
 
             const cancelBtn = modal.querySelector('#cancelCityBtn');
             const confirmBtn = modal.querySelector('#confirmCityBtn');
@@ -806,6 +812,7 @@ class WeatherModule {
         setTimeout(() => modal.remove(), 300);
     }
 
+    // ===== 修复：gpsAttempted 重置移入 finally，确保任何情况都能重试 =====
     async handleGpsRefresh() {
         this.gpsAttempted = false;
         try {
@@ -827,6 +834,8 @@ class WeatherModule {
             if (toast && toast.show) toast.show('定位失败，请手动选择城市', 'error');
             else if (window.app && window.app.showToast) window.app.showToast('定位失败，请手动选择城市', 'error');
         } finally {
+            // ===== 修复：无论成败都重置尝试标记，保证下次能重新定位 =====
+            this.gpsAttempted = false;
             const locationBtn = this.modalElement?.querySelector('#weatherLocationBtn');
             if (locationBtn) { locationBtn.innerHTML = '<i class="fas fa-location-crosshairs"></i>'; locationBtn.disabled = false; }
         }
@@ -901,10 +910,10 @@ class WeatherModule {
     closeOtherModals() {
         if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible) window.Starlink.sidebar.hide();
         else if (window.sidebar && window.sidebar.isVisible) window.sidebar.hide();
-        
+
         if (window.Starlink?.search && window.Starlink.search.isModalOpen) window.Starlink.search.hide();
         else if (window.searchModule && window.searchModule.isModalOpen) window.searchModule.hide();
-        
+
         if (window.Starlink?.navbar?.hideMusicPlayer) window.Starlink.navbar.hideMusicPlayer();
         else if (window.app?.components?.navbar?.hideMusicPlayer) window.app.components.navbar.hideMusicPlayer();
     }
