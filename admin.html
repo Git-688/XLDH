@@ -53,9 +53,6 @@
         .login-form label { display: block; font-size: 11px; font-weight: 500; color: #475569; margin-bottom: 6px; }
         .login-form input { width: 100%; padding: 8px 12px; font-size: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; transition: all 0.2s; outline: none; }
         .login-form input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-        .captcha-row { display: flex; gap: 8px; align-items: center; }
-        .captcha-row input { flex: 1; }
-        .captcha-row img { height: 36px; border-radius: 8px; cursor: pointer; background: #f1f5f9; }
         .remember-checkbox { display: flex; align-items: center; gap: 6px; margin: 12px 0 16px; font-size: 11px; color: #475569; }
         .remember-checkbox input { width: 14px; height: 14px; margin: 0; }
         .login-btn { width: 100%; background: #3b82f6; border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 500; color: white; cursor: pointer; transition: background 0.2s; }
@@ -282,13 +279,6 @@
                             </button>
                         </div>
                     </div>
-                    <div class="input-group" id="captchaGroup" style="display: none;">
-                        <label>验证码</label>
-                        <div class="captcha-row">
-                            <input type="text" id="captchaInput" placeholder="请输入验证码" autocomplete="off" maxlength="8">
-                            <img id="captchaImg" src="" alt="验证码" style="height:36px;cursor:pointer;" title="点击刷新">
-                        </div>
-                    </div>
                     <div class="remember-checkbox">
                         <input type="checkbox" id="rememberToken">
                         <label for="rememberToken">记住密码（1小时有效）</label>
@@ -420,11 +410,9 @@
         </div>
     </div>
 
-    <!-- ===== jQuery 与 FontAwesome 从 unpkg 加载，无 SRI ===== -->
     <script src="https://unpkg.com/jquery@3.6.1/dist/jquery.min.js"></script>
     <script src="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/js/all.min.js"></script>
 
-    <!-- ===== 后台主脚本（外链，与内联脚本内容完全一致） ===== -->
     <script src="./admin.js" defer></script>
 </body>
 </html>
