@@ -1,4 +1,4 @@
-/* admin.js - 完整版（密码可见性切换 + 从 admin.html 抽离的内联脚本） */
+/* admin.js - 完整版（密码可见性切换 + 从 admin.html 抽离的内联脚本 + 兼容新旧导航缓存前缀） */
 (function() {
     'use strict';
 
@@ -1983,10 +1983,13 @@
 
             try {
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
+                // ===== 修复：同时清理新旧两种前缀的导航缓存 =====
+                // - nav_data_*          旧版（裸 localStorage 直写）
+                // - starlink_nav_data_* 新版（Storage 封装）
                 const keysToRemove = [];
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
-                    if (key && key.startsWith('nav_data_')) {
+                    if (key && (key.startsWith('nav_data_') || key.startsWith('starlink_nav_data_'))) {
                         keysToRemove.push(key);
                     }
                 }
