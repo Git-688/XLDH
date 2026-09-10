@@ -170,7 +170,6 @@ class CustomSelect {
         if (valueSpan) valueSpan.textContent = this.getSelectedText();
     }
 
-    // ===== 修复：完善 destroy，从 Map 中删除 =====
     destroy() {
         this.closeDropdown();
         if (this.container.parentNode) this.container.remove();
@@ -214,6 +213,8 @@ class MusicPlayer {
         this.userGesturePromise = null;
         // ===== 新增：用户手势超时定时器 =====
         this._userGestureTimeout = null;
+        // ===== 修复：保存缓存清理定时器 ID，便于 cleanup 时清除 =====
+        this._cacheCleanupInterval = null;
 
         if (!window.Starlink) window.Starlink = {};
         if (!window.Starlink.musicPlayer) {
@@ -222,29 +223,38 @@ class MusicPlayer {
         window.musicPlayer = window.Starlink.musicPlayer;
     }
 
-    // ===== 修复：waitForUserGesture 添加 10 秒超时 =====
+    // ===== 修复：waitForUserGesture 处理顺序 + 超时/手势触发后清空 Promise =====
     waitForUserGesture() {
         if (this.userGestureResolved) return Promise.resolve();
         if (this.userGesturePromise) return this.userGesturePromise;
 
         this.userGesturePromise = new Promise((resolve) => {
+            // 先声明 handler（避免 TDZ 边界歧义）
+            const handler = () => {
+                this.userGestureResolved = true;
+                if (this._userGestureTimeout) {
+                    clearTimeout(this._userGestureTimeout);
+                    this._userGestureTimeout = null;
+                }
+                document.removeEventListener('click', handler);
+                document.removeEventListener('touchstart', handler);
+                document.removeEventListener('keydown', handler);
+                // 手势触发后清空 Promise，避免后续调用返回已 resolve 的旧引用
+                this.userGesturePromise = null;
+                resolve();
+            };
+
             // 10 秒超时自动 resolve
             this._userGestureTimeout = setTimeout(() => {
                 this.userGestureResolved = true;
+                this._userGestureTimeout = null;
                 document.removeEventListener('click', handler);
                 document.removeEventListener('touchstart', handler);
                 document.removeEventListener('keydown', handler);
+                this.userGesturePromise = null;
                 resolve();
             }, 10000);
 
-            const handler = () => {
-                this.userGestureResolved = true;
-                clearTimeout(this._userGestureTimeout);
-                document.removeEventListener('click', handler);
-                document.removeEventListener('touchstart', handler);
-                document.removeEventListener('keydown', handler);
-                resolve();
-            };
             document.addEventListener('click', handler);
             document.addEventListener('touchstart', handler);
             document.addEventListener('keydown', handler);
@@ -328,7 +338,6 @@ class MusicPlayer {
         } catch(e) {}
     }
 
-    // ===== 修复：restorePlaybackProgress 监听 loadedmetadata =====
     restorePlaybackProgress() {
         try {
             const progress = localStorage.getItem('music_player_progress');
@@ -344,7 +353,6 @@ class MusicPlayer {
                             this.audio.removeEventListener('loadedmetadata', setTime);
                         };
                         this.audio.addEventListener('loadedmetadata', setTime);
-                        // 如果已经加载完成，直接设置
                         if (this.audio.readyState >= 1) {
                             this.audio.removeEventListener('loadedmetadata', setTime);
                             this.audio.currentTime = data.currentTime;
@@ -492,7 +500,6 @@ class MusicPlayer {
             this.lyricsLineEl.classList.remove('overflow');
             this.lyricsLineEl.style.transform = '';
         }
-        // ===== 修改点：区分无歌词和加载失败 =====
         if (!song.lrc) {
             this.lyricsLineEl.textContent = '暂无歌词';
             return;
@@ -1277,7 +1284,8 @@ class MusicPlayer {
             }
         }, 500);
 
-        setInterval(() => this.cacheManager.cleanup(), 30 * 60 * 1000);
+        // ===== 修复：保存定时器 ID，便于 cleanup 时清除 =====
+        this._cacheCleanupInterval = setInterval(() => this.cacheManager.cleanup(), 30 * 60 * 1000);
         this.hasInitialized = true;
         this.restorePlaybackProgress();
 
@@ -1296,7 +1304,7 @@ class MusicPlayer {
         if (this.isVolumeSliderVisible) this.hideVolumeSlider();
     }
 
-    // ===== 修复：cleanup 中销毁所有 CustomSelect 实例 =====
+    // ===== 修复：cleanup 中清除缓存清理定时器 =====
     cleanup() {
         if (this.updateAnimationFrame) cancelAnimationFrame(this.updateAnimationFrame);
         if (this.dragRAF) cancelAnimationFrame(this.dragRAF);
@@ -1308,8 +1316,13 @@ class MusicPlayer {
             clearTimeout(this._userGestureTimeout);
             this._userGestureTimeout = null;
         }
+        // ===== 新增：清除缓存清理定时器 =====
+        if (this._cacheCleanupInterval) {
+            clearInterval(this._cacheCleanupInterval);
+            this._cacheCleanupInterval = null;
+        }
 
-        // ===== 新增：销毁所有 CustomSelect 实例 =====
+        // ===== 销毁所有 CustomSelect 实例 =====
         if (customSelectInstances) {
             customSelectInstances.forEach((instance) => {
                 try { instance.destroy(); } catch(e) {}
