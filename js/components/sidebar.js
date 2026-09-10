@@ -51,8 +51,10 @@
             this.categories = JSON.parse(JSON.stringify(CATEGORIES_DATA));
             this.userConfig = null;
             this._savedScrollY = 0;
-            this._profileModal = null; // ===== 新增：复用模态框 =====
-            this._wallpaperCache = null; // ===== 新增：壁纸缓存 =====
+            this._profileModal = null; // 复用模态框
+            this._wallpaperCache = null; // 壁纸缓存
+            // ===== 新增：保存个人资料模态框的 ESC 监听器引用 =====
+            this._profileEscHandler = null;
             this.init();
             if (window.Starlink) window.Starlink.sidebar = this;
             window.sidebar = this;
@@ -323,7 +325,7 @@
             }
         }
 
-        // ===== 修复：壁纸加载增加缓存 =====
+        // 壁纸加载增加缓存
         async loadWallpaperBackground() {
             const wallpaperDiv = document.getElementById('sidebarWallpaper');
             if (!wallpaperDiv) return;
@@ -363,12 +365,17 @@
             }
         }
 
-        // ===== 修复：openProfileModal 复用单例模态框 =====
+        // ===== 修复：openProfileModal 复用单例模态框 + ESC 监听器统一管理 =====
         openProfileModal() {
             // 如果已有模态框，先移除
             if (this._profileModal && this._profileModal.parentNode) {
                 this._profileModal.remove();
                 this._profileModal = null;
+            }
+            // ===== 修复：同时清理可能残留的 ESC 监听器 =====
+            if (this._profileEscHandler) {
+                document.removeEventListener('keydown', this._profileEscHandler);
+                this._profileEscHandler = null;
             }
 
             const currentAvatar = (this.userConfig && this.userConfig.avatar) ? this.userConfig.avatar : './assets/logo.png';
@@ -493,11 +500,12 @@
                 const newName = document.getElementById('profileNickname')?.value.trim() || '访客用户';
                 const newSig = document.getElementById('profileSignature')?.value.trim() || '探索无限可能';
                 const newQQ = document.getElementById('profileQQ')?.value.trim() || '';
+                // ===== 修复：userConfig 兜底，防止 null 时抛错 =====
                 const userConfig = Storage.get('userConfig') || {};
                 userConfig.nickname = newName;
                 userConfig.signature = newSig;
                 userConfig.qq = newQQ;
-                if (this.userConfig.avatar) userConfig.avatar = this.userConfig.avatar;
+                if (this.userConfig && this.userConfig.avatar) userConfig.avatar = this.userConfig.avatar;
                 Storage.set('userConfig', userConfig);
                 this.loadUserData();
                 this._closeProfileModal();
@@ -508,17 +516,21 @@
                 this._closeProfileModal();
             });
 
-            // ESC 关闭
-            const escHandler = (e) => {
+            // ===== 修复：ESC 监听器保存到实例属性，便于统一移除 =====
+            this._profileEscHandler = (e) => {
                 if (e.key === 'Escape') {
                     this._closeProfileModal();
-                    document.removeEventListener('keydown', escHandler);
                 }
             };
-            document.addEventListener('keydown', escHandler);
+            document.addEventListener('keydown', this._profileEscHandler);
         }
 
+        // ===== 修复：统一清理模态框 + ESC 监听器 =====
         _closeProfileModal() {
+            if (this._profileEscHandler) {
+                document.removeEventListener('keydown', this._profileEscHandler);
+                this._profileEscHandler = null;
+            }
             if (this._profileModal && this._profileModal.parentNode) {
                 this._profileModal.remove();
                 this._profileModal = null;
