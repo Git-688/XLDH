@@ -42,24 +42,6 @@
         ::-webkit-scrollbar { display: none; }
         * { -ms-overflow-style: none; scrollbar-width: none; }
         .container { flex: 1; display: flex; flex-direction: column; max-width: 1200px; margin: 0 auto; width: 100%; overflow: hidden; }
-        .login-section { display: flex; justify-content: center; align-items: center; min-height: 100%; flex: 1; }
-        .login-card { background: #ffffff; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.04); padding: 28px 24px 32px; width: 100%; max-width: 320px; border: 1px solid #eef2f6; }
-        .login-header { text-align: center; margin-bottom: 24px; }
-        .login-logo { width: 48px; height: 48px; margin: 0 auto 12px; border-radius: 8px; overflow: hidden; }
-        .login-logo img { width: 100%; height: 100%; object-fit: contain; }
-        .login-header h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; color: #0f172a; }
-        .login-header p { font-size: 11px; color: #64748b; }
-        .login-form .input-group { margin-bottom: 16px; }
-        .login-form label { display: block; font-size: 11px; font-weight: 500; color: #475569; margin-bottom: 6px; }
-        .login-form input { width: 100%; padding: 8px 12px; font-size: 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; transition: all 0.2s; outline: none; }
-        .login-form input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
-        .remember-checkbox { display: flex; align-items: center; gap: 6px; margin: 12px 0 16px; font-size: 11px; color: #475569; }
-        .remember-checkbox input { width: 14px; height: 14px; margin: 0; }
-        .login-btn { width: 100%; background: #3b82f6; border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 500; color: white; cursor: pointer; transition: background 0.2s; }
-        .login-btn:hover { background: #2563eb; }
-        .logout-btn { background: #f1f5f9; color: #1e293b; border: 1px solid #e2e8f0; }
-        .logout-btn:hover { background: #e2e8f0; }
-        .lock-message { font-size: 10px; color: #ef4444; text-align: center; margin-top: 12px; display: none; }
         .stats-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 16px; }
         .stat-card-mini { background: #fff; border-radius: 8px; padding: 12px 16px; border: 1px solid #eef2f6; text-align: center; }
         .stat-card-mini .stat-number { font-size: 20px; font-weight: 700; color: #0f172a; }
@@ -132,9 +114,9 @@
         .announcement-actions-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-wrap: wrap; gap: 8px; }
         .announcement-checkbox { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
         .announcement-buttons { display: flex; gap: 8px; }
-        @media (max-width: 768px) { body { padding: 12px; } .login-card { padding: 24px 20px; max-width: 280px; } .content-layout { flex-direction: row !important; gap: 8px; } .sidebar, .main-content { min-width: 0; padding: 8px; } .action-buttons-row button { font-size: 10px; padding: 5px 8px; min-width: 60px; } .tab-btn { padding: 4px 10px; font-size: 11px; } .stats-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; } .stat-card-mini .stat-number { font-size: 16px; } }
-        @media (max-width: 480px) { body { padding: 8px; } .login-card { padding: 20px 16px; } .stats-cards { grid-template-columns: 1fr 1fr; gap: 6px; } .stat-card-mini { padding: 8px 12px; } .stat-card-mini .stat-number { font-size: 14px; } .action-buttons-row button { font-size: 9px; padding: 4px 6px; min-width: 50px; } .cat-item { font-size: 10px; padding: 4px 8px; } }
-        @media (prefers-color-scheme: dark) { body { background: #0f172a; color: #e2e8f0; } .login-card { background: #1e293b; border-color: #334155; } .login-header h2 { color: #f1f5f9; } .login-header p { color: #94a3b8; } .login-form label { color: #94a3b8; } .login-form input { background: #0f172a; border-color: #334155; color: #e2e8f0; } .login-form input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.2); } .login-btn { background: #3b82f6; } .login-btn:hover { background: #2563eb; } .main-card { background: #1e293b; border-color: #334155; } .tab-btn { background: #334155; color: #94a3b8; } .tab-btn.active { background: #3b82f6; color: #fff; } .tab-btn:hover { background: #475569; } .cat-bar { background: #0f172a; } .cat-item { background: #1e293b; color: #e2e8f0; border-color: #334155; } .cat-item.active { background: #3b82f6; color: #fff; border-color: #3b82f6; } .cat-item .rename-text-btn { background: #334155; color: #94a3b8; } .cat-item.active .rename-text-btn { background: rgba(255,255,255,0.2); color: #fff; } .sidebar, .main-content { background: #0f172a; } .sub-item, .link-item { background: #1e293b; border: 1px solid #334155; } .sub-item.active { background: #1e3a5f; color: #60a5fa; } .sub-item .rename-text-btn { background: #334155; color: #94a3b8; } .link-info strong { color: #e2e8f0; } button.secondary { background: #475569; color: #e2e8f0; } button.secondary:hover { background: #334155; } input, select, textarea, .form-input { background: #0f172a; border-color: #334155; color: #e2e8f0; } input:focus, select:focus, textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); } .modal-body { background: #1e293b; color: #e2e8f0; } .stat-card-mini { background: #1e293b; border-color: #334155; } .stat-card-mini .stat-number { color: #f1f5f9; } .stat-card-mini .stat-label { color: #94a3b8; } .skeleton-item { background: #334155; } .toast { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; } .toast.success { background: #065f46; } .toast.error { background: #7f1d1d; } .toast.warn { background: #78350f; } .toast.info { background: #1e3a5f; } }
+        @media (max-width: 768px) { body { padding: 12px; } .content-layout { flex-direction: row !important; gap: 8px; } .sidebar, .main-content { min-width: 0; padding: 8px; } .action-buttons-row button { font-size: 10px; padding: 5px 8px; min-width: 60px; } .tab-btn { padding: 4px 10px; font-size: 11px; } .stats-cards { grid-template-columns: repeat(2, 1fr); gap: 8px; } .stat-card-mini .stat-number { font-size: 16px; } }
+        @media (max-width: 480px) { body { padding: 8px; } .stats-cards { grid-template-columns: 1fr 1fr; gap: 6px; } .stat-card-mini { padding: 8px 12px; } .stat-card-mini .stat-number { font-size: 14px; } .action-buttons-row button { font-size: 9px; padding: 4px 6px; min-width: 50px; } .cat-item { font-size: 10px; padding: 4px 8px; } }
+        @media (prefers-color-scheme: dark) { body { background: #0f172a; color: #e2e8f0; } .main-card { background: #1e293b; border-color: #334155; } .tab-btn { background: #334155; color: #94a3b8; } .tab-btn.active { background: #3b82f6; color: #fff; } .tab-btn:hover { background: #475569; } .cat-bar { background: #0f172a; } .cat-item { background: #1e293b; color: #e2e8f0; border-color: #334155; } .cat-item.active { background: #3b82f6; color: #fff; border-color: #3b82f6; } .cat-item .rename-text-btn { background: #334155; color: #94a3b8; } .cat-item.active .rename-text-btn { background: rgba(255,255,255,0.2); color: #fff; } .sidebar, .main-content { background: #0f172a; } .sub-item, .link-item { background: #1e293b; border: 1px solid #334155; } .sub-item.active { background: #1e3a5f; color: #60a5fa; } .sub-item .rename-text-btn { background: #334155; color: #94a3b8; } .link-info strong { color: #e2e8f0; } button.secondary { background: #475569; color: #e2e8f0; } button.secondary:hover { background: #334155; } input, select, textarea, .form-input { background: #0f172a; border-color: #334155; color: #e2e8f0; } input:focus, select:focus, textarea:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.2); } .modal-body { background: #1e293b; color: #e2e8f0; } .stat-card-mini { background: #1e293b; border-color: #334155; } .stat-card-mini .stat-number { color: #f1f5f9; } .stat-card-mini .stat-label { color: #94a3b8; } .skeleton-item { background: #334155; } .toast { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; } .toast.success { background: #065f46; } .toast.error { background: #7f1d1d; } .toast.warn { background: #78350f; } .toast.info { background: #1e3a5f; } }
         .submission-title-truncate { display: inline-block; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
         .custom-select-wrapper { position: relative; flex: 1; min-width: 110px; }
         .custom-select-trigger {
@@ -217,38 +199,6 @@
         .batch-toolbar .batch-count { font-size: 12px; color: #3b82f6; font-weight: 600; flex-shrink: 0; }
         .batch-toolbar button { flex-shrink: 0; padding: 4px 12px; font-size: 11px; border-radius: 6px; }
         .batch-toolbar button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        .password-input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .password-input-wrapper input {
-            padding-right: 36px;
-        }
-        .password-toggle-btn {
-            position: absolute;
-            right: 8px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            font-size: 14px;
-            padding: 4px;
-            border-radius: 4px;
-            transition: color 0.2s;
-        }
-        .password-toggle-btn:hover {
-            color: #475569;
-        }
-        .dark-mode .password-toggle-btn {
-            color: #64748b;
-        }
-        .dark-mode .password-toggle-btn:hover {
-            color: #94a3b8;
-        }
     </style>
 </head>
 <body>
@@ -262,34 +212,7 @@
     </div>
 
     <div class="container">
-        <div id="loginWrapper" class="login-section">
-            <div class="login-card">
-                <div class="login-header">
-                    <div class="login-logo"><img src="/assets/logo.png" alt="星聚导航"></div>
-                    <h2>星聚导航</h2>
-                    <p>管理员登录</p>
-                </div>
-                <div class="login-form">
-                    <div class="input-group">
-                        <label>管理Token</label>
-                        <div class="password-input-wrapper">
-                            <input type="password" id="tokenInput" placeholder="请输入管理Token" autocomplete="off" maxlength="128">
-                            <button type="button" class="password-toggle-btn" id="tokenToggleBtn" aria-label="显示/隐藏密码">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="remember-checkbox">
-                        <input type="checkbox" id="rememberToken">
-                        <label for="rememberToken">记住密码（1小时有效）</label>
-                    </div>
-                    <button class="login-btn" id="loginBtn">登录</button>
-                    <div id="loginLockMessage" class="lock-message">登录失败过多，请10分钟后重试</div>
-                </div>
-            </div>
-        </div>
-
-        <div id="mainContent" class="hidden main-card">
+        <div id="mainContent" class="main-card">
             <div class="stats-cards" id="statsCards">
                 <div class="stat-card-mini"><div class="stat-number blue" id="statTotalSites">0</div><div class="stat-label">总站点</div></div>
                 <div class="stat-card-mini"><div class="stat-number green" id="statSubmissions">0</div><div class="stat-label">待审核</div></div>
@@ -309,7 +232,6 @@
 
             <div id="manageTab" class="tab-panel">
                 <div class="action-buttons-row">
-                    <button class="logout-btn" id="logoutBtn">退出</button>
                     <button class="primary" id="addCategoryBtn">+ 一级分类</button>
                     <button class="primary" id="refreshCacheBtn" style="background: #10b981; color: #fff;">🔄 刷新缓存</button>
                 </div>
@@ -337,7 +259,7 @@
             </div>
 
             <div id="feedbackTab" class="tab-panel hidden">
-                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;"><button class="primary sm" id="refreshFeedbackBtn">刷新列表</button><button class="secondary sm" id="clearAllFeedbackBtn" style="background:#ef4444;color:#fff;">清空全部</button></div>
+                <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;"><button class="primary sm" id="refreshFeedbackBtn">刷新列表</button></div>
                 <div class="feedback-list" id="feedbackList"></div>
             </div>
 
