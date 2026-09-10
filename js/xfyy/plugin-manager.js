@@ -1,9 +1,12 @@
-/* plugin-manager.js - 精简版（歌单缓存 + TTL 管理，仅保留网易云、QQ、本地音乐） */
+
 class PluginManager {
     constructor(cacheManager) {
         this.cacheManager = cacheManager || new CacheManager();
         this.plugins = new Map();
         this.currentApi = 'netease';
+        // ===== 新增：重试配置 =====
+        this.FETCH_MAX_RETRIES = 2;
+        this.FETCH_RETRY_BASE_MS = 500;
         this.initializePlugins();
     }
 
@@ -17,24 +20,48 @@ class PluginManager {
         return contentType.includes('application/json') ? await response.json() : await response.text();
     }
 
-    // ---------- 公共请求方法（减少重复代码） ----------
+    // ---------- 公共请求方法（含重试 + 空数组不缓存） ----------
     async _fetchFromMeting(server, type, id) {
         const cacheKey = `${server}_${type}_${id}`;
         const cached = this.cacheManager.get(cacheKey);
         if (cached && this._isCacheValid(cached)) return cached;
 
-        try {
-            const originalUrl = `https://api.i-meto.com/meting/api?server=${server}&type=${type}&id=${encodeURIComponent(id)}`;
-            const data = await this.proxyFetch(originalUrl);
-            if (!Array.isArray(data)) throw new Error('数据格式错误');
-            const formatted = data.map(song => this._formatSong(song, server));
-            const ttl = type === 'search' ? 10 * 60 * 1000 : 30 * 60 * 1000;
-            this.cacheManager.set(cacheKey, formatted, ttl);
-            return formatted;
-        } catch (error) {
-            console.error(`${server} ${type} 请求失败:`, error);
-            return [];
+        const originalUrl = `https://api.i-meto.com/meting/api?server=${server}&type=${type}&id=${encodeURIComponent(id)}`;
+        const ttl = type === 'search' ? 10 * 60 * 1000 : 30 * 60 * 1000;
+
+        let lastError = null;
+        // ===== 新增：最多尝试 FETCH_MAX_RETRIES + 1 次 =====
+        for (let attempt = 0; attempt <= this.FETCH_MAX_RETRIES; attempt++) {
+            try {
+                const data = await this.proxyFetch(originalUrl);
+
+                // ===== 修复：数据格式校验（非数组视为失败） =====
+                if (!Array.isArray(data)) {
+                    throw new Error('上游返回数据格式错误（非数组）');
+                }
+                // ===== 修复：空数组视为失败，触发重试，且不缓存 =====
+                if (data.length === 0) {
+                    throw new Error('上游返回空数组（可能被限流或暂时无数据）');
+                }
+
+                const formatted = data.map(song => this._formatSong(song, server));
+                // ===== 只有非空结果才写入缓存 =====
+                this.cacheManager.set(cacheKey, formatted, ttl);
+                return formatted;
+            } catch (error) {
+                lastError = error;
+                // 最后一次尝试失败，直接跳出
+                if (attempt >= this.FETCH_MAX_RETRIES) break;
+                // 指数退避
+                const delay = this.FETCH_RETRY_BASE_MS * Math.pow(2, attempt);
+                console.warn(`[PluginManager] ${server}/${type} 第 ${attempt + 1} 次失败: ${error.message}，${delay}ms 后重试`);
+                await this.sleep(delay);
+            }
         }
+
+        console.error(`[PluginManager] ${server}/${type} 最终失败:`, lastError?.message || '未知错误');
+        // 关键改动：失败时返回空数组（兼容调用方），但绝不写缓存
+        return [];
     }
 
     _isCacheValid(cached) {
@@ -108,7 +135,8 @@ class PluginManager {
         try {
             return await plugin.search(keyword);
         } catch (e) {
-            console.warn(`搜索 ${apiId} 失败:`, e);
+            // ===== 修复：明确标注为失败（调用方拿到空数组时可据此日志排查） =====
+            console.warn(`[PluginManager] 搜索 ${apiId} 失败:`, e?.message || e);
             return [];
         }
     }
@@ -145,10 +173,23 @@ class PluginManager {
     disablePlugin(pluginId) { const p = this.getPlugin(pluginId); if(p) { p.enabled = false; return true; } return false; }
     isPluginEnabled(pluginId) { const p = this.getPlugin(pluginId); return p ? p.enabled : false; }
 
+    // ===== 修复：两阶段提交，失败时不会污染现有插件表 =====
     async reloadPlugins() {
-        const old = new Map(this.plugins);
-        this.plugins.clear();
-        try { this.initializePlugins(); return true; } catch(e) { this.plugins = old; return false; }
+        // 阶段 1：在临时 Map 中构建新插件表
+        const savedPlugins = this.plugins;
+        const newPlugins = new Map();
+        this.plugins = newPlugins;
+        try {
+            this.initializePlugins();
+            // 阶段 2：构建成功，替换旧的（旧 Map 交由 GC）
+            this.plugins = newPlugins;
+            return true;
+        } catch (e) {
+            // 阶段 2 失败：回滚到旧 Map，新 Map 直接丢弃
+            this.plugins = savedPlugins;
+            console.error('[PluginManager] reloadPlugins 失败，已回滚:', e?.message || e);
+            return false;
+        }
     }
 
     getPluginInfo(pluginId) {
