@@ -24,12 +24,12 @@
 /assets/*.gif
   Cache-Control: public, max-age=31536000, immutable
 
-# CSS 文件（缓存 1 天，每次验证）
+# CSS 文件（缓存 1 小时）
 /css/*.css
-  Cache-Control: public, max-age=86400
+  Cache-Control: public, max-age=3600
 
-# JS 文件（缓存 1 天，每次验证）
+# JS 文件（缓存 1 小时）
 /js/*.js
-  Cache-Control: public, max-age=86400
+  Cache-Control: public, max-age=3600
 
 # 第三方 CDN 资源（由 CDN 管理，不覆盖）
