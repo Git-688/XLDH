@@ -28,14 +28,14 @@
 - 📱 **响应式设计**：适配桌面、平板、手机
 - 🔒 **安全检测**：网站投稿时自动执行 Google Safe Browsing + VirusTotal 双重检测
 - ⚡ **性能优化**：三级缓存（边缘缓存 + KV + 内存），静态资源 CDN 化，图片懒加载
-- 🛡️ **后台验证码**：星空动态星星云验证码，防止暴力破解
-
+- 🛡️ **Cloudflare Access**：在边缘拦截未授权请求，隐藏源站IP，有效防御暴力破解和 DDoS攻击。
 
 ## 🌐 在线体验
 
 ✅️星聚导航：`https://xjdh688.ccwu.cc`  
-✅️星聚图床：`https://tc688.ccwu.cc`   
-✅️星聚影视：`https://ys688.ccwu.cc`  
+✅️星聚图床：`https://tc688.ccwu.cc`未开放
+✅️星聚影视：`https://ys688.ccwu.cc`星聚影视688
+✅️星聚音乐：`https://yy688.ccwu.cc`688
 
 ## 🚀 快速部署
 
