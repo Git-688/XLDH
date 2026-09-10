@@ -1,4 +1,4 @@
-/* navigation.js - 异步分页加载 + 图标缓存持久化 + 预加载 + 直接加载（移除懒加载依赖） */
+/* navigation.js - 异步分页加载 + 图标缓存持久化 + 预加载 + 自动重试 */
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -25,7 +25,6 @@ class OptimizedNavigation {
 
         // 图标缓存（持久化到 localStorage）
         this.iconCache = this.loadIconCache();
-        // ===== 新增：图标缓存容量限制 =====
         this.MAX_ICON_CACHE_SIZE = 200;
 
         // DOM 元素
@@ -59,13 +58,9 @@ class OptimizedNavigation {
 
     saveIconCache() {
         try {
-            // ===== 新增：限制缓存大小 =====
             const keys = Object.keys(this.iconCache);
             if (keys.length > this.MAX_ICON_CACHE_SIZE) {
-                const sorted = keys.sort((a, b) => {
-                    // 优先保留已保存时间较新的（如果有时间戳字段）
-                    return 0;
-                });
+                const sorted = keys.sort((a, b) => 0);
                 const toRemove = sorted.slice(0, sorted.length - this.MAX_ICON_CACHE_SIZE);
                 toRemove.forEach(key => delete this.iconCache[key]);
             }
@@ -193,8 +188,6 @@ class OptimizedNavigation {
             const iconEl = this._createIconElement(site);
             const views = site.views || 0;
             const formattedViews = this._formatViews(views);
-
-            // ===== 修复：确保 description 有默认值 =====
             const desc = site.description || '暂无描述';
 
             card.innerHTML = `
@@ -216,7 +209,6 @@ class OptimizedNavigation {
             titleSpan.textContent = site.title;
             cardTop.appendChild(titleSpan);
 
-            // ===== 修复：click 事件增加错误回滚 =====
             card.addEventListener('click', async (e) => {
                 if (e.target.closest('.report-dead-link-btn')) return;
                 const viewEl = card.querySelector('.view-count');
@@ -260,7 +252,6 @@ class OptimizedNavigation {
                     }
                 }
 
-                // ===== 新增：请求失败时回滚视图 =====
                 if (!updateSuccess) {
                     viewEl.dataset.views = oldViews;
                     viewEl.textContent = this._formatViews(oldViews);
@@ -329,7 +320,6 @@ class OptimizedNavigation {
             const iconEl = this._createIconElement(site);
             const views = site.views || 0;
             const formattedViews = this._formatViews(views);
-
             const desc = site.description || '暂无描述';
 
             card.innerHTML = `
@@ -470,7 +460,6 @@ class OptimizedNavigation {
         if (retryBtn) {
             retryBtn.addEventListener('click', () => {
                 if (this.currentLevel2) {
-                    // ===== 修复：强制刷新，清除该子分类缓存 =====
                     this.selectLevel2(this.currentLevel2, true);
                 }
             });
@@ -508,7 +497,6 @@ class OptimizedNavigation {
         this.setupIntersectionObserver(trigger);
     }
 
-    // ===== 修复：增强 IntersectionObserver 清理 =====
     setupIntersectionObserver(trigger) {
         if (this.intersectionObserver) {
             this.intersectionObserver.disconnect();
@@ -625,6 +613,7 @@ class OptimizedNavigation {
         await this.updateStats();
     }
 
+    // ===== 修复：添加自动重试 =====
     async loadCategoryData(categoryName, forceRefresh = false) {
         const cacheKey = `nav_data_${categoryName}`;
         const cached = localStorage.getItem(cacheKey);
@@ -638,13 +627,37 @@ class OptimizedNavigation {
             } catch (e) {}
         }
 
-        const response = await Utils.safeFetch(`${this.apiBase}/navigation/category-sites?category=${encodeURIComponent(categoryName)}`);
-        const json = await response.json();
-        if (!json.subcategories) throw new Error('Invalid response');
+        const MAX_RETRIES = 3;
+        let lastError = null;
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            try {
+                const response = await Utils.safeFetch(
+                    `${this.apiBase}/navigation/category-sites?category=${encodeURIComponent(categoryName)}`,
+                    { timeout: 15000 }
+                );
 
-        const cacheData = { data: json, timestamp: now };
-        localStorage.setItem(cacheKey, JSON.stringify(cacheData));
-        return json;
+                if (response.status === 503 && attempt < MAX_RETRIES - 1) {
+                    await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+                    continue;
+                }
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const json = await response.json();
+                if (!json.subcategories) throw new Error('Invalid response');
+
+                const cacheData = { data: json, timestamp: now };
+                try { localStorage.setItem(cacheKey, JSON.stringify(cacheData)); } catch (e) {}
+                return json;
+            } catch (error) {
+                lastError = error;
+                console.warn(`加载分类 ${categoryName} 第 ${attempt + 1} 次失败:`, error.message);
+                if (attempt < MAX_RETRIES - 1) {
+                    await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+                }
+            }
+        }
+        throw lastError || new Error('加载失败');
     }
 
     renderLevel2(categoryName) {
@@ -713,7 +726,6 @@ class OptimizedNavigation {
             b.classList.toggle('active', parseInt(b.dataset.level2) === subId);
         });
 
-        // ===== 修复：强制刷新时清除该子分类的所有缓存 =====
         if (forceRefresh) {
             const keysToDelete = [];
             for (const key of this.siteCache.keys()) {
@@ -846,42 +858,74 @@ class OptimizedNavigation {
         }
     }
 
+    // ===== 修复：init 添加自动重试 =====
     async init() {
         if (this.isInitialized) return;
 
-        try {
-            const resp = await Utils.safeFetch(`${this.apiBase}/navigation/structure`);
-            const structure = await resp.json();
-            const categories = Object.keys(structure);
-            if (!categories.length) throw new Error('No categories');
+        const MAX_RETRIES = 3;
+        let lastError = null;
 
-            this.level1Nav.innerHTML = categories.map((cat, idx) =>
-                `<button class="level1-btn ${idx === 0 ? 'active' : ''}" data-level1="${cat}">${this._escapeHtml(cat)}</button>`
-            ).join('');
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            try {
+                const resp = await Utils.safeFetch(`${this.apiBase}/navigation/structure`, { timeout: 15000 });
 
-            this.level1Nav.addEventListener('click', (e) => {
-                const btn = e.target.closest('.level1-btn');
-                if (btn) {
-                    const cat = btn.dataset.level1;
-                    this.selectLevel1(cat, true);
+                if (resp.status === 503 && attempt < MAX_RETRIES - 1) {
+                    await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+                    continue;
                 }
-            });
 
-            const firstCat = categories[0];
-            await this.selectLevel1(firstCat, false);
-            this.createSearchBox();
+                if (!resp.ok) {
+                    throw new Error(`HTTP ${resp.status}`);
+                }
 
-            await this.updateStats();
+                const structure = await resp.json();
+                const categories = Object.keys(structure);
+                if (!categories.length) throw new Error('No categories');
 
-            if ('requestIdleCallback' in window) {
-                requestIdleCallback(() => this.preloadAllCategories());
-            } else {
-                setTimeout(() => this.preloadAllCategories(), 2000);
+                this.level1Nav.innerHTML = categories.map((cat, idx) =>
+                    `<button class="level1-btn ${idx === 0 ? 'active' : ''}" data-level1="${cat}">${this._escapeHtml(cat)}</button>`
+                ).join('');
+
+                this.level1Nav.addEventListener('click', (e) => {
+                    const btn = e.target.closest('.level1-btn');
+                    if (btn) {
+                        const cat = btn.dataset.level1;
+                        this.selectLevel1(cat, true);
+                    }
+                });
+
+                const firstCat = categories[0];
+                await this.selectLevel1(firstCat, false);
+                this.createSearchBox();
+
+                await this.updateStats();
+
+                if ('requestIdleCallback' in window) {
+                    requestIdleCallback(() => this.preloadAllCategories());
+                } else {
+                    setTimeout(() => this.preloadAllCategories(), 2000);
+                }
+
+                this.isInitialized = true;
+                return;
+            } catch (error) {
+                lastError = error;
+                console.warn(`导航初始化第 ${attempt + 1} 次失败:`, error.message);
+
+                if (attempt < MAX_RETRIES - 1) {
+                    await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+                }
             }
+        }
 
-            this.isInitialized = true;
-        } catch (error) {
-            this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">加载失败，请刷新页面</h3></div>`;
+        console.error('导航初始化失败:', lastError);
+        this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div><h3 class="empty-title">加载失败，请刷新页面</h3><button class="retry-btn" id="navInitRetryBtn" style="margin-top:12px;">重试</button></div>`;
+        const retryBtn = document.getElementById('navInitRetryBtn');
+        if (retryBtn) {
+            retryBtn.addEventListener('click', () => {
+                this.isInitialized = false;
+                this.init();
+            });
         }
     }
 
@@ -890,11 +934,10 @@ class OptimizedNavigation {
             const resp = await Utils.safeFetch(`${this.apiBase}/navigation/structure`, { timeout: 5000 });
             const structure = await resp.json();
             const categories = Object.keys(structure);
-            await Promise.all(categories.map(cat => this.loadCategoryData(cat, false)));
+            await Promise.all(categories.map(cat => this.loadCategoryData(cat, false).catch(() => null)));
         } catch (e) {}
     }
 
-    // ===== 修复：完善 destroy 方法 =====
     destroy() {
         this._isDestroyed = true;
         if (this.intersectionObserver) {
