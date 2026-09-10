@@ -1,4 +1,4 @@
-/* utils.js - 移除重试机制，使用简单 fetch */
+/* utils.js - 公共工具函数（含脱敏、防抖、节流等） */
 (function(window) {
     const Utils = {};
 
@@ -102,6 +102,17 @@
             if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
         }
         return null;
+    };
+
+    // ===== 新增：脱敏 =====
+    Utils.maskSensitive = function(str) {
+        if (!str) return '';
+        str = String(str);
+        str = str.replace(/\b(\d{1,3}\.\d{1,3})\.\d{1,3}\.\d{1,3}\b/g, '$1.***.***');
+        str = str.replace(/\b[\w.-]+@[\w.-]+\.\w{2,4}\b/g, '***@***.***');
+        str = str.replace(/\b1[3-9]\d{9}\b/g, '1**********');
+        if (str.length > 500) str = str.substring(0, 500) + '…(truncated)';
+        return str;
     };
 
     let _webpSupported = null;
@@ -224,6 +235,11 @@
         const timeout = options.timeout || C.API.BASE_TIMEOUT || 15000;
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
+        // 保留外部传入的 signal
+        const externalSignal = options.signal;
+        if (externalSignal) {
+            externalSignal.addEventListener('abort', () => controller.abort());
+        }
         try {
             const response = await fetch(url, { ...options, signal: controller.signal });
             clearTimeout(timeoutId);
@@ -273,12 +289,17 @@
             const errorMessage = error?.message || msg || '未知错误';
             if (shouldIgnore(errorMessage)) return;
             console.error('[Global Error]', errorMessage);
-            if (!window._lastErrorTime || Date.now() - window._lastErrorTime > 5000) {
+
+            // 调用统一错误处理器
+            if (window.errorHandler && typeof window.errorHandler.reportError === 'function') {
+                window.errorHandler.reportError(error || new Error(errorMessage), 'global');
+            } else if (!window._lastErrorTime || Date.now() - window._lastErrorTime > 5000) {
                 window._lastErrorTime = Date.now();
                 if (window.toast && typeof window.toast.show === 'function') {
                     window.toast.show('页面遇到问题，建议刷新页面', 'error');
                 }
             }
+
             const apiBase = Utils.getApiBase();
             if (apiBase) {
                 try {
@@ -306,13 +327,12 @@
         };
     };
 
-    // ===== 新增：获取 API 基础 URL（从 APP_CONFIG 读取，支持动态推导） =====
     Utils.getApiBase = function() {
         return (window.APP_CONFIG && window.APP_CONFIG.API_BASE) || 'https://api.xjdh688.ccwu.cc';
     };
 
     Utils.getWalineServer = function() {
-        return (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://yy688.ccwu.cc';
+        return (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://pl688.ccwu.cc';
     };
 
     window.Utils = Utils;
