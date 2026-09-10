@@ -1,8 +1,8 @@
-/* wallpaper.css - 精简版*/
+/* wallpaper.css - 完整修改版（上下间距统一为16px） */
 .wallpaper-section {
-    padding: 0 !important;
+    padding: 16px 0;
     position: relative;
-    margin: 0 !important;
+    margin: 0;
 }
 
 .wallpaper-container {
@@ -105,7 +105,7 @@
 
 /* 响应式 */
 @media (max-width:768px) {
-    .wallpaper-section { padding: 0 !important; }
+    .wallpaper-section { padding: 16px 0; }
     .wallpaper-container {
         height: 26vh;
         min-height: 130px;
@@ -116,7 +116,7 @@
     .wallpaper-title { font-size: 13px; max-width: calc(100% - 60px); }
 }
 @media (max-width:480px) {
-    .wallpaper-section { padding: 0 !important; }
+    .wallpaper-section { padding: 16px 0; }
     .wallpaper-container {
         height: 26vh;
         min-height: 130px;
