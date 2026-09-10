@@ -1,6 +1,4 @@
-/* navigation.js - 异步分页加载 + 图标缓存持久化 + 预加载 + 自动重试 + 批量图标 + 搜索防抖节流
- * 本次修复：loadCategoryData 统一使用 Storage 封装（前缀 starlink_nav_data_*）
- */
+/* navigation.js - 异步分页加载 + 图标缓存持久化 + 预加载 + 自动重试 + 搜索防抖节流 */
 
 class OptimizedNavigation {
     constructor() {
@@ -174,26 +172,7 @@ class OptimizedNavigation {
         return container;
     }
 
-    // ===== 渲染站点卡片 =====
-    _renderSites(sites) {
-        const container = this.level3Content;
-        if (!container) return;
-        if (!sites || !sites.length) {
-            container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3 class="empty-title">暂无站点</h3></div>`;
-            return;
-        }
-
-        const fragment = document.createDocumentFragment();
-        sites.forEach((site) => {
-            const card = this._createSiteCard(site);
-            fragment.appendChild(card);
-        });
-
-        container.innerHTML = '';
-        container.appendChild(fragment);
-        this.updateLoadMoreTrigger();
-    }
-
+    // ===== 创建站点卡片 =====
     _createSiteCard(site) {
         const card = document.createElement('a');
         card.className = 'site-card';
@@ -264,7 +243,9 @@ class OptimizedNavigation {
                     }
                 }
             } catch (err) {
-                if (window.errorHandler) window.errorHandler.reportError(err, 'navigation.clickUpdate');
+                if (window.errorHandler && window.errorHandler.reportError) {
+                    window.errorHandler.reportError(err, 'navigation.clickUpdate');
+                }
             }
 
             if (!updateSuccess) {
@@ -306,6 +287,25 @@ class OptimizedNavigation {
         }
 
         return card;
+    }
+
+    // ===== 渲染站点列表 =====
+    _renderSites(sites) {
+        const container = this.level3Content;
+        if (!container) return;
+        if (!sites || !sites.length) {
+            container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3 class="empty-title">暂无站点</h3></div>`;
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        sites.forEach((site) => {
+            fragment.appendChild(this._createSiteCard(site));
+        });
+
+        container.innerHTML = '';
+        container.appendChild(fragment);
+        this.updateLoadMoreTrigger();
     }
 
     _appendSites(sites) {
@@ -460,12 +460,30 @@ class OptimizedNavigation {
         }
     }
 
+    // ===== 加载子分类站点（带重试） =====
     async loadSubcategorySites(subId, page) {
         const url = `${this.apiBase}/navigation/sites?subcategory_id=${subId}&page=${page}&limit=${this.pageSize}`;
-        const response = await Utils.safeFetch(url, { timeout: 10000 });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        return data;
+        const MAX_RETRIES = 3;
+        let lastError = null;
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            try {
+                const response = await Utils.safeFetch(url, { timeout: 15000 });
+                if (response.status === 503 && attempt < MAX_RETRIES - 1) {
+                    await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+                    continue;
+                }
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                lastError = error;
+                console.warn(`加载子分类 ${subId} 第 ${attempt + 1} 页失败:`, error.message);
+                if (attempt < MAX_RETRIES - 1) {
+                    await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+                }
+            }
+        }
+        throw lastError || new Error('加载失败');
     }
 
     async refreshCurrentSubcategory() {
@@ -509,16 +527,18 @@ class OptimizedNavigation {
         await this.updateStats();
     }
 
-    // ===== 修复：统一使用 Storage 封装（前缀 starlink_nav_data_*） =====
+    // ===== 加载分类数据（带重试） =====
     async loadCategoryData(categoryName, forceRefresh = false) {
         const cacheKey = `nav_data_${categoryName}`;
-        const cached = Storage.get(cacheKey);
+        const cached = localStorage.getItem(cacheKey);
         const now = Date.now();
-
-        if (!forceRefresh && cached && cached.data && cached.timestamp) {
-            if (now - cached.timestamp < 30 * 60 * 1000) {
-                return cached.data;
-            }
+        if (!forceRefresh && cached) {
+            try {
+                const data = JSON.parse(cached);
+                if (now - data.timestamp < 30 * 60 * 1000) {
+                    return data.data;
+                }
+            } catch (e) {}
         }
 
         const MAX_RETRIES = 3;
@@ -540,8 +560,8 @@ class OptimizedNavigation {
                 const json = await response.json();
                 if (!json.subcategories) throw new Error('Invalid response');
 
-                // ===== 修复：改用 Storage.set（内部已 try/catch 并带前缀） =====
-                Storage.set(cacheKey, { data: json, timestamp: now });
+                const cacheData = { data: json, timestamp: now };
+                try { localStorage.setItem(cacheKey, JSON.stringify(cacheData)); } catch (e) {}
                 return json;
             } catch (error) {
                 lastError = error;
@@ -564,7 +584,7 @@ class OptimizedNavigation {
         const subIds = subs.map(s => s.id);
         this.fetchSubcategoryCounts(subIds).then(counts => {
             this.subCounts = counts;
-            this.level2Nav.innerHTML = subs.map((sub, idx) => {
+            this.level2Nav.innerHTML = subs.map((sub) => {
                 const count = counts[sub.id] || 0;
                 const isActive = (this.currentLevel2 === sub.id);
                 return `<button class="level2-btn ${isActive ? 'active' : ''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}">
@@ -580,7 +600,7 @@ class OptimizedNavigation {
                 });
             });
         }).catch(() => {
-            this.level2Nav.innerHTML = subs.map((sub, idx) => {
+            this.level2Nav.innerHTML = subs.map((sub) => {
                 const isActive = (this.currentLevel2 === sub.id);
                 return `<button class="level2-btn ${isActive ? 'active' : ''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}">
                     <span class="level2-btn-text">${this._escapeHtml(sub.name)}</span>
@@ -703,7 +723,7 @@ class OptimizedNavigation {
         });
     }
 
-    // AbortController 取消上一次请求
+    // 搜索（带 AbortController）
     async performSearch(query) {
         if (!query.trim()) return;
 
@@ -777,6 +797,7 @@ class OptimizedNavigation {
         }
     }
 
+    // ===== 初始化（带自动重试） =====
     async init() {
         if (this.isInitialized) return;
 
@@ -823,8 +844,6 @@ class OptimizedNavigation {
                 }
 
                 this.isInitialized = true;
-
-                setTimeout(() => this._prefetchIcons(), 2000);
                 return;
             } catch (error) {
                 lastError = error;
@@ -843,40 +862,6 @@ class OptimizedNavigation {
                 this.isInitialized = false;
                 this.init();
             });
-        }
-    }
-
-    // 批量图标预取
-    async _prefetchIcons() {
-        try {
-            const domains = new Set();
-            for (const cached of this.siteCache.values()) {
-                const sites = cached.sites || (cached.data && cached.data.sites);
-                if (sites) {
-                    for (const site of sites) {
-                        const domain = this._getDomain(site.url);
-                        if (domain && !this._getCachedIcon(domain)) domains.add(domain);
-                    }
-                }
-            }
-            if (domains.size === 0) return;
-
-            const domainList = Array.from(domains).slice(0, 50);
-            const resp = await Utils.safeFetch(
-                `${this.apiBase}/batch-icons?domains=${domainList.map(d => encodeURIComponent(d)).join(',')}`,
-                { timeout: 5000 }
-            );
-            const data = await resp.json();
-            if (data.icons) {
-                Object.values(data.icons).forEach(url => {
-                    if (url) {
-                        const img = new Image();
-                        img.src = this.apiBase + url;
-                    }
-                });
-            }
-        } catch (e) {
-            // 静默失败
         }
     }
 
