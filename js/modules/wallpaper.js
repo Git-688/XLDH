@@ -1,8 +1,8 @@
-/* wallpaper.js - 修复壁纸偏移问题（使用像素值计算偏移） */
+
 class CarouselModule {
     constructor() {
         if (window.Starlink && window.Starlink.carousel) return window.Starlink.carousel;
-        
+
         this.currentIndex = 1;
         this.slides = [];
         this.clonedSlides = [];
@@ -18,8 +18,22 @@ class CarouselModule {
         this.preloadQueue = [];
         this.idlePreloadQueue = [];
         this.slideWidth = 0;
+
+        // ===== 新增：事件绑定状态 + 生命周期标志 + 定时器引用 =====
+        this._eventsBound = false;
+        this._destroyed = false;
+        this._boundResizeHandler = null;
+        this._boundArrowLeftClick = null;
+        this._boundArrowRightClick = null;
+        this._boundTrackTouchStart = null;
+        this._boundTrackTouchEnd = null;
+        this._boundContainerMouseEnter = null;
+        this._boundContainerMouseLeave = null;
+        this._idleTimer = null;
+        this._idleRetryTimer = null;
+
         this.init();
-        
+
         if (window.Starlink) window.Starlink.carousel = this;
         window.carouselModule = this;
     }
@@ -78,7 +92,7 @@ class CarouselModule {
         if (!imageUrl || this.preloadCache.has(imageUrl)) return Promise.resolve(true);
 
         const task = () => this.preloadSingleImage(imageUrl);
-        
+
         return new Promise((resolve) => {
             if (this.activePreloads.size >= this.maxConcurrentPreloads) {
                 if (priority === 'high') {
@@ -111,6 +125,7 @@ class CarouselModule {
     }
 
     preloadAllIdle() {
+        if (this._destroyed) return;
         if (this.idlePreloadQueue.length > 0) return;
         const allIndices = Array.from({ length: this.clonedSlides.length }, (_, i) => i);
         const toPreload = allIndices.filter(idx => {
@@ -129,24 +144,27 @@ class CarouselModule {
             this.idlePreloadQueue.push(() => this.preloadImage(idx, 'low'));
         }
         const processIdle = () => {
+            // ===== 修复：销毁后终止递归 =====
+            if (this._destroyed) return;
             if (this.idlePreloadQueue.length === 0) return;
             if (this.activePreloads.size >= this.maxConcurrentPreloads) {
-                setTimeout(processIdle, 500);
+                this._idleRetryTimer = setTimeout(processIdle, 500);
                 return;
             }
             const nextTask = this.idlePreloadQueue.shift();
             if (nextTask) {
                 Promise.resolve(nextTask()).finally(() => {
+                    if (this._destroyed) return;
                     if (this.idlePreloadQueue.length > 0) {
-                        setTimeout(processIdle, 100);
+                        this._idleTimer = setTimeout(processIdle, 100);
                     }
                 });
             }
         };
         if (window.requestIdleCallback) {
-            requestIdleCallback(processIdle, { timeout: 5000 });
+            this._idleTimer = requestIdleCallback(processIdle, { timeout: 5000 });
         } else {
-            setTimeout(processIdle, 2000);
+            this._idleTimer = setTimeout(processIdle, 2000);
         }
     }
 
@@ -157,6 +175,9 @@ class CarouselModule {
     }
 
     async init() {
+        // ===== 每次 init 重置销毁标志（refresh 复用场景） =====
+        this._destroyed = false;
+
         const days = 7;
         const bingImages = [];
         const resolution = this.getResolution();
@@ -214,7 +235,8 @@ class CarouselModule {
         this.bindEvents();
         this.startAutoplay();
 
-        setTimeout(() => this.preloadAllIdle(), 3000);
+        // ===== 修复：idle 定时器用实例引用，便于销毁时清理 =====
+        this._idleTimer = setTimeout(() => this.preloadAllIdle(), 3000);
     }
 
     renderSlides() {
@@ -339,28 +361,36 @@ class CarouselModule {
         this.startAutoplay();
     }
 
+    // ===== 修复：事件绑定幂等，防止 refresh 累积监听器 =====
     bindEvents() {
+        if (this._eventsBound) return;
+        this._eventsBound = true;
+
+        // 箭头按钮
         if (this.arrowLeft) {
-            this.arrowLeft.addEventListener('click', () => {
+            this._boundArrowLeftClick = () => {
                 this.prev();
                 this.resetAutoplay();
-            });
+            };
+            this.arrowLeft.addEventListener('click', this._boundArrowLeftClick);
         }
         if (this.arrowRight) {
-            this.arrowRight.addEventListener('click', () => {
+            this._boundArrowRightClick = () => {
                 this.next();
                 this.resetAutoplay();
-            });
+            };
+            this.arrowRight.addEventListener('click', this._boundArrowRightClick);
         }
 
+        // 触摸滑动
         if (this.track) {
             let startX = 0, startY = 0;
-            this.track.addEventListener('touchstart', (e) => {
+            this._boundTrackTouchStart = (e) => {
                 startX = e.touches[0].clientX;
                 startY = e.touches[0].clientY;
                 this.stopAutoplay();
-            });
-            this.track.addEventListener('touchend', (e) => {
+            };
+            this._boundTrackTouchEnd = (e) => {
                 const endX = e.changedTouches[0].clientX;
                 const endY = e.changedTouches[0].clientY;
                 const diffX = endX - startX;
@@ -370,23 +400,68 @@ class CarouselModule {
                     else this.next();
                 }
                 this.startAutoplay();
-            });
+            };
+            this.track.addEventListener('touchstart', this._boundTrackTouchStart);
+            this.track.addEventListener('touchend', this._boundTrackTouchEnd);
         }
 
+        // 容器 hover 暂停/恢复
         const container = document.getElementById('wallpaperCarousel');
         if (container) {
-            container.addEventListener('mouseenter', () => this.stopAutoplay());
-            container.addEventListener('mouseleave', () => this.startAutoplay());
+            this._carouselContainer = container;
+            this._boundContainerMouseEnter = () => this.stopAutoplay();
+            this._boundContainerMouseLeave = () => this.startAutoplay();
+            container.addEventListener('mouseenter', this._boundContainerMouseEnter);
+            container.addEventListener('mouseleave', this._boundContainerMouseLeave);
         }
 
-        window.addEventListener('resize', () => {
+        // ===== 修复：resize 使用保存的引用，destroy 时可解绑 =====
+        this._boundResizeHandler = () => {
             this.updateSlideWidth();
-            if (!this.isTransitioning) {
+            if (!this.isTransitioning && this.track) {
                 const offset = -this.currentIndex * this.slideWidth;
                 this.track.style.transition = 'none';
                 this.track.style.transform = `translateX(${offset}px)`;
             }
-        });
+        };
+        window.addEventListener('resize', this._boundResizeHandler);
+    }
+
+    // ===== 修复：destroy 通过保存的引用正确解绑所有监听器 =====
+    unbindEvents() {
+        if (!this._eventsBound) return;
+
+        if (this.arrowLeft && this._boundArrowLeftClick) {
+            this.arrowLeft.removeEventListener('click', this._boundArrowLeftClick);
+        }
+        if (this.arrowRight && this._boundArrowRightClick) {
+            this.arrowRight.removeEventListener('click', this._boundArrowRightClick);
+        }
+        if (this.track && this._boundTrackTouchStart) {
+            this.track.removeEventListener('touchstart', this._boundTrackTouchStart);
+        }
+        if (this.track && this._boundTrackTouchEnd) {
+            this.track.removeEventListener('touchend', this._boundTrackTouchEnd);
+        }
+        if (this._carouselContainer && this._boundContainerMouseEnter) {
+            this._carouselContainer.removeEventListener('mouseenter', this._boundContainerMouseEnter);
+        }
+        if (this._carouselContainer && this._boundContainerMouseLeave) {
+            this._carouselContainer.removeEventListener('mouseleave', this._boundContainerMouseLeave);
+        }
+        if (this._boundResizeHandler) {
+            window.removeEventListener('resize', this._boundResizeHandler);
+        }
+
+        this._boundArrowLeftClick = null;
+        this._boundArrowRightClick = null;
+        this._boundTrackTouchStart = null;
+        this._boundTrackTouchEnd = null;
+        this._boundContainerMouseEnter = null;
+        this._boundContainerMouseLeave = null;
+        this._boundResizeHandler = null;
+        this._carouselContainer = null;
+        this._eventsBound = false;
     }
 
     async refresh() {
@@ -395,13 +470,47 @@ class CarouselModule {
         this.activePreloads.clear();
         this.preloadQueue = [];
         this.idlePreloadQueue = [];
+
+        // ===== 修复：清理旧的 idle 定时器 =====
+        if (this._idleTimer) {
+            try {
+                if (window.cancelIdleCallback) window.cancelIdleCallback(this._idleTimer);
+            } catch (e) {}
+            clearTimeout(this._idleTimer);
+            this._idleTimer = null;
+        }
+        if (this._idleRetryTimer) {
+            clearTimeout(this._idleRetryTimer);
+            this._idleRetryTimer = null;
+        }
+
+        // ===== 修复：refresh 时先解绑旧监听器，再走 init 流程（_eventsBound 会重新绑定） =====
+        this.unbindEvents();
+
         await this.init();
         this.startAutoplay();
     }
 
     destroy() {
+        this._destroyed = true;
         this.stopAutoplay();
-        window.removeEventListener('resize', this.updateSlideWidth);
+
+        // ===== 修复：清理所有 idle 相关定时器 =====
+        if (this._idleTimer) {
+            try {
+                if (window.cancelIdleCallback) window.cancelIdleCallback(this._idleTimer);
+            } catch (e) {}
+            clearTimeout(this._idleTimer);
+            this._idleTimer = null;
+        }
+        if (this._idleRetryTimer) {
+            clearTimeout(this._idleRetryTimer);
+            this._idleRetryTimer = null;
+        }
+
+        // ===== 修复：通过保存的引用正确解绑所有事件 =====
+        this.unbindEvents();
+
         if (this.preloadQueue.length) this.preloadQueue = [];
         if (this.idlePreloadQueue.length) this.idlePreloadQueue = [];
         this.activePreloads.clear();
