@@ -1,14 +1,100 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "xjdh",
+  "main": "worker.js",
   "compatibility_date": "2026-07-19",
   "observability": {
     "enabled": true
   },
   "assets": {
-    "directory": "."
+    "directory": ".",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/navigation/*",
+      "/stats",
+      "/uptime",
+      "/init",
+      "/batch-icons",
+      "/submit-site",
+      "/report-dead-link",
+      "/click",
+      "/log",
+      "/icon",
+      "/image-proxy",
+      "/music-proxy",
+      "/weather/*",
+      "/search*",
+      "/notebook",
+      "/partners",
+      "/partner-settings",
+      "/announcement/*",
+      "/subcategory/*",
+      "/global-submission-count",
+      "/total-sites-count",
+      "/fetch-site-info",
+      "/security-status",
+      "/user/today-submission-count",
+      "/admin/*",
+      "/health",
+      "/csp-report",
+      "/topclicks"
+    ]
   },
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "STATS_KV",
+      "id": "e7f6ab4e79f04c6db4034b39a9f97f92"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "nav-db",
+      "database_id": "892f0e93-85be-455c-8e78-8e9f0ca7e194"
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "*/5 * * * *",
+      "*/10 * * * *",
+      "0 * * * *",
+      "0 2 * * *",
+      "0 3 * * 0"
+    ]
+  },
+  "vars": {
+    "ADMIN_TOKEN": "www.lian688.com",
+    "ALLOWED_ORIGINS": "https://xjdh688.ccwu.cc",
+    "ADMIN_IP_WHITELIST": "",
+    "API_BASE_URL": "https://api.xjdh688.ccwu.cc",
+    "APIHZ_ID": "10014221",
+    "APIHZ_KEY": "4a7768de1cf2e0f41fc0a4005240c837",
+    "WEATHER_API_ID": "10014221",
+    "WEATHER_API_KEY": "4a7768de1cf2e0f41fc0a4005240c837",
+    "SMTP_HOST": "smtp.qq.com",
+    "SMTP_PORT": "465",
+    "SMTP_SECURE": "ssl",
+    "SMTP_USER": "1595126534@qq.com",
+    "SMTP_PASS": "fchqsebmosysibbg",
+    "SMTP_FROM": "1595126534@qq.com",
+    "SMTP_CODE": "UTF-8",
+    "HEALTH_CHECK_EMAIL": "1595126534@qq.com",
+    "LOG_LEVEL": "error",
+    "SESSION_TTL": "3600",
+    "REFRESH_TOKEN_TTL": "7200",
+    "ONLINE_TTL": "1200000",
+    "DEAD_LINK_THRESHOLD": "3",
+    "MAX_LOGIN_ATTEMPTS": "5",
+    "LOGIN_LOCK_DURATION": "600",
+    "CSRF_PROTECTION_ENABLED": "true",
+    "RATE_LIMIT_ENABLED": "true",
+    "RATE_LIMIT_DEFAULT_MAX": "200",
+    "RATE_LIMIT_ADMIN_MAX": "100",
+    "RATE_LIMIT_SUBMIT_MAX": "30",
+    "RATE_LIMIT_WHITELIST": ""
+  }
 }
