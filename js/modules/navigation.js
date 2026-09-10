@@ -1,4 +1,5 @@
-/* navigation.js - 异步分页加载 + 图标缓存持久化 + 预加载 + 自动重试 */
+/* navigation.js - 异步分页加载 + 图标缓存持久化 + 预加载 + 自动重试 + 批量图标 + 搜索防抖节流 */
+
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -19,13 +20,18 @@ class OptimizedNavigation {
         this.hasMoreData = true;
         this.isLoadingMore = false;
 
-        // 站点数据缓存：key = `${subId}_${page}`, value = { sites, total, page, limit }
+        // 站点数据缓存
         this.siteCache = new Map();
         this.subCounts = {};
 
-        // 图标缓存（持久化到 localStorage）
+        // 图标缓存
         this.iconCache = this.loadIconCache();
         this.MAX_ICON_CACHE_SIZE = 200;
+
+        // ===== 改动 8：搜索防抖节流 =====
+        this.searchAbortController = null;
+        this.searchTimer = null;
+        this.lastInputTime = 0;
 
         // DOM 元素
         this.level1Nav = document.getElementById('level1Nav');
@@ -60,8 +66,7 @@ class OptimizedNavigation {
         try {
             const keys = Object.keys(this.iconCache);
             if (keys.length > this.MAX_ICON_CACHE_SIZE) {
-                const sorted = keys.sort((a, b) => 0);
-                const toRemove = sorted.slice(0, sorted.length - this.MAX_ICON_CACHE_SIZE);
+                const toRemove = keys.slice(0, keys.length - this.MAX_ICON_CACHE_SIZE);
                 toRemove.forEach(key => delete this.iconCache[key]);
             }
             localStorage.setItem('nav_icon_cache', JSON.stringify({
@@ -178,124 +183,127 @@ class OptimizedNavigation {
 
         const fragment = document.createDocumentFragment();
         sites.forEach((site) => {
-            const card = document.createElement('a');
-            card.className = 'site-card';
-            card.href = site.url;
-            card.target = '_blank';
-            card.rel = 'noopener noreferrer';
-            card.title = `${site.title}\n${site.description || ''}`;
-
-            const iconEl = this._createIconElement(site);
-            const views = site.views || 0;
-            const formattedViews = this._formatViews(views);
-            const desc = site.description || '暂无描述';
-
-            card.innerHTML = `
-                <div class="card-top"></div>
-                <div class="site-description">${this._escapeHtml(desc)}</div>
-                <div class="divider-line"></div>
-                <div class="card-bottom">
-                    <span class="view-count" data-views="${views}">${formattedViews}</span>
-                    <button class="report-dead-link-btn" data-url="${this._escapeHtml(site.url)}" data-title="${this._escapeHtml(site.title)}" title="报告死链">
-                        <i class="fas fa-exclamation-circle"></i>
-                    </button>
-                </div>
-            `;
-
-            const cardTop = card.querySelector('.card-top');
-            cardTop.appendChild(iconEl);
-            const titleSpan = document.createElement('span');
-            titleSpan.className = 'site-title';
-            titleSpan.textContent = site.title;
-            cardTop.appendChild(titleSpan);
-
-            card.addEventListener('click', async (e) => {
-                if (e.target.closest('.report-dead-link-btn')) return;
-                const viewEl = card.querySelector('.view-count');
-                if (!viewEl) return;
-                const oldViews = parseInt(viewEl.dataset.views) || 0;
-                const optimisticViews = oldViews + 1;
-                viewEl.dataset.views = optimisticViews;
-                viewEl.textContent = this._formatViews(optimisticViews);
-                viewEl.classList.add('increasing');
-                setTimeout(() => viewEl.classList.remove('increasing'), 300);
-
-                let updateSuccess = false;
-                try {
-                    const response = await Utils.safeFetch(`${this.apiBase}/click`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: site.id, url: site.url }),
-                        keepalive: true
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.views !== undefined) {
-                            const correctedViews = data.views;
-                            viewEl.dataset.views = correctedViews;
-                            viewEl.textContent = this._formatViews(correctedViews);
-                            const cacheKey = `${this.currentLevel2}_${this.currentPage}`;
-                            if (this.siteCache.has(cacheKey)) {
-                                const cached = this.siteCache.get(cacheKey);
-                                const targetSite = cached.sites.find(s => s.id === site.id);
-                                if (targetSite) {
-                                    targetSite.views = correctedViews;
-                                    this.siteCache.set(cacheKey, cached);
-                                }
-                            }
-                            updateSuccess = true;
-                        }
-                    }
-                } catch (err) {
-                    if (window.errorHandler) {
-                        window.errorHandler.report(err, 'navigation.clickUpdate');
-                    }
-                }
-
-                if (!updateSuccess) {
-                    viewEl.dataset.views = oldViews;
-                    viewEl.textContent = this._formatViews(oldViews);
-                }
-            });
-
-            const reportBtn = card.querySelector('.report-dead-link-btn');
-            if (reportBtn) {
-                reportBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (reportBtn.disabled) return;
-                    reportBtn.disabled = true;
-                    reportBtn.style.opacity = '0.5';
-                    try {
-                        const res = await Utils.safeFetch(`${this.apiBase}/report-dead-link`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ url: reportBtn.dataset.url, title: reportBtn.dataset.title })
-                        });
-                        if (res.ok) {
-                            window.toast.show('已反馈，管理员将处理', 'success');
-                            reportBtn.style.display = 'none';
-                            card.classList.add('invalid');
-                        } else {
-                            const err = await res.json().catch(() => ({}));
-                            window.toast.show(err.error || '反馈失败', 'error');
-                            reportBtn.disabled = false;
-                            reportBtn.style.opacity = '';
-                        }
-                    } catch (err) {
-                        window.toast.show('网络错误', 'error');
-                        reportBtn.disabled = false;
-                        reportBtn.style.opacity = '';
-                    }
-                });
-            }
-
+            const card = this._createSiteCard(site);
             fragment.appendChild(card);
         });
 
         container.innerHTML = '';
         container.appendChild(fragment);
         this.updateLoadMoreTrigger();
+    }
+
+    _createSiteCard(site) {
+        const card = document.createElement('a');
+        card.className = 'site-card';
+        card.href = site.url;
+        card.target = '_blank';
+        card.rel = 'noopener noreferrer';
+        card.title = `${site.title}\n${site.description || ''}`;
+
+        const iconEl = this._createIconElement(site);
+        const views = site.views || 0;
+        const formattedViews = this._formatViews(views);
+        const desc = site.description || '暂无描述';
+
+        card.innerHTML = `
+            <div class="card-top"></div>
+            <div class="site-description">${this._escapeHtml(desc)}</div>
+            <div class="divider-line"></div>
+            <div class="card-bottom">
+                <span class="view-count" data-views="${views}">${formattedViews}</span>
+                <button class="report-dead-link-btn" data-url="${this._escapeHtml(site.url)}" data-title="${this._escapeHtml(site.title)}" title="报告死链">
+                    <i class="fas fa-exclamation-circle"></i>
+                </button>
+            </div>
+        `;
+
+        const cardTop = card.querySelector('.card-top');
+        cardTop.appendChild(iconEl);
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'site-title';
+        titleSpan.textContent = site.title;
+        cardTop.appendChild(titleSpan);
+
+        card.addEventListener('click', async (e) => {
+            if (e.target.closest('.report-dead-link-btn')) return;
+            const viewEl = card.querySelector('.view-count');
+            if (!viewEl) return;
+            const oldViews = parseInt(viewEl.dataset.views) || 0;
+            const optimisticViews = oldViews + 1;
+            viewEl.dataset.views = optimisticViews;
+            viewEl.textContent = this._formatViews(optimisticViews);
+            viewEl.classList.add('increasing');
+            setTimeout(() => viewEl.classList.remove('increasing'), 300);
+
+            let updateSuccess = false;
+            try {
+                const response = await Utils.safeFetch(`${this.apiBase}/click`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: site.id, url: site.url }),
+                    keepalive: true
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.views !== undefined) {
+                        const correctedViews = data.views;
+                        viewEl.dataset.views = correctedViews;
+                        viewEl.textContent = this._formatViews(correctedViews);
+                        const cacheKey = `${this.currentLevel2}_${this.currentPage}`;
+                        if (this.siteCache.has(cacheKey)) {
+                            const cached = this.siteCache.get(cacheKey);
+                            const targetSite = cached.sites.find(s => s.id === site.id);
+                            if (targetSite) {
+                                targetSite.views = correctedViews;
+                                this.siteCache.set(cacheKey, cached);
+                            }
+                        }
+                        updateSuccess = true;
+                    }
+                }
+            } catch (err) {
+                if (window.errorHandler) window.errorHandler.reportError(err, 'navigation.clickUpdate');
+            }
+
+            if (!updateSuccess) {
+                viewEl.dataset.views = oldViews;
+                viewEl.textContent = this._formatViews(oldViews);
+            }
+        });
+
+        const reportBtn = card.querySelector('.report-dead-link-btn');
+        if (reportBtn) {
+            reportBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (reportBtn.disabled) return;
+                reportBtn.disabled = true;
+                reportBtn.style.opacity = '0.5';
+                try {
+                    const res = await Utils.safeFetch(`${this.apiBase}/report-dead-link`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: reportBtn.dataset.url, title: reportBtn.dataset.title })
+                    });
+                    if (res.ok) {
+                        window.toast.show('已反馈，管理员将处理', 'success');
+                        reportBtn.style.display = 'none';
+                        card.classList.add('invalid');
+                    } else {
+                        const err = await res.json().catch(() => ({}));
+                        window.toast.show(err.error || '反馈失败', 'error');
+                        reportBtn.disabled = false;
+                        reportBtn.style.opacity = '';
+                    }
+                } catch (err) {
+                    window.toast.show('网络错误', 'error');
+                    reportBtn.disabled = false;
+                    reportBtn.style.opacity = '';
+                }
+            });
+        }
+
+        return card;
     }
 
     _appendSites(sites) {
@@ -310,119 +318,7 @@ class OptimizedNavigation {
 
         const fragment = document.createDocumentFragment();
         sites.forEach((site) => {
-            const card = document.createElement('a');
-            card.className = 'site-card';
-            card.href = site.url;
-            card.target = '_blank';
-            card.rel = 'noopener noreferrer';
-            card.title = `${site.title}\n${site.description || ''}`;
-
-            const iconEl = this._createIconElement(site);
-            const views = site.views || 0;
-            const formattedViews = this._formatViews(views);
-            const desc = site.description || '暂无描述';
-
-            card.innerHTML = `
-                <div class="card-top"></div>
-                <div class="site-description">${this._escapeHtml(desc)}</div>
-                <div class="divider-line"></div>
-                <div class="card-bottom">
-                    <span class="view-count" data-views="${views}">${formattedViews}</span>
-                    <button class="report-dead-link-btn" data-url="${this._escapeHtml(site.url)}" data-title="${this._escapeHtml(site.title)}" title="报告死链">
-                        <i class="fas fa-exclamation-circle"></i>
-                    </button>
-                </div>
-            `;
-
-            const cardTop = card.querySelector('.card-top');
-            cardTop.appendChild(iconEl);
-            const titleSpan = document.createElement('span');
-            titleSpan.className = 'site-title';
-            titleSpan.textContent = site.title;
-            cardTop.appendChild(titleSpan);
-
-            card.addEventListener('click', async (e) => {
-                if (e.target.closest('.report-dead-link-btn')) return;
-                const viewEl = card.querySelector('.view-count');
-                if (!viewEl) return;
-                const oldViews = parseInt(viewEl.dataset.views) || 0;
-                const optimisticViews = oldViews + 1;
-                viewEl.dataset.views = optimisticViews;
-                viewEl.textContent = this._formatViews(optimisticViews);
-                viewEl.classList.add('increasing');
-                setTimeout(() => viewEl.classList.remove('increasing'), 300);
-
-                let updateSuccess = false;
-                try {
-                    const response = await Utils.safeFetch(`${this.apiBase}/click`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: site.id, url: site.url }),
-                        keepalive: true
-                    });
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.views !== undefined) {
-                            const correctedViews = data.views;
-                            viewEl.dataset.views = correctedViews;
-                            viewEl.textContent = this._formatViews(correctedViews);
-                            const cacheKey = `${this.currentLevel2}_${this.currentPage}`;
-                            if (this.siteCache.has(cacheKey)) {
-                                const cached = this.siteCache.get(cacheKey);
-                                const targetSite = cached.sites.find(s => s.id === site.id);
-                                if (targetSite) {
-                                    targetSite.views = correctedViews;
-                                    this.siteCache.set(cacheKey, cached);
-                                }
-                            }
-                            updateSuccess = true;
-                        }
-                    }
-                } catch (err) {
-                    if (window.errorHandler) {
-                        window.errorHandler.report(err, 'navigation.clickUpdate');
-                    }
-                }
-
-                if (!updateSuccess) {
-                    viewEl.dataset.views = oldViews;
-                    viewEl.textContent = this._formatViews(oldViews);
-                }
-            });
-
-            const reportBtn = card.querySelector('.report-dead-link-btn');
-            if (reportBtn) {
-                reportBtn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (reportBtn.disabled) return;
-                    reportBtn.disabled = true;
-                    reportBtn.style.opacity = '0.5';
-                    try {
-                        const res = await Utils.safeFetch(`${this.apiBase}/report-dead-link`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ url: reportBtn.dataset.url, title: reportBtn.dataset.title })
-                        });
-                        if (res.ok) {
-                            window.toast.show('已反馈，管理员将处理', 'success');
-                            reportBtn.style.display = 'none';
-                            card.classList.add('invalid');
-                        } else {
-                            const err = await res.json().catch(() => ({}));
-                            window.toast.show(err.error || '反馈失败', 'error');
-                            reportBtn.disabled = false;
-                            reportBtn.style.opacity = '';
-                        }
-                    } catch (err) {
-                        window.toast.show('网络错误', 'error');
-                        reportBtn.disabled = false;
-                        reportBtn.style.opacity = '';
-                    }
-                });
-            }
-
-            fragment.appendChild(card);
+            fragment.appendChild(this._createSiteCard(site));
         });
 
         container.appendChild(fragment);
@@ -574,9 +470,7 @@ class OptimizedNavigation {
         if (!this.currentLevel2) return;
         const keysToDelete = [];
         for (const key of this.siteCache.keys()) {
-            if (key.startsWith(`${this.currentLevel2}_`)) {
-                keysToDelete.push(key);
-            }
+            if (key.startsWith(`${this.currentLevel2}_`)) keysToDelete.push(key);
         }
         keysToDelete.forEach(key => this.siteCache.delete(key));
 
@@ -613,7 +507,6 @@ class OptimizedNavigation {
         await this.updateStats();
     }
 
-    // ===== 修复：添加自动重试 =====
     async loadCategoryData(categoryName, forceRefresh = false) {
         const cacheKey = `nav_data_${categoryName}`;
         const cached = localStorage.getItem(cacheKey);
@@ -729,9 +622,7 @@ class OptimizedNavigation {
         if (forceRefresh) {
             const keysToDelete = [];
             for (const key of this.siteCache.keys()) {
-                if (key.startsWith(`${subId}_`)) {
-                    keysToDelete.push(key);
-                }
+                if (key.startsWith(`${subId}_`)) keysToDelete.push(key);
             }
             keysToDelete.forEach(key => this.siteCache.delete(key));
         }
@@ -775,23 +666,34 @@ class OptimizedNavigation {
 
         const input = document.getElementById('navSearchInput');
         const clearBtn = document.getElementById('navSearchClearBtn');
-        const hint = document.getElementById('navSearchHint');
 
+        // ===== 改动 8：防抖 + 节流 =====
         input.addEventListener('input', () => {
             const query = input.value.trim();
             clearBtn.style.display = query ? 'flex' : 'none';
+
+            const now = Date.now();
+            if (now - this.lastInputTime < 100) return;
+            this.lastInputTime = now;
+
             clearTimeout(this.searchTimer);
             this.searchTimer = setTimeout(() => {
                 if (query) this.performSearch(query);
                 else this.clearSearch();
             }, 300);
         });
+
         clearBtn.addEventListener('click', () => {
             input.value = '';
             clearBtn.style.display = 'none';
+            if (this.searchAbortController) {
+                this.searchAbortController.abort();
+                this.searchAbortController = null;
+            }
             this.clearSearch();
             input.focus();
         });
+
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
@@ -800,27 +702,42 @@ class OptimizedNavigation {
         });
     }
 
+    // ===== 改动 8：AbortController 取消上一次请求 =====
     async performSearch(query) {
         if (!query.trim()) return;
+
+        if (this.searchAbortController) {
+            this.searchAbortController.abort();
+        }
+        this.searchAbortController = new AbortController();
+
         this.isSearching = true;
         this.searchQuery = query;
         this._showSkeleton();
         try {
-            const response = await Utils.safeFetch(`${this.apiBase}/search?q=${encodeURIComponent(query)}`);
+            const response = await Utils.safeFetch(
+                `${this.apiBase}/search?q=${encodeURIComponent(query)}`,
+                { signal: this.searchAbortController.signal }
+            );
             const results = await response.json();
             if (!results.length) {
                 this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-search"></i></div><h3 class="empty-title">未找到相关链接</h3></div>`;
             } else {
                 this._renderSites(results);
             }
-            document.getElementById('navSearchHint').style.display = 'block';
-            document.getElementById('navSearchHint').textContent = `找到 ${results.length} 个结果`;
+            const hintEl = document.getElementById('navSearchHint');
+            if (hintEl) {
+                hintEl.style.display = 'block';
+                hintEl.textContent = `找到 ${results.length} 个结果`;
+            }
             const trigger = this.level3Content.querySelector('.load-more-trigger');
             if (trigger) trigger.style.display = 'none';
         } catch (e) {
+            if (e.name === 'AbortError') return;
             this.level3Content.innerHTML = '<div class="empty-state">搜索失败，请重试</div>';
         } finally {
             this.isSearching = false;
+            this.searchAbortController = null;
         }
     }
 
@@ -828,7 +745,8 @@ class OptimizedNavigation {
         if (!this.isSearching && !this.searchQuery) return;
         this.isSearching = false;
         this.searchQuery = '';
-        document.getElementById('navSearchHint').style.display = 'none';
+        const hintEl = document.getElementById('navSearchHint');
+        if (hintEl) hintEl.style.display = 'none';
         if (this.currentLevel2) {
             this.selectLevel2(this.currentLevel2, true);
         } else if (this.currentLevel1 && this.categoryCache[this.currentLevel1]) {
@@ -858,7 +776,6 @@ class OptimizedNavigation {
         }
     }
 
-    // ===== 修复：init 添加自动重试 =====
     async init() {
         if (this.isInitialized) return;
 
@@ -874,9 +791,7 @@ class OptimizedNavigation {
                     continue;
                 }
 
-                if (!resp.ok) {
-                    throw new Error(`HTTP ${resp.status}`);
-                }
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
                 const structure = await resp.json();
                 const categories = Object.keys(structure);
@@ -907,11 +822,13 @@ class OptimizedNavigation {
                 }
 
                 this.isInitialized = true;
+
+                // ===== 改动 7：批量图标预取 =====
+                setTimeout(() => this._prefetchIcons(), 2000);
                 return;
             } catch (error) {
                 lastError = error;
                 console.warn(`导航初始化第 ${attempt + 1} 次失败:`, error.message);
-
                 if (attempt < MAX_RETRIES - 1) {
                     await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
                 }
@@ -926,6 +843,40 @@ class OptimizedNavigation {
                 this.isInitialized = false;
                 this.init();
             });
+        }
+    }
+
+    // ===== 改动 7：批量图标预取 =====
+    async _prefetchIcons() {
+        try {
+            const domains = new Set();
+            for (const cached of this.siteCache.values()) {
+                const sites = cached.sites || (cached.data && cached.data.sites);
+                if (sites) {
+                    for (const site of sites) {
+                        const domain = this._getDomain(site.url);
+                        if (domain && !this._getCachedIcon(domain)) domains.add(domain);
+                    }
+                }
+            }
+            if (domains.size === 0) return;
+
+            const domainList = Array.from(domains).slice(0, 50);
+            const resp = await Utils.safeFetch(
+                `${this.apiBase}/batch-icons?domains=${domainList.map(d => encodeURIComponent(d)).join(',')}`,
+                { timeout: 5000 }
+            );
+            const data = await resp.json();
+            if (data.icons) {
+                Object.values(data.icons).forEach(url => {
+                    if (url) {
+                        const img = new Image();
+                        img.src = this.apiBase + url;
+                    }
+                });
+            }
+        } catch (e) {
+            // 静默失败
         }
     }
 
@@ -951,8 +902,11 @@ class OptimizedNavigation {
             clearTimeout(this.searchTimer);
             this.searchTimer = null;
         }
+        if (this.searchAbortController) {
+            this.searchAbortController.abort();
+            this.searchAbortController = null;
+        }
         this.siteCache.clear();
-        this._batchCache?.clear();
         this.iconCache = {};
     }
 }
