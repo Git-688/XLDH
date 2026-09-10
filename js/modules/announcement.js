@@ -1,4 +1,4 @@
-/* announcement.js */
+
 class AnnouncementModule {
     constructor() {
         if (window.Starlink && window.Starlink.announcement) return window.Starlink.announcement;
@@ -6,6 +6,8 @@ class AnnouncementModule {
         this.isVisible = false;
         this.currentAnnouncement = null;
         this.escapeHandler = null;
+        // ===== 新增：按钮绑定标志，防止反复 cloneNode 替换节点 =====
+        this._btnBound = false;
         this.apiBase = Utils.getApiBase();
         this.loadAnnouncement();
         this.setupGlobalEvents();
@@ -90,7 +92,7 @@ class AnnouncementModule {
         this.modalElement = document.createElement('div');
         this.modalElement.className = 'announcement-modal-simple';
         this.modalElement.id = 'announcementModal';
-        
+
         if (!this.currentAnnouncement || !this.currentAnnouncement.title) {
             this.modalElement.innerHTML = `
                 <div class="announcement-modal-container">
@@ -173,16 +175,25 @@ class AnnouncementModule {
         });
     }
 
+    // ===== 修复：ESC handler 只绑一次 + 按钮只克隆/绑定一次 =====
     setupGlobalEvents() {
-        this.escapeHandler = (e) => {
-            if (e.key === 'Escape' && this.isVisible) {
-                this.hide();
-            }
-        };
-        document.addEventListener('keydown', this.escapeHandler);
-        
+        // ESC handler：仅首次绑定，避免累积多个监听器
+        if (!this.escapeHandler) {
+            this.escapeHandler = (e) => {
+                if (e.key === 'Escape' && this.isVisible) {
+                    this.hide();
+                }
+            };
+            document.addEventListener('keydown', this.escapeHandler);
+        }
+
+        // 按钮事件：仅首次克隆/绑定，避免反复替换节点
+        if (this._btnBound) return;
+
         const announcementBtn = document.getElementById('announcementBtn');
         if (announcementBtn) {
+            // 通过替换节点清除 navbar.js 可能已绑定的监听器，
+            // 避免一次点击触发两次 toggleModal（打开后又立即关闭）
             const newBtn = announcementBtn.cloneNode(true);
             announcementBtn.parentNode.replaceChild(newBtn, announcementBtn);
             newBtn.addEventListener('click', (e) => {
@@ -190,6 +201,7 @@ class AnnouncementModule {
                 e.stopPropagation();
                 this.toggleModal();
             });
+            this._btnBound = true;
         }
     }
 
@@ -253,15 +265,23 @@ class AnnouncementModule {
         if (this.isVisible) this.showModal();
     }
 
+    // ===== 修复：destroy 完整清理 + 复位 _btnBound =====
     destroy() {
         this.hide();
+
         if (this.escapeHandler) {
             document.removeEventListener('keydown', this.escapeHandler);
+            this.escapeHandler = null;
         }
+
         if (this.modalElement?.parentNode) {
             this.modalElement.parentNode.removeChild(this.modalElement);
         }
         this.modalElement = null;
+
+        // ===== 复位按钮绑定标志，允许重新初始化 =====
+        this._btnBound = false;
+        this.isVisible = false;
     }
 }
 
