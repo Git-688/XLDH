@@ -1,13 +1,10 @@
-/* admin.js - 完整版（批量操作优化 + 修复内存泄漏 + 重试上限 + 错误区分 + UI同步） */
+/* admin.js - 完整版（密码可见性切换 + 从 admin.html 抽离的内联脚本） */
 (function() {
     'use strict';
 
-    // ===== 修改：使用动态获取的 API_BASE =====
     const API_BASE = window.ADMIN_API_BASE || 'https://api.xjdh688.ccwu.cc';
     const TOKEN_EXPIRE_HOURS = 1;
     const SESSION_REFRESH_BEFORE_MS = 5 * 60 * 1000;
-
-    // ===== 新增：API 重试配置 =====
     const API_MAX_RETRIES = 3;
 
     let token = '';
@@ -29,6 +26,24 @@
 
     let partnersData = [];
     let partnerIntroText = '';
+
+    function initPasswordToggle() {
+        const toggleBtn = document.getElementById('tokenToggleBtn');
+        const tokenInput = document.getElementById('tokenInput');
+        if (!toggleBtn || !tokenInput) return;
+
+        toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const isPassword = tokenInput.type === 'password';
+            tokenInput.type = isPassword ? 'text' : 'password';
+            const icon = this.querySelector('i');
+            if (icon) {
+                icon.className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+            }
+            tokenInput.focus();
+        });
+    }
 
     function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
     function showToast(msg, type = 'success') { const toast = document.getElementById('toast'); if (!toast) return; toast.textContent = msg; toast.className = `toast ${type} show`; clearTimeout(toast._timeout); toast._timeout = setTimeout(() => toast.classList.remove('show'), 2300); }
@@ -62,7 +77,6 @@
         if (feedbackEl) feedbackEl.textContent = feedbackData ? feedbackData.length : 0;
     }
 
-    // ===== 修复：apiFetch 添加重试上限 =====
     async function apiFetch(endpoint, opt = {}, retryCount = 0) {
         const headers = { 'Content-Type': 'application/json', ...opt.headers };
         if (token) headers.Authorization = `Bearer ${token}`;
@@ -326,7 +340,6 @@
         finally { if (btn) { btn.disabled = false; btn.textContent = '获取信息'; } }
     }
 
-    // ===== 修复：loadAllData 错误区分 =====
     async function loadAllData() {
         try {
             const [catData, subData, siteData, subDataList, feedbackDataList] = await Promise.all([
@@ -610,7 +623,6 @@
             showToast(result.message || '删除成功', 'success');
             const idSet = new Set(ids);
             sites = sites.filter(s => !idSet.has(s.id));
-            // ===== 修复：清空 selectedSiteIds 并刷新 UI =====
             selectedSiteIds.clear();
             const currentSites = sites.filter(s => s.subcategory_id === currentSub);
             renderSitesWithCheckboxes(currentSites);
@@ -633,7 +645,6 @@
         if (!subcategoriesData || !subcategoriesData.length) { showToast('暂无子分类可移动', 'error'); return; }
         const subOptions = subcategoriesData.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
 
-        // ===== 修复：确保旧实例被销毁 =====
         if (batchMoveCustomSelect) {
             batchMoveCustomSelect.destroy();
             batchMoveCustomSelect = null;
@@ -698,7 +709,6 @@
                 batchMoveCustomSelect = new CustomSelect(select);
             },
             function() {
-                // ===== 修复：模态框关闭时销毁实例 =====
                 if (batchMoveCustomSelect) {
                     batchMoveCustomSelect.destroy();
                     batchMoveCustomSelect = null;
@@ -709,8 +719,8 @@
 
     async function batchToggleSites() {
         if (selectedSiteIds.size === 0) { showToast('请先选择要修改的站点', 'warning'); return; }
-        if (!confirm(`确定要${isValid ? '启用' : '禁用'}选中的 ${selectedSiteIds.size} 个站点吗？`)) return;
         const isValid = document.getElementById('batchToggleStatus')?.value === 'true' || false;
+        if (!confirm(`确定要${isValid ? '启用' : '禁用'}选中的 ${selectedSiteIds.size} 个站点吗？`)) return;
         const ids = Array.from(selectedSiteIds);
         const btn = document.getElementById('batchToggleBtn');
         btn.disabled = true;
@@ -820,7 +830,6 @@
         } catch { return 0; }
     }
 
-    // ===== 修复：openModal 增加 onClose 回调，确保清理 =====
     function openModal(title, formHtml, submitCb, showDelete = false, deleteCb = null, onShow = null, onClose = null) {
         const modal = document.getElementById('modal');
         document.querySelector('#modal .modal-title').textContent = title;
@@ -1272,7 +1281,6 @@
             this.dropdownEl.classList.remove('open');
         }
 
-        // ===== 修复：完善 destroy =====
         destroy() {
             if (this._outsideClickHandler) {
                 document.removeEventListener('click', this._outsideClickHandler);
@@ -1487,7 +1495,6 @@
         } catch (e) { showToast('操作失败: ' + e.message, 'error'); }
     }
 
-    // ===== CustomSelect 类（已修复内存泄漏） =====
     class CustomSelect {
         constructor(selectElement, onChange) {
             this.select = selectElement;
@@ -1580,7 +1587,6 @@
                 if (!this.wrapper.contains(e.target) && !this.dropdown.contains(e.target)) this.close();
             };
             setTimeout(() => document.addEventListener('click', this.handleOutsideClick), 0);
-            // 监听滚动和 resize 以更新位置
             this.scrollListener = () => { if (this.isOpen) this.positionDropdown(); };
             this.resizeListener = () => { if (this.isOpen) this.positionDropdown(); };
             window.addEventListener('scroll', this.scrollListener, true);
@@ -1622,13 +1628,11 @@
             if (valueSpan) valueSpan.textContent = this.getSelectedText();
         }
 
-        // ===== 修复：完善 destroy，清理所有监听器和 DOM =====
         destroy() {
             this.close();
             if (this.wrapper && this.wrapper.parentNode) {
                 this.wrapper.parentNode.removeChild(this.wrapper);
             }
-            // 从 customSelectInstances Map 中删除
             const id = this.select.id || this.select.name;
             if (id) {
                 const index = customSelectInstances.findIndex(inst => inst === this);
@@ -1901,9 +1905,7 @@
         }
     }
 
-    // ===== 修复：使用事件委托减少重复绑定 =====
     function setupEventDelegation() {
-        // 分类栏事件委托
         document.getElementById('catBar').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
             if (btn && btn.dataset.action === 'modifyCat') {
@@ -1914,7 +1916,6 @@
             if (item) selectCat(parseInt(item.dataset.cid));
         });
 
-        // 子分类列表事件委托
         document.getElementById('subList').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
             if (btn && btn.dataset.action === 'modifySub') {
@@ -1925,14 +1926,12 @@
             if (item) selectSub(parseInt(item.dataset.sid));
         });
 
-        // 站点列表事件委托
         document.getElementById('siteList').addEventListener('click', e => {
             const btn = e.target.closest('[data-action]');
             if (!btn) return;
             if (btn.dataset.action === 'editSite') handleEditSite(parseInt(btn.dataset.id));
         });
 
-        // Tab 切换
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const tabId = btn.dataset.tab;
@@ -1953,7 +1952,6 @@
             });
         });
 
-        // 登录、登出等
         document.getElementById('loginBtn').addEventListener('click', login);
         document.getElementById('logoutBtn').addEventListener('click', logout);
         document.getElementById('addCategoryBtn').addEventListener('click', handleAddCategory);
@@ -2026,6 +2024,8 @@
     }
 
     injectGlobalStyles();
+
+    initPasswordToggle();
 
     loginLocked = localStorage.getItem('login_locked') === 'true';
     updateLockMessage(loginLocked);
