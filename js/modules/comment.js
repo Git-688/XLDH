@@ -1,4 +1,4 @@
-/* comment.js - 完整版（支持自定义表情、GIF搜索、草稿保存、弹窗控制 + 防重复初始化 + 草稿区分页面） */
+/* comment.js - 完整版（支持自定义表情、GIF搜索、草稿保存、弹窗控制 + 防重复初始化 + 冷却重试 + 草稿区分页面） */
 class CommentModule {
   static CONFIG = {
     serverURL: (window.APP_CONFIG && window.APP_CONFIG.WALINE_SERVER) || 'https://pl688.ccwu.cc',
@@ -6,6 +6,9 @@ class CommentModule {
     modalId: 'commentModal',
     openBtnId: 'commentBtn',
     activeClass: 'active',
+    // ===== 新增：初始化重试配置 =====
+    INIT_MAX_ATTEMPTS: 3,
+    INIT_COOLDOWN_MS: 30 * 1000,
     walineOptions: {
       dark: 'auto',
       meta: ['nick', 'mail', 'link', 'ua', 'region'],
@@ -85,7 +88,11 @@ class CommentModule {
     this.searchObserver = null;
     this.draftObserver = null;
     this.isVisible = false;
-    this._initialized = false; // ===== 新增：防重复初始化标志 =====
+    this._initialized = false; // 防重复初始化标志
+    // ===== 新增：重试/冷却状态 =====
+    this._initAttempts = 0;
+    this._initCooldownUntil = 0;
+    this._initFailed = false;
     this._initDOM();
     this._bindEvents();
     this._initWaline();
@@ -114,31 +121,64 @@ class CommentModule {
     });
   }
 
-  // ===== 修复：增加防重复初始化 =====
+  // ===== 修复：增加冷却时间 + 最大尝试次数，防止反复初始化 =====
   _initWaline() {
     if (this._initialized) return;
-    const { el, serverURL, walineOptions } = CommentModule.CONFIG;
 
-    console.log('[评论] 初始化 Waline，表情包配置:', walineOptions.emoji);
+    // 冷却期内直接跳过（避免短时间高频重试）
+    const now = Date.now();
+    if (this._initCooldownUntil && now < this._initCooldownUntil) {
+      console.log(`[评论] Waline 初始化冷却中，剩余 ${Math.ceil((this._initCooldownUntil - now) / 1000)} 秒`);
+      return;
+    }
 
-    if (typeof Waline === 'undefined') {
-      const container = document.querySelector(el);
-      if (container) {
-        container.innerHTML = '<div class="waline-comment-fallback" style="padding:20px;text-align:center;color:#999;">评论系统加载中，请稍后再试...</div>';
+    // 超过最大尝试次数，不再重试
+    if (this._initAttempts >= CommentModule.CONFIG.INIT_MAX_ATTEMPTS) {
+      if (!this._initFailed) {
+        this._initFailed = true;
+        const container = document.querySelector(CommentModule.CONFIG.el);
+        if (container) {
+          container.innerHTML = '<div class="waline-comment-fallback" style="padding:20px;text-align:center;color:#999;">评论系统暂时不可用，请稍后再试。</div>';
+        }
+        console.warn('[评论] Waline 初始化已达最大尝试次数，停止重试');
       }
       return;
     }
+
+    this._initAttempts++;
+
+    const { el, serverURL, walineOptions } = CommentModule.CONFIG;
+    console.log(`[评论] 初始化 Waline（第 ${this._initAttempts} 次尝试），表情包配置:`, walineOptions.emoji);
+
     const container = document.querySelector(el);
-    if (!container) return;
+    if (!container) {
+      console.warn('[评论] 未找到 Waline 挂载容器');
+      this._initCooldownUntil = now + CommentModule.CONFIG.INIT_COOLDOWN_MS;
+      return;
+    }
+
+    // SDK 未加载，进入冷却等待
+    if (typeof Waline === 'undefined') {
+      console.warn('[评论] Waline SDK 尚未加载，进入冷却等待');
+      container.innerHTML = '<div class="waline-comment-fallback" style="padding:20px;text-align:center;color:#999;">评论系统加载中，请稍后再试...</div>';
+      this._initCooldownUntil = now + CommentModule.CONFIG.INIT_COOLDOWN_MS;
+      return;
+    }
+
     try {
+      // ===== 修复：初始化前清空容器，防止重建时叠加 =====
+      container.innerHTML = '';
       this.instance = Waline.init({ el, serverURL, ...walineOptions });
       this._initialized = true;
+      this._initFailed = false;
+      this._initAttempts = 0;
+      this._initCooldownUntil = 0;
       console.log('[评论] Waline 初始化成功');
     } catch (err) {
       console.error('[评论] 初始化失败', err);
-      if (container) {
-        container.innerHTML = '<div class="waline-comment-fallback" style="padding:20px;text-align:center;color:#999;">评论系统暂时不可用，请稍后再试。</div>';
-      }
+      this.instance = null;
+      this._initCooldownUntil = now + CommentModule.CONFIG.INIT_COOLDOWN_MS;
+      container.innerHTML = '<div class="waline-comment-fallback" style="padding:20px;text-align:center;color:#999;">评论系统暂时不可用，请稍后再试。</div>';
     }
   }
 
@@ -176,7 +216,7 @@ class CommentModule {
     });
   }
 
-  // ===== 修复：草稿 key 加入页面路径区分 =====
+  // ===== 草稿 key 加入页面路径区分 =====
   _initDraftAutoSave() {
     const container = document.querySelector(CommentModule.CONFIG.el);
     if (!container) return;
@@ -210,7 +250,15 @@ class CommentModule {
     if (!this.modal) return;
     if (!this.instance) {
       this._initWaline();
-      if (!this.instance) return;
+      // 若仍无实例（冷却中或已达重试上限），提示并返回
+      if (!this.instance) {
+        if (this._initFailed) {
+          window.toast?.show('评论系统暂时不可用，请稍后再试', 'error');
+        } else {
+          window.toast?.show('评论系统加载中，请稍后重试', 'info');
+        }
+        return;
+      }
     }
     if (window.Starlink?.sidebar && window.Starlink.sidebar.isVisible?.()) {
       window.Starlink.sidebar.hide();
@@ -238,16 +286,32 @@ class CommentModule {
     setTimeout(onTransitionEnd, 400);
   }
 
-  // ===== 修复：完善 destroy 方法 =====
+  // ===== 修复：destroy 完善清理 + 重置全部状态 =====
   destroy() {
     clearTimeout(this.searchTimer);
-    this.searchObserver?.disconnect();
-    this.draftObserver?.disconnect();
+    this.searchTimer = null;
+
+    if (this.searchObserver) {
+      this.searchObserver.disconnect();
+      this.searchObserver = null;
+    }
+    if (this.draftObserver) {
+      this.draftObserver.disconnect();
+      this.draftObserver = null;
+    }
+
     if (this.instance && typeof this.instance.destroy === 'function') {
-      this.instance.destroy();
+      try { this.instance.destroy(); } catch (e) { console.warn('[评论] destroy 实例失败:', e); }
     }
     this.instance = null;
+
+    // 重置状态，允许后续重新初始化
     this._initialized = false;
+    this._initAttempts = 0;
+    this._initCooldownUntil = 0;
+    this._initFailed = false;
+    this.isVisible = false;
+    document.body.style.overflow = '';
   }
 }
 
