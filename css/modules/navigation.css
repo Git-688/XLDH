@@ -1,4 +1,4 @@
-/* navigation.css - 完整修改版（上下间距16px + 数字背景自适应 + 简介兼容降级） */
+/* navigation.css - 完整修改版（统一 padding-bottom: 16px + 数字背景自适应 + 简介兼容降级） */
 
 .nav-search-box {
     display: block;
@@ -74,7 +74,7 @@
     .search-clear-btn { width: 20px; height: 20px; right: 6px; font-size: 11px; }
 }
 
-.navigation-section { padding: 16px 0; width: 100%; }
+.navigation-section { padding: 0 0 16px 0; width: 100%; }
 .navigation-section .container { padding: 0 var(--container-padding-xs); width: 100%; max-width: 1200px; margin: 0 auto; }
 
 @media (min-width: 576px) { .navigation-section .container { padding: 0 var(--container-padding-sm); } }
@@ -500,7 +500,7 @@
 
 /* 平板（768px以下）保持水平滚动，卡片调整 */
 @media (max-width: 768px) {
-    .navigation-section { padding: 16px 0; }
+    .navigation-section { padding: 0 0 16px 0; }
     .level3-content { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding: 10px; }
     .site-card { padding: 6px; }
     .icon-container { width: 24px; height: 24px; font-size: 11px; }
@@ -511,7 +511,7 @@
 }
 
 @media (max-width: 480px) {
-    .navigation-section { padding: 16px 0; }
+    .navigation-section { padding: 0 0 16px 0; }
     .level3-content { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; padding: 8px; }
     .site-card { padding: 4px; border-radius: 6px; }
     .icon-container { width: 20px; height: 20px; font-size: 9px; }
