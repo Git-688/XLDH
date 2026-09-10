@@ -1,4 +1,6 @@
-/* navigation.js - 异步分页加载 + 图标缓存持久化 + 预加载 + 自动重试 + 批量图标 + 搜索防抖节流 */
+/* navigation.js - 异步分页加载 + 图标缓存持久化 + 预加载 + 自动重试 + 批量图标 + 搜索防抖节流
+ * 本次修复：loadCategoryData 统一使用 Storage 封装（前缀 starlink_nav_data_*）
+ */
 
 class OptimizedNavigation {
     constructor() {
@@ -28,7 +30,7 @@ class OptimizedNavigation {
         this.iconCache = this.loadIconCache();
         this.MAX_ICON_CACHE_SIZE = 200;
 
-        // ===== 改动 8：搜索防抖节流 =====
+        // 搜索防抖节流
         this.searchAbortController = null;
         this.searchTimer = null;
         this.lastInputTime = 0;
@@ -507,17 +509,16 @@ class OptimizedNavigation {
         await this.updateStats();
     }
 
+    // ===== 修复：统一使用 Storage 封装（前缀 starlink_nav_data_*） =====
     async loadCategoryData(categoryName, forceRefresh = false) {
         const cacheKey = `nav_data_${categoryName}`;
-        const cached = localStorage.getItem(cacheKey);
+        const cached = Storage.get(cacheKey);
         const now = Date.now();
-        if (!forceRefresh && cached) {
-            try {
-                const data = JSON.parse(cached);
-                if (now - data.timestamp < 30 * 60 * 1000) {
-                    return data.data;
-                }
-            } catch (e) {}
+
+        if (!forceRefresh && cached && cached.data && cached.timestamp) {
+            if (now - cached.timestamp < 30 * 60 * 1000) {
+                return cached.data;
+            }
         }
 
         const MAX_RETRIES = 3;
@@ -539,8 +540,8 @@ class OptimizedNavigation {
                 const json = await response.json();
                 if (!json.subcategories) throw new Error('Invalid response');
 
-                const cacheData = { data: json, timestamp: now };
-                try { localStorage.setItem(cacheKey, JSON.stringify(cacheData)); } catch (e) {}
+                // ===== 修复：改用 Storage.set（内部已 try/catch 并带前缀） =====
+                Storage.set(cacheKey, { data: json, timestamp: now });
                 return json;
             } catch (error) {
                 lastError = error;
@@ -667,7 +668,7 @@ class OptimizedNavigation {
         const input = document.getElementById('navSearchInput');
         const clearBtn = document.getElementById('navSearchClearBtn');
 
-        // ===== 改动 8：防抖 + 节流 =====
+        // 防抖 + 节流
         input.addEventListener('input', () => {
             const query = input.value.trim();
             clearBtn.style.display = query ? 'flex' : 'none';
@@ -702,7 +703,7 @@ class OptimizedNavigation {
         });
     }
 
-    // ===== 改动 8：AbortController 取消上一次请求 =====
+    // AbortController 取消上一次请求
     async performSearch(query) {
         if (!query.trim()) return;
 
@@ -823,7 +824,6 @@ class OptimizedNavigation {
 
                 this.isInitialized = true;
 
-                // ===== 改动 7：批量图标预取 =====
                 setTimeout(() => this._prefetchIcons(), 2000);
                 return;
             } catch (error) {
@@ -846,7 +846,7 @@ class OptimizedNavigation {
         }
     }
 
-    // ===== 改动 7：批量图标预取 =====
+    // 批量图标预取
     async _prefetchIcons() {
         try {
             const domains = new Set();
