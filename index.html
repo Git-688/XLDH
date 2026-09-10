@@ -73,7 +73,7 @@
     <link rel="apple-touch-icon" href="./assets/logo.png">
 
     <script>
-        window.ASSET_VERSION = '20260819';
+        window.ASSET_VERSION = '20260910';
     </script>
 
     <script>
@@ -97,14 +97,14 @@
         })();
     </script>
 
-    <link rel="preload" href="./js/main.js?v=20260819" as="script">
-    <link rel="preload" href="./css/style.css?v=20260819" as="style">
-    <link rel="preload" href="./js/modules/navigation.js?v=20260819" as="script">
-    <link rel="preload" href="./js/components/sidebar.js?v=20260819" as="script">
-    <link rel="preload" href="./js/modules/wallpaper.js?v=20260819" as="script">
-    <link rel="preload" href="./js/modules/greeting.js?v=20260819" as="script">
-    <link rel="preload" href="./css/modules/navigation.css?v=20260819" as="style">
-    <link rel="preload" href="./css/modules/sidebar.css?v=20260819" as="style">
+    <link rel="preload" href="./js/main.js?v=20260910" as="script">
+    <link rel="preload" href="./css/style.css?v=20260910" as="style">
+    <link rel="preload" href="./js/modules/navigation.js?v=20260910" as="script">
+    <link rel="preload" href="./js/components/sidebar.js?v=20260910" as="script">
+    <link rel="preload" href="./js/modules/wallpaper.js?v=20260910" as="script">
+    <link rel="preload" href="./js/modules/greeting.js?v=20260910" as="script">
+    <link rel="preload" href="./css/modules/navigation.css?v=20260910" as="style">
+    <link rel="preload" href="./css/modules/sidebar.css?v=20260910" as="style">
     <link rel="preload" href="./assets/logo.webp" as="image" type="image/webp">
 
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
@@ -122,21 +122,21 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 
-    <link rel="stylesheet" href="./css/style.css?v=20260819">
-    <link rel="stylesheet" href="./css/modules/navbar.css?v=20260819">
-    <link rel="stylesheet" href="./css/modules/sidebar.css?v=20260819">
-    <link rel="stylesheet" href="./css/modules/announcement.css?v=20260819">
-    <link rel="stylesheet" href="./css/modules/search.css?v=20260819">
-    <link rel="stylesheet" href="./css/modules/weather.css?v=20260819">
-    <link rel="stylesheet" href="./css/modules/about.css?v=20260819">
-    <link rel="stylesheet" href="./css/modules/navigation.css?v=20260819">
-    <link rel="stylesheet" href="./css/modules/wallpaper.css?v=20260819">
-    <link rel="stylesheet" href="./css/modules/greeting.css?v=20260819">
-    <link rel="stylesheet" href="./css/modules/stats.css?v=20260819">
-    <link rel="stylesheet" href="./css/modules/compact-tags.css?v=20260819">
-    <link rel="stylesheet" href="./css/responsive.css?v=20260819">
-    <link rel="stylesheet" href="./css/xfyy1/music-player.css?v=20260819">
-    <link rel="stylesheet" href="./css/modules/comment.css?v=20260819">
+    <link rel="stylesheet" href="./css/style.css?v=20260910">
+    <link rel="stylesheet" href="./css/modules/navbar.css?v=20260910">
+    <link rel="stylesheet" href="./css/modules/sidebar.css?v=20260910">
+    <link rel="stylesheet" href="./css/modules/announcement.css?v=20260910">
+    <link rel="stylesheet" href="./css/modules/search.css?v=20260910">
+    <link rel="stylesheet" href="./css/modules/weather.css?v=20260910">
+    <link rel="stylesheet" href="./css/modules/about.css?v=20260910">
+    <link rel="stylesheet" href="./css/modules/navigation.css?v=20260910">
+    <link rel="stylesheet" href="./css/modules/wallpaper.css?v=20260910">
+    <link rel="stylesheet" href="./css/modules/greeting.css?v=20260910">
+    <link rel="stylesheet" href="./css/modules/stats.css?v=20260910">
+    <link rel="stylesheet" href="./css/modules/compact-tags.css?v=20260910">
+    <link rel="stylesheet" href="./css/responsive.css?v=20260910">
+    <link rel="stylesheet" href="./css/xfyy1/music-player.css?v=20260910">
+    <link rel="stylesheet" href="./css/modules/comment.css?v=20260910">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
@@ -148,6 +148,7 @@
         /* ===== 桌面端统计卡片显示控制 ===== */
         #desktopStatsSection {
             display: none;
+            padding: 0 0 16px 0;
         }
         .mobile-stats-wrapper {
             display: block;
@@ -159,6 +160,7 @@
         @media (min-width: 769px) {
             #desktopStatsSection {
                 display: block;
+                padding: 0 0 16px 0;
             }
             .mobile-stats-wrapper {
                 display: none;
@@ -171,6 +173,17 @@
             .mobile-stats-wrapper {
                 display: block;
             }
+        }
+
+        /* ===== 主页顶部到导航栏间距为 0 ===== */
+        .main-content {
+            margin-top: 60px;
+            padding-top: 0;
+            min-height: calc(100vh - 120px);
+        }
+        .wallpaper-section {
+            margin-top: 0;
+            padding-top: 0;
         }
 
         .scroll-progress {
@@ -334,7 +347,6 @@
         }
         .nav-btn:hover { background: var(--primary-color); color: white; }
 
-        .main-content { margin-top: 60px; min-height: calc(100vh - 120px); }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 var(--container-padding-xs); width: 100%; }
         .container-fluid { width: 100%; padding: 0 var(--container-padding-xs); }
         @media (min-width: 576px) { .container, .container-fluid { padding: 0 var(--container-padding-sm); } }
@@ -714,35 +726,35 @@
     </style>
 
     <!-- ===== 本地脚本（带版本号） ===== -->
-    <script defer src="./js/constants.js?v=20260819"></script>
-    <script defer src="./js/utils.js?v=20260819"></script>
-    <script defer src="./js/toast.js?v=20260819"></script>
-    <script defer src="./js/error-handler.js?v=20260819"></script>
-    <script defer src="./js/storage.js?v=20260819"></script>
-    <script defer src="./js/components/navbar.js?v=20260819"></script>
-    <script defer src="./js/components/sidebar.js?v=20260819"></script>
-    <script defer src="./js/modules/announcement.js?v=20260819"></script>
-    <script defer src="./js/modules/search.js?v=20260819"></script>
-    <script defer src="./js/modules/weather.js?v=20260819"></script>
-    <script defer src="./js/modules/about.js?v=20260819"></script>
-    <script defer src="./js/modules/navigation.js?v=20260819"></script>
-    <script defer src="./js/modules/wallpaper.js?v=20260819"></script>
-    <script defer src="./js/modules/greeting.js?v=20260819"></script>
-    <script defer src="./js/modules/stats.js?v=20260819"></script>
-    <script defer src="./js/modules/compact-tags.js?v=20260819"></script>
-    <script defer src="./js/main.js?v=20260819"></script>
-    <script defer src="./js/partner.js?v=20260819"></script>
-    <script defer src="./js/xfyy/cache-manager.js?v=20260819"></script>
-    <script defer src="./js/xfyy/lyric-parser.js?v=20260819"></script>
-    <script defer src="./data/local-music-data.js?v=20260819"></script>
-    <script defer src="./js/xfyy/plugin-manager.js?v=20260819"></script>
-    <script defer src="./js/xfyy/music-player.js?v=20260819"></script>
-    <script defer src="./js/xfyy/music-main.js?v=20260819"></script>
-    <script defer src="./js/modules/comment.js?v=20260819"></script>
-    <script defer src="./js/modules/submit.js?v=20260819"></script>
-    <script defer src="./js/modules/theme.js?v=20260819"></script>
-    <script defer src="./js/cursor2.js?v=20260819"></script>
-    <script defer src="./js/modules/keyboard-adapter.js?v=20260819"></script>
+    <script defer src="./js/constants.js?v=20260910"></script>
+    <script defer src="./js/utils.js?v=20260910"></script>
+    <script defer src="./js/toast.js?v=20260910"></script>
+    <script defer src="./js/error-handler.js?v=20260910"></script>
+    <script defer src="./js/storage.js?v=20260910"></script>
+    <script defer src="./js/components/navbar.js?v=20260910"></script>
+    <script defer src="./js/components/sidebar.js?v=20260910"></script>
+    <script defer src="./js/modules/announcement.js?v=20260910"></script>
+    <script defer src="./js/modules/search.js?v=20260910"></script>
+    <script defer src="./js/modules/weather.js?v=20260910"></script>
+    <script defer src="./js/modules/about.js?v=20260910"></script>
+    <script defer src="./js/modules/navigation.js?v=20260910"></script>
+    <script defer src="./js/modules/wallpaper.js?v=20260910"></script>
+    <script defer src="./js/modules/greeting.js?v=20260910"></script>
+    <script defer src="./js/modules/stats.js?v=20260910"></script>
+    <script defer src="./js/modules/compact-tags.js?v=20260910"></script>
+    <script defer src="./js/main.js?v=20260910"></script>
+    <script defer src="./js/partner.js?v=20260910"></script>
+    <script defer src="./js/xfyy/cache-manager.js?v=20260910"></script>
+    <script defer src="./js/xfyy/lyric-parser.js?v=20260910"></script>
+    <script defer src="./data/local-music-data.js?v=20260910"></script>
+    <script defer src="./js/xfyy/plugin-manager.js?v=20260910"></script>
+    <script defer src="./js/xfyy/music-player.js?v=20260910"></script>
+    <script defer src="./js/xfyy/music-main.js?v=20260910"></script>
+    <script defer src="./js/modules/comment.js?v=20260910"></script>
+    <script defer src="./js/modules/submit.js?v=20260910"></script>
+    <script defer src="./js/modules/theme.js?v=20260910"></script>
+    <script defer src="./js/cursor2.js?v=20260910"></script>
+    <script defer src="./js/modules/keyboard-adapter.js?v=20260910"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"></script>
 </head>
 <body>
