@@ -1,4 +1,4 @@
-/* admin.js - 完整版（密码可见性切换 + 从 admin.html 抽离的内联脚本 + 兼容新旧导航缓存前缀） */
+/* admin.js - 完整版（已移除验证码，仅使用 Token 登录） */
 (function() {
     'use strict';
 
@@ -18,7 +18,6 @@
     let currentSubmissionId = null;
     let refreshTimer = null;
     let currentAnnouncement = null;
-    let currentCaptchaMd5key = null;
     let loginLocked = false;
 
     let selectedSiteIds = new Set();
@@ -226,68 +225,70 @@
 
     function updateLockMessage(locked) { const el = document.getElementById('loginLockMessage'); if (!el) return; if (locked) { el.textContent = '登录失败过多，请10分钟后重试'; el.style.display = 'block'; } else { el.style.display = 'none'; } }
 
-    async function loadCaptcha() {
-        const captchaGroup = document.getElementById('captchaGroup');
-        const captchaImg = document.getElementById('captchaImg');
-        if (!captchaGroup || !captchaImg) return;
-        try {
-            const response = await fetch(`${API_BASE}/admin/captcha`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Device-Id': getDeviceId() }
-            });
-            const data = await response.json();
-            if (data.imgurl && data.md5key) {
-                captchaImg.src = data.imgurl;
-                currentCaptchaMd5key = data.md5key;
-                captchaGroup.style.display = 'block';
-            } else {
-                showToast('获取验证码失败，请刷新重试', 'error');
-            }
-        } catch (err) { showToast('验证码服务异常', 'error'); }
-    }
-
-    function refreshCaptcha() { loadCaptcha(); }
-
     async function login() {
         const rawToken = document.getElementById('tokenInput').value.trim();
         if (!rawToken) { showToast('请输入Token', 'error'); return; }
-        const captchaCode = document.getElementById('captchaInput')?.value.trim() || '';
-        if (!captchaCode) { showToast('请输入验证码', 'error'); return; }
         if (loginLocked) { showToast('登录已锁定，请10分钟后重试', 'error'); return; }
+
         const btn = document.getElementById('loginBtn');
         btn.disabled = true;
         btn.textContent = '登录中…';
+
         try {
             const loginRes = await fetch(`${API_BASE}/admin/login`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Device-Id': getDeviceId() },
-                body: JSON.stringify({ token: rawToken, captchaCode, md5key: currentCaptchaMd5key })
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Device-Id': getDeviceId()
+                },
+                body: JSON.stringify({ token: rawToken })
             });
+
             const loginData = await loginRes.json().catch(() => ({}));
+
             if (!loginRes.ok) {
-                if (loginRes.status === 429) { loginLocked = true; updateLockMessage(true); showToast('登录失败过多，请10分钟后重试', 'error'); }
-                throw new Error(loginData.error || '登录失败');
+                if (loginRes.status === 429) {
+                    loginLocked = true;
+                    updateLockMessage(true);
+                    localStorage.setItem('login_locked', 'true');
+                    showToast('登录失败过多，请10分钟后重试', 'error');
+                    return;
+                } else if (loginRes.status === 401) {
+                    showToast('Token 无效', 'error');
+                    return;
+                } else {
+                    showToast(loginData.error || '登录失败', 'error');
+                    return;
+                }
             }
+
+            // ===== 登录成功 =====
             loginLocked = false;
             updateLockMessage(false);
+            localStorage.removeItem('login_locked');
+
             const sessionToken = loginData.token;
             const rtk = loginData.refreshToken;
             const csrf = loginData.csrfToken || '';
             const remember = document.getElementById('rememberToken').checked;
             saveToken(sessionToken, rtk, csrf, remember);
+
             await loadAllData();
+
             const loginWrapper = document.getElementById('loginWrapper');
             const mainContent = document.getElementById('mainContent');
             if (loginWrapper) loginWrapper.style.display = 'none';
             if (mainContent) mainContent.classList.remove('hidden');
+
             document.getElementById('tokenInput').value = '';
-            document.getElementById('captchaInput').value = '';
             showToast('登录成功' + (remember ? '（已记住密码）' : ''));
         } catch (e) {
             token = '';
-            showToast(e.message === 'Unauthorized' ? 'Token无效或验证码错误' : e.message || '登录失败', 'error');
-            loadCaptcha();
-        } finally { btn.disabled = false; btn.textContent = '登录'; }
+            showToast(e.message === 'Unauthorized' ? 'Token 无效' : (e.message || '登录失败'), 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '登录';
+        }
     }
 
     function logout() {
@@ -298,12 +299,6 @@
         if (mainContent) mainContent.classList.add('hidden');
         const tokenInput = document.getElementById('tokenInput');
         if (tokenInput) tokenInput.value = '';
-        const captchaInput = document.getElementById('captchaInput');
-        if (captchaInput) captchaInput.value = '';
-        const captchaGroup = document.getElementById('captchaGroup');
-        if (captchaGroup) captchaGroup.style.display = 'none';
-        currentCaptchaMd5key = null;
-        loadCaptcha();
         showToast('已退出');
     }
 
@@ -1967,9 +1962,6 @@
         document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
         document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
 
-        const captchaImg = document.getElementById('captchaImg');
-        if (captchaImg) captchaImg.addEventListener('click', refreshCaptcha);
-
         document.getElementById('batchSelectAll')?.addEventListener('click', toggleSelectAll);
         document.getElementById('batchClearSelection')?.addEventListener('click', clearSelection);
         document.getElementById('batchDeleteBtn')?.addEventListener('click', batchDeleteSites);
@@ -1983,9 +1975,7 @@
 
             try {
                 await apiFetch('/admin/refresh-navigation', { method: 'POST' });
-                // ===== 修复：同时清理新旧两种前缀的导航缓存 =====
-                // - nav_data_*          旧版（裸 localStorage 直写）
-                // - starlink_nav_data_* 新版（Storage 封装）
+                // 同时清理新旧两种前缀的导航缓存
                 const keysToRemove = [];
                 for (let i = 0; i < localStorage.length; i++) {
                     const key = localStorage.key(i);
@@ -2053,12 +2043,6 @@
         const mainContent = document.getElementById('mainContent');
         if (loginWrapper) loginWrapper.style.display = 'flex';
         if (mainContent) mainContent.classList.add('hidden');
-        loadCaptcha();
-        setInterval(() => {
-            if (document.getElementById('captchaGroup')?.style.display !== 'none' && !token) {
-                loadCaptcha();
-            }
-        }, 4 * 60 * 1000);
     }
 
     setInterval(() => {
