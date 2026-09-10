@@ -1295,16 +1295,5 @@
 
         })();
     </script>
-
-    <!-- ===== Service Worker 注册 ===== -->
-    <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js?v=20260910')
-                .then(reg => console.log('[SW] 注册成功', reg.scope))
-                .catch(err => console.warn('[SW] 注册失败', err));
-        });
-    }
-    </script>
 </body>
 </html>
