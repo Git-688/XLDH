@@ -1,4 +1,4 @@
-/* music-main.js - 精简版（音乐播放器入口） */
+/* music-main.js - 精简版（音乐播放器入口 + 与统一错误处理器协同） */
 let musicPlayer = null;
 
 function tryInitMusicPlayer(retry = 0) {
@@ -52,7 +52,10 @@ function tryInitMusicPlayer(retry = 0) {
 
 function initWhenReady() {
     const playerEl = document.getElementById('musicPlayer');
-    if (playerEl) playerEl.style.display = 'none';
+    // ===== 修复：仅在播放器未打开时才强制隐藏，避免覆盖用户已打开的状态 =====
+    if (playerEl && !playerEl.classList.contains('show')) {
+        playerEl.style.display = 'none';
+    }
     tryInitMusicPlayer();
 }
 
@@ -63,24 +66,34 @@ if (document.readyState === 'loading') {
     initWhenReady();
 }
 
-// ---------- 全局错误处理 ----------
-const shouldIgnore = (message) => {
-    const m = String(message || '');
-    return m === 'Script error.' || m === 'null' || m === 'undefined' || m.trim() === '';
-};
+// ---------- 全局错误处理（与统一错误处理器协同） ----------
+// ===== 修复：若统一错误处理器已注册，则跳过全局监听，避免重复记录与上报 =====
+(function setupMusicGlobalErrorHandlers() {
+    // 如果 utils.js 的 setupGlobalErrorHandler 已经通过 main.js 注册过，
+    // window.errorHandler 会存在，此时不再重复挂载监听器。
+    if (window._errorHandlerSetup || window.errorHandler) {
+        return;
+    }
 
-window.addEventListener('error', (event) => {
-    const msg = event.message || event.error?.message || '';
-    if (shouldIgnore(msg)) return;
-    console.error('全局错误:', event.error);
-});
+    const shouldIgnore = (message) => {
+        const m = String(message || '');
+        return m === 'Script error.' || m === 'null' || m === 'undefined' || m.trim() === '';
+    };
 
-window.addEventListener('unhandledrejection', (event) => {
-    const reason = event.reason;
-    const msg = reason?.message || String(reason);
-    if (shouldIgnore(msg) || reason === null) return;
-    console.error('未处理的Promise拒绝:', reason);
-});
+    window.addEventListener('error', (event) => {
+        const msg = event.message || event.error?.message || '';
+        if (shouldIgnore(msg)) return;
+        console.error('全局错误:', event.error);
+    });
+
+    window.addEventListener('unhandledrejection', (event) => {
+        const reason = event.reason;
+        // ===== 修复：reason === null 已被 shouldIgnore(String(null) === 'null') 覆盖，无需重复判断 =====
+        const msg = reason?.message || String(reason);
+        if (shouldIgnore(msg)) return;
+        console.error('未处理的Promise拒绝:', reason);
+    });
+})();
 
 // ---------- 全局 API ----------
 window.toggleMusicPlayer = () => window.Starlink?.navbar?.toggleMusicPlayer?.() || window.app?.components?.navbar?.toggleMusicPlayer?.();
