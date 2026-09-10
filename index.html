@@ -104,9 +104,8 @@
     <link rel="preload" href="./assets/logo.webp" as="image" type="image/webp">
 
     <link rel="preconnect" href="https://api.xjdh688.ccwu.cc">
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://myhkw.cn">
     <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://myhkw.cn">
     <link rel="preconnect" href="https://oiapi.net">
     <link rel="dns-prefetch" href="https://favicon.yandex.net">
     <link rel="dns-prefetch" href="https://icon.horse">
@@ -115,8 +114,8 @@
     <link rel="dns-prefetch" href="https://api.kuleu.com">
     <link rel="dns-prefetch" href="https://api.injahow.cn">
 
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin="anonymous">
+    <link rel="preload" href="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin="anonymous">
 
     <link rel="stylesheet" href="./css/style.css">
     <link rel="stylesheet" href="./css/modules/navbar.css">
@@ -134,11 +133,12 @@
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
     <link rel="stylesheet" href="./css/modules/comment.css">
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.css">
+    <!-- ===== 修复：所有 CDN 从 cdn.jsdelivr.net 改为 unpkg.com ===== -->
+    <link rel="stylesheet" href="https://unpkg.com/@waline/client@3.15.2/dist/waline.css">
+    <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/katex@0.16.45/dist/katex.min.css">
 
     <style>
         /* ===== 桌面端统计卡片显示控制 ===== */
@@ -751,7 +751,7 @@
     <script defer src="./js/modules/theme.js"></script>
     <script defer src="./js/cursor2.js"></script>
     <script defer src="./js/modules/keyboard-adapter.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/@waline/client@3.15.2/dist/waline.umd.js"></script>
+    <script defer src="https://unpkg.com/@waline/client@3.15.2/dist/waline.umd.js"></script>
 </head>
 <body>
     <div class="scroll-progress" id="scrollProgress"></div>
@@ -1045,7 +1045,7 @@
         </div>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.1/dist/jquery.min.js"></script>
+    <script src="https://unpkg.com/jquery@3.6.1/dist/jquery.min.js"></script>
     <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/178139989192" key="178139989192" m="1"></script>
 
     <script>
@@ -1064,8 +1064,8 @@
         })();
     </script>
 
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/katex.min.js"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
+    <script defer src="https://unpkg.com/katex@0.16.45/dist/katex.min.js"></script>
+    <script defer src="https://unpkg.com/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
 
     <script>
         (function() {
