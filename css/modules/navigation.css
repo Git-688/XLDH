@@ -1,4 +1,4 @@
-/* navigation.css - 完整修改版（电脑端一级、二级导航水平滚动 + 数字背景自适应） */
+/* navigation.css - 完整修改版（上下间距16px + 数字背景自适应 + 简介兼容降级） */
 
 .nav-search-box {
     display: block;
@@ -74,7 +74,7 @@
     .search-clear-btn { width: 20px; height: 20px; right: 6px; font-size: 11px; }
 }
 
-.navigation-section { padding: 0 0 calc(var(--section-margin-xs) * 0.5) 0; width: 100%; }
+.navigation-section { padding: 16px 0; width: 100%; }
 .navigation-section .container { padding: 0 var(--container-padding-xs); width: 100%; max-width: 1200px; margin: 0 auto; }
 
 @media (min-width: 576px) { .navigation-section .container { padding: 0 var(--container-padding-sm); } }
@@ -140,7 +140,7 @@
 
 .navigation-body {
     display: flex;
-    flex-direction: column;  /* 改为纵向排列，一级、二级各自一行 */
+    flex-direction: column;
     width: 100%;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -151,7 +151,7 @@
 }
 
 .navigation-left {
-    width: 100%;             /* 占满整行 */
+    width: 100%;
     flex-shrink: 0;
     border-right: none;
     border-bottom: 1px solid var(--border-color);
@@ -162,18 +162,18 @@
 }
 .level1-nav {
     display: flex;
-    flex-direction: row;     /* 水平排列 */
-    overflow-x: auto;        /* 允许横向滚动 */
+    flex-direction: row;
+    overflow-x: auto;
     white-space: nowrap;
     padding: 4px 8px;
-    scrollbar-width: none;   /* 隐藏滚动条 */
+    scrollbar-width: none;
     -ms-overflow-style: none;
 }
 .level1-nav::-webkit-scrollbar {
     display: none;
 }
 .level1-btn {
-    flex: 0 0 auto;          /* 不伸缩，宽度自适应 */
+    flex: 0 0 auto;
     padding: 0 16px;
     border: none;
     background: transparent;
@@ -186,7 +186,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border-right: 1px solid var(--border-color); /* 右侧分割线 */
+    border-right: 1px solid var(--border-color);
     white-space: nowrap;
     min-height: 40px;
     height: 40px;
@@ -242,7 +242,7 @@
 .level2-btn.active { background: transparent; color: var(--nav-level2-active); font-weight: 700; }
 .level2-btn-text { white-space: nowrap; font-size: 13px; text-align: center; }
 
-/* ===== 修改：数字背景自适应，去掉固定宽度 ===== */
+/* ===== 数字背景自适应（去掉固定宽度） ===== */
 .level2-btn-count {
     background: rgba(0, 0, 0, 0.05);
     color: var(--text-secondary);
@@ -250,7 +250,6 @@
     font-weight: 600;
     padding: 1px 6px;
     border-radius: 8px;
-    /* min-width 移除，由 padding 撑开 */
     text-align: center;
     flex-shrink: 0;
     margin-left: 4px;
@@ -303,7 +302,6 @@
     to { transform: rotate(360deg); }
 }
 
-/* 卡片主体：正方形，紧凑 */
 .site-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -329,7 +327,6 @@
     background: linear-gradient(135deg, var(--card-hover-bg-start), var(--card-hover-bg-end));
 }
 
-/* 第一行：图标 + 标题 */
 .card-top {
     display: flex;
     align-items: center;
@@ -411,12 +408,10 @@
     overflow: hidden;
     text-overflow: ellipsis;
     word-break: break-word;
-    /* 默认显示两行（后备） */
     display: block;
     max-height: 2.6em;
 }
 
-/* 支持 -webkit-box 的浏览器使用更精确的两行截断 */
 @supports (display: -webkit-box) {
     .site-description {
         display: -webkit-box;
@@ -503,10 +498,9 @@
 .view-count.increasing { animation: pulseView 0.3s ease; }
 @keyframes pulseView { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
-/* ===== 响应式：桌面端（≥769px）已整合到上述通用规则，无需额外媒体查询 ===== */
-
 /* 平板（768px以下）保持水平滚动，卡片调整 */
 @media (max-width: 768px) {
+    .navigation-section { padding: 16px 0; }
     .level3-content { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding: 10px; }
     .site-card { padding: 6px; }
     .icon-container { width: 24px; height: 24px; font-size: 11px; }
@@ -517,6 +511,7 @@
 }
 
 @media (max-width: 480px) {
+    .navigation-section { padding: 16px 0; }
     .level3-content { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; padding: 8px; }
     .site-card { padding: 4px; border-radius: 6px; }
     .icon-container { width: 20px; height: 20px; font-size: 9px; }
