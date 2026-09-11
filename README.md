@@ -1,7 +1,7 @@
 <div align="center">
   <img src="./assets/logo.png" alt="星聚导航 Logo" width="100">
   <h1>⭐️ 星聚导航</h1>
-  <p>一款极简的现代个人导航（集合Git开源项目）</p>
+  <p>极简的个人导航（Git开源项目+Cloudflare）</p>
 
   ![GitHub Repo stars](https://img.shields.io/github/stars/Git-688/XLDH?style=social)
   ![GitHub forks](https://img.shields.io/github/forks/Git-688/XLDH?style=social)
@@ -33,9 +33,9 @@
 ## 🌐 在线体验
 
 ✅️星聚导航：`https://xjdh688.ccwu.cc`  
-✅️星聚图床：`https://tc688.ccwu.cc`未开放
-✅️星聚影视：`https://ys688.ccwu.cc`星聚影视688
-✅️星聚音乐：`https://yy688.ccwu.cc`688
+✅️星聚图床：`https://tc688.ccwu.cc`
+✅️星聚影视：`https://ys688.ccwu.cc`
+✅️星聚音乐：`https://yy688.ccwu.cc`
 
 ## 🚀 快速部署
 
