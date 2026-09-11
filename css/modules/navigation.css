@@ -1,4 +1,4 @@
-/* navigation.css 卡片自己定高 描述固定3行 无多余空白 */
+/* navigation.css 卡片固定高度 描述3行 底部显示"已加载全部" */
 
 .nav-search-box {
     display: block;
@@ -265,7 +265,6 @@
     position: relative;
 }
 
-/* 网格容器 行高由内容决定 卡片自己定高 */
 .level3-content {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -276,12 +275,41 @@
     align-items: stretch;
 }
 
-/* 隐藏的加载触发器 不占高度 */
+/* 加载触发器与结束语 默认状态 */
 .load-more-trigger {
     grid-column: 1 / -1;
-    height: 1px;
     width: 100%;
+}
+
+/* 隐藏触发器（用于无限滚动） */
+.load-more-trigger:not(.is-end) {
+    height: 1px;
     visibility: hidden;
+}
+
+/* 结束语 显示在底部中间 */
+.load-more-trigger.is-end {
+    height: auto;
+    visibility: visible;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 0 2px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    letter-spacing: 1px;
+    opacity: 0.6;
+    user-select: none;
+    line-height: 1;
+}
+
+.load-more-trigger.is-end::before,
+.load-more-trigger.is-end::after {
+    content: '';
+    height: 1px;
+    width: 32px;
+    background: linear-gradient(to right, transparent, var(--border-color), transparent);
 }
 
 .scroll-loading-trigger {
@@ -305,7 +333,6 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* 卡片 固定高度 */
 .site-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -513,6 +540,9 @@
     .card-bottom { height: 18px; }
     .view-count { font-size: 10px; }
     .level1-btn, .level2-btn { font-size: 12px; min-height: 36px; height: 36px; line-height: 36px; padding: 0 14px; }
+    .load-more-trigger.is-end { font-size: 10px; padding: 8px 0 2px; }
+    .load-more-trigger.is-end::before,
+    .load-more-trigger.is-end::after { width: 24px; }
 }
 
 @media (max-width: 480px) {
@@ -529,6 +559,9 @@
     .report-dead-link-btn i { font-size: 11px; }
     .level1-btn, .level2-btn { font-size: 11px; padding: 0 10px; min-height: 32px; height: 32px; line-height: 32px; }
     .level1-nav, .level2-nav { padding: 2px 6px; }
+    .load-more-trigger.is-end { font-size: 9px; padding: 6px 0 2px; letter-spacing: 0.5px; }
+    .load-more-trigger.is-end::before,
+    .load-more-trigger.is-end::after { width: 18px; }
 }
 
 .dark-mode .navigation-body,
