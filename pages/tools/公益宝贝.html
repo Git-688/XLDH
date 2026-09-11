@@ -47,8 +47,8 @@
     </div>
     <div id="errorBox" class="hidden absolute inset-0 flex flex-col items-center justify-center text-gray-500 text-sm p-4 text-center">
       <span class="text-3xl mb-2">😔</span>
-      <p>信息加载失败</p>
-      <p class="text-xs text-gray-400 mt-1">请点击按钮重试</p>
+      <p id="errorMessage" class="text-red-500 font-medium">信息加载失败</p>
+      <p id="errorDetail" class="text-xs text-gray-400 mt-1 break-all px-2">请点击按钮重试</p>
     </div>
     <img
       id="babyImg"
@@ -86,7 +86,7 @@
 </div>
 
 <script>
-// 后端代理地址 自动根据访问域名推导
+// 根据访问域名推导后端 API 地址
 const API_BASE = (function() {
   const hostname = window.location.hostname;
   if (hostname === 'localhost' || hostname === '127.0.0.1') return 'http://localhost:8787';
@@ -105,13 +105,14 @@ let isLoading = false;
 const img = document.getElementById('babyImg');
 const loadingBox = document.getElementById('loadingBox');
 const errorBox = document.getElementById('errorBox');
+const errorMessage = document.getElementById('errorMessage');
+const errorDetail = document.getElementById('errorDetail');
 const infoBox = document.getElementById('infoBox');
 const babyTitle = document.getElementById('babyTitle');
 const babyInfoList = document.getElementById('babyInfoList');
 const sourceLink = document.getElementById('sourceLink');
 const refreshBtn = document.getElementById('refreshBtn');
 
-// 切换寻人类型
 function changeType(type) {
   if (isLoading || type === currentType) return;
   currentType = type;
@@ -127,8 +128,7 @@ function changeType(type) {
   refreshBaby();
 }
 
-// 请求寻亲数据
-function fetchBabyData() {
+async function fetchBabyData() {
   if (isLoading) return;
   isLoading = true;
 
@@ -142,70 +142,84 @@ function fetchBabyData() {
   const timestamp = Date.now();
   const requestUrl = `${API_URL}?type=${encodeURIComponent(currentType)}&t=${timestamp}`;
 
-  fetch(requestUrl)
-    .then(response => {
-      if (!response.ok) throw new Error('网络请求失败');
-      return response.json();
-    })
-    .then(result => {
-      if (result.error) throw new Error(result.error);
+  try {
+    const response = await fetch(requestUrl);
+    const rawText = await response.text();
 
-      const data = result.data || result;
-      const imageUrl = data.image;
-      const title = data.title || '寻人启事';
-      const infoData = data.info || {};
-      const sourceUrl = data.source_url || '#';
+    let result = null;
+    try {
+      result = JSON.parse(rawText);
+    } catch (e) {
+      throw new Error(`后端返回非 JSON (HTTP ${response.status}) 内容: ${rawText.slice(0, 120)}`);
+    }
 
-      if (!imageUrl) throw new Error('未获取到图片信息');
+    if (!response.ok) {
+      const detail = result.detail ? ` (${result.detail})` : '';
+      throw new Error((result.error || `HTTP ${response.status}`) + detail);
+    }
 
+    if (result.error) {
+      throw new Error(result.error + (result.detail ? ` (${result.detail})` : ''));
+    }
+
+    const data = result.data || result;
+    const imageUrl = data.image;
+    const title = data.title || '寻人启事';
+    const infoData = data.info || {};
+    const sourceUrl = data.source_url || '#';
+
+    if (!imageUrl) throw new Error('上游未返回图片地址');
+
+    await new Promise((resolve, reject) => {
       const tempImg = new Image();
-      tempImg.onload = () => {
-        img.src = imageUrl;
-        babyTitle.textContent = title;
-        sourceLink.href = sourceUrl;
-
-        babyInfoList.innerHTML = '';
-        if (typeof infoData === 'object' && infoData !== null) {
-          Object.entries(infoData).forEach(([key, value]) => {
-            if (!value || value === '暂无' || value === '未知CM') return;
-            const item = document.createElement('div');
-            item.className = 'flex text-gray-600';
-            const keySpan = document.createElement('span');
-            keySpan.className = 'text-gray-400 w-20 shrink-0';
-            keySpan.textContent = `${key}：`;
-            const valSpan = document.createElement('span');
-            valSpan.className = 'flex-1';
-            valSpan.textContent = value;
-            item.appendChild(keySpan);
-            item.appendChild(valSpan);
-            babyInfoList.appendChild(item);
-          });
-        } else {
-          babyInfoList.innerHTML = `<p class="text-gray-600"></p>`;
-          babyInfoList.firstChild.textContent = infoData || '暂无更多详情';
-        }
-
-        loadingBox.classList.add('hidden');
-        img.classList.remove('hidden');
-        img.classList.add('fade-in');
-        infoBox.classList.remove('hidden');
-        infoBox.classList.add('fade-in');
-      };
-      tempImg.onerror = () => {
-        throw new Error('图片加载失败');
-      };
+      tempImg.onload = () => resolve();
+      tempImg.onerror = () => reject(new Error('图片加载失败'));
       tempImg.src = imageUrl;
-    })
-    .catch(error => {
-      console.error('加载失败', error);
-      loadingBox.classList.add('hidden');
-      errorBox.classList.remove('hidden');
-    })
-    .finally(() => {
-      isLoading = false;
-      refreshBtn.disabled = false;
-      refreshBtn.classList.remove('opacity-70', 'cursor-not-allowed');
     });
+
+    img.src = imageUrl;
+    babyTitle.textContent = title;
+    sourceLink.href = sourceUrl;
+
+    babyInfoList.innerHTML = '';
+    if (typeof infoData === 'object' && infoData !== null) {
+      Object.entries(infoData).forEach(([key, value]) => {
+        if (!value || value === '暂无' || value === '未知CM') return;
+        const item = document.createElement('div');
+        item.className = 'flex text-gray-600';
+        const keySpan = document.createElement('span');
+        keySpan.className = 'text-gray-400 w-20 shrink-0';
+        keySpan.textContent = `${key}：`;
+        const valSpan = document.createElement('span');
+        valSpan.className = 'flex-1';
+        valSpan.textContent = value;
+        item.appendChild(keySpan);
+        item.appendChild(valSpan);
+        babyInfoList.appendChild(item);
+      });
+    } else {
+      const p = document.createElement('p');
+      p.className = 'text-gray-600';
+      p.textContent = infoData || '暂无更多详情';
+      babyInfoList.appendChild(p);
+    }
+
+    loadingBox.classList.add('hidden');
+    img.classList.remove('hidden');
+    img.classList.add('fade-in');
+    infoBox.classList.remove('hidden');
+    infoBox.classList.add('fade-in');
+  } catch (error) {
+    console.error('加载失败', error);
+    loadingBox.classList.add('hidden');
+    errorBox.classList.remove('hidden');
+    errorMessage.textContent = error.message || '信息加载失败';
+    errorDetail.textContent = '把上面这行错误信息发给管理员即可定位问题';
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+  }
 }
 
 function refreshBaby() {
@@ -216,6 +230,8 @@ function handleImgError() {
   loadingBox.classList.add('hidden');
   errorBox.classList.remove('hidden');
   img.classList.add('hidden');
+  errorMessage.textContent = '图片加载失败';
+  errorDetail.textContent = '上游图片地址无法访问';
 }
 
 window.addEventListener('DOMContentLoaded', fetchBabyData);
