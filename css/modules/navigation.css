@@ -1,4 +1,4 @@
-/* navigation.css 卡片统一高度 描述固定3行 带调试色块 */
+/* navigation.css 卡片统一高度 描述固定3行 文字垂直居中 */
 
 .nav-search-box {
     display: block;
@@ -266,7 +266,7 @@
     position: relative;
 }
 
-/* 网格容器 灰色底 固定行高 让所有卡片统一高度 */
+/* 网格容器 固定行高 让所有卡片统一高度 */
 .level3-content {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -274,7 +274,6 @@
     gap: 10px;
     padding: 12px;
     box-sizing: border-box;
-    background: rgba(128, 128, 128, 0.06);
 }
 
 .scroll-loading-trigger {
@@ -298,9 +297,9 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* 卡片 淡蓝底 高度由 grid 行高决定 */
+/* 卡片 高度由 grid 行高决定 */
 .site-card {
-    background: rgba(67, 97, 238, 0.08);
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 6px;
@@ -323,7 +322,7 @@
     background: linear-gradient(135deg, var(--card-hover-bg-start), var(--card-hover-bg-end));
 }
 
-/* 顶部行 淡绿底 固定 28px */
+/* 顶部行 固定 28px */
 .card-top {
     display: flex;
     align-items: center;
@@ -331,8 +330,6 @@
     flex-shrink: 0;
     height: 28px;
     padding: 0;
-    background: rgba(16, 185, 129, 0.18);
-    border-radius: 4px;
 }
 
 .icon-container {
@@ -340,7 +337,7 @@
     width: 26px;
     height: 26px;
     border-radius: 6px;
-    background: rgba(245, 158, 11, 0.3);
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -396,7 +393,7 @@
     text-align: center;
 }
 
-/* 描述区域 淡黄底 flex:1 撑满中间剩余空间 内部文字垂直居中 最多3行 */
+/* 描述区域 flex:1 撑满中间 文字垂直居中 最多3行 */
 .site-description {
     flex: 1;
     min-height: 0;
@@ -404,8 +401,6 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    background: rgba(250, 204, 21, 0.28);
-    border-radius: 4px;
     padding: 0 2px;
 }
 
@@ -423,7 +418,6 @@
     width: 100%;
 }
 
-/* 分隔线 红色描边 */
 .divider-line {
     height: 1px;
     background: repeating-linear-gradient(
@@ -437,10 +431,9 @@
     opacity: 0.5;
     width: 100%;
     flex-shrink: 0;
-    outline: 1px solid rgba(239, 68, 68, 0.7);
 }
 
-/* 底部行 淡紫底 固定 20px */
+/* 底部行 固定 20px */
 .card-bottom {
     display: flex;
     justify-content: space-between;
@@ -448,8 +441,6 @@
     flex-shrink: 0;
     height: 20px;
     padding-top: 0;
-    background: rgba(139, 92, 246, 0.18);
-    border-radius: 4px;
 }
 
 .view-count {
