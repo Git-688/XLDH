@@ -1,4 +1,5 @@
 
+
 class OptimizedNavigation {
     constructor() {
         if (window.Starlink && window.Starlink.navigation) return window.Starlink.navigation;
@@ -13,26 +14,21 @@ class OptimizedNavigation {
         this.searchQuery = '';
         this.isSearching = false;
 
-        // 分页配置
         this.pageSize = 20;
         this.currentPage = 1;
         this.hasMoreData = true;
         this.isLoadingMore = false;
 
-        // 站点数据缓存
         this.siteCache = new Map();
         this.subCounts = {};
 
-        // 图标缓存
         this.iconCache = this.loadIconCache();
         this.MAX_ICON_CACHE_SIZE = 200;
 
-        // 搜索防抖节流
         this.searchAbortController = null;
         this.searchTimer = null;
         this.lastInputTime = 0;
 
-        // DOM 元素
         this.level1Nav = document.getElementById('level1Nav');
         this.level2Nav = document.getElementById('level2Nav');
         this.level3Content = document.getElementById('level3Content');
@@ -171,19 +167,23 @@ class OptimizedNavigation {
         return container;
     }
 
-    // ===== 渲染站点卡片 =====
+    // ===== 渲染站点卡片（首次） =====
     _renderSites(sites) {
         const container = this.level3Content;
         if (!container) return;
+
         if (!sites || !sites.length) {
             container.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3 class="empty-title">暂无站点</h3></div>`;
+            this.hasMoreData = false;
             return;
         }
 
+        // 关键：渲染前先根据数据量判断是否还有更多
+        this.hasMoreData = sites.length >= this.pageSize;
+
         const fragment = document.createDocumentFragment();
         sites.forEach((site) => {
-            const card = this._createSiteCard(site);
-            fragment.appendChild(card);
+            fragment.appendChild(this._createSiteCard(site));
         });
 
         container.innerHTML = '';
@@ -306,22 +306,33 @@ class OptimizedNavigation {
         return card;
     }
 
+    // ===== 追加站点卡片（加载更多） =====
     _appendSites(sites) {
         const container = this.level3Content;
         if (!container) return;
-        if (!sites || !sites.length) return;
 
+        // 移除旧的触发器
         const existingTrigger = container.querySelector('.load-more-trigger');
         if (existingTrigger) existingTrigger.remove();
+
         const emptyState = container.querySelector('.empty-state');
         if (emptyState) emptyState.remove();
+
+        // 空数组也要更新底部状态
+        if (!sites || !sites.length) {
+            this.hasMoreData = false;
+            this.updateLoadMoreTrigger();
+            return;
+        }
 
         const fragment = document.createDocumentFragment();
         sites.forEach((site) => {
             fragment.appendChild(this._createSiteCard(site));
         });
-
         container.appendChild(fragment);
+
+        // 根据本次返回数量判断是否还有更多
+        this.hasMoreData = sites.length >= this.pageSize;
         this.updateLoadMoreTrigger();
     }
 
@@ -362,19 +373,19 @@ class OptimizedNavigation {
         }
     }
 
-    // ===== 更新底部触发器/结束语 =====
+    // ===== 底部触发器 / 结束语 =====
     updateLoadMoreTrigger() {
         const container = this.level3Content;
         if (!container) return;
 
-        // 移除旧的
+        // 移除旧状态
         const oldTrigger = container.querySelector('.load-more-trigger');
         if (oldTrigger) oldTrigger.remove();
 
         // 搜索模式不显示
         if (this.isSearching) return;
 
-        // 已全部加载完 → 显示结束语
+        // 无更多数据 → 显示"已加载全部"
         if (!this.hasMoreData || this.currentLevel2 === null) {
             const footer = document.createElement('div');
             footer.className = 'load-more-trigger is-end';
@@ -383,7 +394,7 @@ class OptimizedNavigation {
             return;
         }
 
-        // 还有更多 → 显示隐藏触发器（用于滚动加载）
+        // 有更多数据 → 加隐藏触发器用于滚动加载
         const trigger = document.createElement('div');
         trigger.className = 'load-more-trigger';
         container.appendChild(trigger);
@@ -425,9 +436,7 @@ class OptimizedNavigation {
             const data = this.siteCache.get(cacheKey);
             this._appendSites(data.sites);
             this.currentPage = nextPage;
-            this.hasMoreData = data.sites.length >= this.pageSize;
             this.isLoadingMore = false;
-            this.updateLoadMoreTrigger();
             return;
         }
 
@@ -436,7 +445,6 @@ class OptimizedNavigation {
             this.siteCache.set(cacheKey, data);
             this._appendSites(data.sites);
             this.currentPage = nextPage;
-            this.hasMoreData = data.sites.length >= this.pageSize;
         } catch (error) {
             const container = this.level3Content;
             const trigger = container.querySelector('.load-more-trigger');
@@ -505,7 +513,6 @@ class OptimizedNavigation {
         await this.updateStats();
     }
 
-    // ===== 统一使用 Storage 封装（前缀 starlink_nav_data_*） =====
     async loadCategoryData(categoryName, forceRefresh = false) {
         const cacheKey = `nav_data_${categoryName}`;
         const cached = Storage.get(cacheKey);
@@ -627,8 +634,6 @@ class OptimizedNavigation {
         if (!forceRefresh && this.siteCache.has(cacheKey)) {
             const data = this.siteCache.get(cacheKey);
             this._renderSites(data.sites);
-            this.hasMoreData = data.sites.length >= this.pageSize;
-            this.updateLoadMoreTrigger();
             return;
         }
 
@@ -638,8 +643,6 @@ class OptimizedNavigation {
             const data = await this.loadSubcategorySites(subId, 1);
             this.siteCache.set(cacheKey, data);
             this._renderSites(data.sites);
-            this.hasMoreData = data.sites.length >= this.pageSize;
-            this.updateLoadMoreTrigger();
         } catch (error) {
             this._showError('加载失败，请点击重试');
         }
@@ -867,9 +870,7 @@ class OptimizedNavigation {
                     }
                 });
             }
-        } catch (e) {
-            // 静默失败
-        }
+        } catch (e) {}
     }
 
     async preloadAllCategories() {
