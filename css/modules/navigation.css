@@ -275,33 +275,38 @@
     align-items: stretch;
 }
 
-/* 加载触发器与结束语 默认状态 */
+/* 底部触发器 隐藏版本 只用来触发滚动加载 */
 .load-more-trigger {
     grid-column: 1 / -1;
     width: 100%;
 }
 
-/* 隐藏触发器（用于无限滚动） */
 .load-more-trigger:not(.is-end) {
     height: 1px;
     visibility: hidden;
+    padding: 0;
+    margin: 0;
 }
 
-/* 结束语 显示在底部中间 */
+/* 底部结束语 显示版本 */
 .load-more-trigger.is-end {
     height: auto;
     visibility: visible;
-    display: flex;
+    display: flex !important;
     align-items: center;
     justify-content: center;
     gap: 10px;
     padding: 10px 0 2px;
+    margin: 0;
     color: var(--text-secondary);
     font-size: 11px;
     letter-spacing: 1px;
     opacity: 0.6;
     user-select: none;
     line-height: 1;
+    background: transparent;
+    border: none;
+    box-shadow: none;
 }
 
 .load-more-trigger.is-end::before,
@@ -310,6 +315,7 @@
     height: 1px;
     width: 32px;
     background: linear-gradient(to right, transparent, var(--border-color), transparent);
+    flex-shrink: 0;
 }
 
 .scroll-loading-trigger {
@@ -595,3 +601,8 @@
 .dark-mode .view-count { color: var(--nav-level1-active) !important; }
 .dark-mode .site-description > span { color: var(--text-secondary); }
 .dark-mode .card-top .site-title { color: var(--text-primary); }
+.dark-mode .load-more-trigger.is-end { color: var(--text-secondary); }
+.dark-mode .load-more-trigger.is-end::before,
+.dark-mode .load-more-trigger.is-end::after {
+    background: linear-gradient(to right, transparent, var(--border-color), transparent);
+}
