@@ -1,7 +1,3 @@
-/* navigation.js - 异步分页加载 + 图标缓存持久化 + 预加载 + 自动重试 + 批量图标 + 搜索防抖节流
- * 描述外层包裹 span 配合 CSS 实现 3 行省略 + 垂直居中
- * 加载完显示底部"已加载全部"结束语
- */
 
 class OptimizedNavigation {
     constructor() {
