@@ -6,6 +6,7 @@
 <title>公益宝贝 - 让爱回家</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <style>
+/* 淡入动画 */
 .fade-in {
   animation: fadeIn 0.4s ease-in-out;
 }
@@ -13,6 +14,7 @@
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+/* 加载旋转动画 */
 .spin {
   animation: spin 1s linear infinite;
 }
@@ -24,10 +26,11 @@
 </head>
 <body class="bg-gradient-to-b from-rose-50 to-gray-50 min-h-screen py-8 px-4 flex flex-col items-center">
 <div class="text-center mb-6">
-  <h1 class="text-red-600 text-2xl md:text-3xl font-bold">公益宝贝 让爱回家</h1>
-  <p class="text-gray-500 mt-2 text-sm">每一次停留 都是一次团圆的希望</p>
+  <h1 class="text-red-600 text-2xl md:text-3xl font-bold">❤️ 公益宝贝 · 让爱回家</h1>
+  <p class="text-gray-500 mt-2 text-sm">每一次停留，都是一次团圆的希望</p>
 </div>
 
+<!-- 寻人类型切换 -->
 <div class="w-full max-w-md mx-auto mb-4 flex flex-wrap gap-2 justify-center">
   <button onclick="changeType('家寻宝贝')" class="type-btn px-3 py-1.5 text-xs rounded-full bg-red-500 text-white transition">家寻宝贝</button>
   <button onclick="changeType('宝贝寻家')" class="type-btn px-3 py-1.5 text-xs rounded-full bg-white text-gray-600 border border-gray-200 hover:border-red-300 transition">宝贝寻家</button>
@@ -36,28 +39,34 @@
   <button onclick="changeType('海外寻人')" class="type-btn px-3 py-1.5 text-xs rounded-full bg-white text-gray-600 border border-gray-200 hover:border-red-300 transition">海外寻人</button>
 </div>
 
+<!-- 主内容卡片 -->
 <div class="w-full max-w-md mx-auto bg-white rounded-2xl shadow-lg overflow-hidden mb-5">
+  <!-- 图片区域 -->
   <div class="relative bg-gray-100 aspect-square">
+    <!-- 加载中状态 -->
     <div id="loadingBox" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 text-sm">
       <svg class="w-8 h-8 spin mb-2 text-red-400" viewBox="0 0 24 24" fill="none">
         <circle class="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
         <path class="opacity-100" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
       </svg>
-      <span>正在加载寻人信息</span>
+      <span>正在加载寻人信息...</span>
     </div>
+    <!-- 错误状态 -->
     <div id="errorBox" class="hidden absolute inset-0 flex flex-col items-center justify-center text-gray-500 text-sm p-4 text-center">
       <span class="text-3xl mb-2">😔</span>
-      <p id="errorMessage" class="text-red-500 font-medium">信息加载失败</p>
-      <p id="errorDetail" class="text-xs text-gray-400 mt-1 break-all px-2">请点击按钮重试</p>
+      <p>信息加载失败</p>
+      <p class="text-xs text-gray-400 mt-1">请点击按钮重试</p>
     </div>
-    <img
+    <!-- 寻亲图片 -->
+    <img 
       id="babyImg"
-      src=""
-      alt="公益寻人宝贝"
+      src="" 
+      alt="公益寻人宝贝" 
       class="w-full h-full object-cover hidden"
       onerror="handleImgError()">
   </div>
 
+  <!-- 详情信息区域 -->
   <div id="infoBox" class="p-4 hidden">
     <h3 id="babyTitle" class="text-lg font-semibold text-gray-800 mb-3 line-clamp-2"></h3>
     <div id="babyInfoList" class="space-y-1.5 text-sm mb-3"></div>
@@ -70,9 +79,10 @@
   </div>
 </div>
 
-<button
+<!-- 刷新按钮 -->
+<button 
   id="refreshBtn"
-  onclick="refreshBaby()"
+  onclick="refreshBaby()" 
   class="bg-red-500 hover:bg-red-600 active:bg-red-700 text-white px-8 py-3 rounded-xl transition shadow-md shadow-red-200 flex items-center gap-2">
   <span>下一位宝贝</span>
   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,42 +91,32 @@
 </button>
 
 <div class="text-center text-gray-400 text-xs mt-8 max-w-md">
-  <p>公益寻人 助力团圆</p>
-  <p class="mt-1">您的每一次浏览 都可能帮他们早日回家</p>
+  <p>公益寻人 · 助力团圆</p>
+  <p class="mt-1">您的每一次浏览，都可能帮他们早日回家</p>
 </div>
 
 <script>
-// 根据访问域名推导后端 API 地址
-const API_BASE = (function() {
-  const hostname = window.location.hostname;
-  if (hostname === 'localhost' || hostname === '127.0.0.1') return 'http://localhost:8787';
-  if (hostname.includes('.pages.dev')) {
-    const projectName = hostname.replace('.pages.dev', '');
-    return `https://api-${projectName}.pages.dev`;
-  }
-  return `https://api.${hostname}`;
-})();
-
-const API_URL = `${API_BASE}/charity/proxy`;
-
+const TOKEN = 'XIZhAXKnSQcH';
+const API_URL = 'https://yunzhiapi.cn/API/gybbhj.php';
 let currentType = '家寻宝贝';
 let isLoading = false;
 
+// DOM 元素缓存
 const img = document.getElementById('babyImg');
 const loadingBox = document.getElementById('loadingBox');
 const errorBox = document.getElementById('errorBox');
-const errorMessage = document.getElementById('errorMessage');
-const errorDetail = document.getElementById('errorDetail');
 const infoBox = document.getElementById('infoBox');
 const babyTitle = document.getElementById('babyTitle');
 const babyInfoList = document.getElementById('babyInfoList');
 const sourceLink = document.getElementById('sourceLink');
 const refreshBtn = document.getElementById('refreshBtn');
 
+// 切换寻人类型
 function changeType(type) {
   if (isLoading || type === currentType) return;
   currentType = type;
-
+  
+  // 更新按钮选中样式
   document.querySelectorAll('.type-btn').forEach(btn => {
     if (btn.textContent === type) {
       btn.className = 'type-btn px-3 py-1.5 text-xs rounded-full bg-red-500 text-white transition';
@@ -124,14 +124,16 @@ function changeType(type) {
       btn.className = 'type-btn px-3 py-1.5 text-xs rounded-full bg-white text-gray-600 border border-gray-200 hover:border-red-300 transition';
     }
   });
-
+  
   refreshBaby();
 }
 
-async function fetchBabyData() {
+// 请求寻亲数据
+function fetchBabyData() {
   if (isLoading) return;
   isLoading = true;
-
+  
+  // 重置界面状态
   loadingBox.classList.remove('hidden');
   errorBox.classList.add('hidden');
   img.classList.add('hidden');
@@ -140,100 +142,82 @@ async function fetchBabyData() {
   refreshBtn.classList.add('opacity-70', 'cursor-not-allowed');
 
   const timestamp = Date.now();
-  const requestUrl = `${API_URL}?type=${encodeURIComponent(currentType)}&t=${timestamp}`;
+  const requestUrl = `${API_URL}?token=${TOKEN}&type=json&msg=${encodeURIComponent(currentType)}&t=${timestamp}`;
 
-  try {
-    const response = await fetch(requestUrl);
-    const rawText = await response.text();
+  fetch(requestUrl)
+    .then(response => {
+      if (!response.ok) throw new Error('网络请求失败');
+      return response.json();
+    })
+    .then(result => {
+      // 兼容接口不同返回结构（根字段 / data包裹）
+      const data = result.data || result;
+      const imageUrl = data.image;
+      const title = data.title || '寻人启事';
+      const infoData = data.info || {};
+      const sourceUrl = data.source_url || '#';
 
-    let result = null;
-    try {
-      result = JSON.parse(rawText);
-    } catch (e) {
-      throw new Error(`后端返回非 JSON (HTTP ${response.status}) 内容: ${rawText.slice(0, 120)}`);
-    }
+      if (!imageUrl) throw new Error('未获取到图片信息');
 
-    if (!response.ok) {
-      const detail = result.detail ? ` (${result.detail})` : '';
-      throw new Error((result.error || `HTTP ${response.status}`) + detail);
-    }
-
-    if (result.error) {
-      throw new Error(result.error + (result.detail ? ` (${result.detail})` : ''));
-    }
-
-    const data = result.data || result;
-    const imageUrl = data.image;
-    const title = data.title || '寻人启事';
-    const infoData = data.info || {};
-    const sourceUrl = data.source_url || '#';
-
-    if (!imageUrl) throw new Error('上游未返回图片地址');
-
-    await new Promise((resolve, reject) => {
+      // 图片预加载，加载完成后再渲染内容
       const tempImg = new Image();
-      tempImg.onload = () => resolve();
-      tempImg.onerror = () => reject(new Error('图片加载失败'));
+      tempImg.onload = () => {
+        img.src = imageUrl;
+        babyTitle.textContent = title;
+        sourceLink.href = sourceUrl;
+
+        // 渲染明细信息 - 修复 [object Object] 核心代码
+        babyInfoList.innerHTML = '';
+        if (typeof infoData === 'object' && infoData !== null) {
+          Object.entries(infoData).forEach(([key, value]) => {
+            // 自动过滤空值、无意义字段
+            if (!value || value === '暂无' || value === '未知CM') return;
+            const item = document.createElement('div');
+            item.className = 'flex text-gray-600';
+            item.innerHTML = `<span class="text-gray-400 w-20 shrink-0">${key}：</span><span class="flex-1">${value}</span>`;
+            babyInfoList.appendChild(item);
+          });
+        } else {
+          // 兼容纯文本格式的info
+          babyInfoList.innerHTML = `<p class="text-gray-600">${infoData || '暂无更多详情'}</p>`;
+        }
+        
+        loadingBox.classList.add('hidden');
+        img.classList.remove('hidden');
+        img.classList.add('fade-in');
+        infoBox.classList.remove('hidden');
+        infoBox.classList.add('fade-in');
+      };
+      tempImg.onerror = () => {
+        throw new Error('图片加载失败');
+      };
       tempImg.src = imageUrl;
+    })
+    .catch(error => {
+      console.error('加载失败：', error);
+      loadingBox.classList.add('hidden');
+      errorBox.classList.remove('hidden');
+    })
+    .finally(() => {
+      isLoading = false;
+      refreshBtn.disabled = false;
+      refreshBtn.classList.remove('opacity-70', 'cursor-not-allowed');
     });
-
-    img.src = imageUrl;
-    babyTitle.textContent = title;
-    sourceLink.href = sourceUrl;
-
-    babyInfoList.innerHTML = '';
-    if (typeof infoData === 'object' && infoData !== null) {
-      Object.entries(infoData).forEach(([key, value]) => {
-        if (!value || value === '暂无' || value === '未知CM') return;
-        const item = document.createElement('div');
-        item.className = 'flex text-gray-600';
-        const keySpan = document.createElement('span');
-        keySpan.className = 'text-gray-400 w-20 shrink-0';
-        keySpan.textContent = `${key}：`;
-        const valSpan = document.createElement('span');
-        valSpan.className = 'flex-1';
-        valSpan.textContent = value;
-        item.appendChild(keySpan);
-        item.appendChild(valSpan);
-        babyInfoList.appendChild(item);
-      });
-    } else {
-      const p = document.createElement('p');
-      p.className = 'text-gray-600';
-      p.textContent = infoData || '暂无更多详情';
-      babyInfoList.appendChild(p);
-    }
-
-    loadingBox.classList.add('hidden');
-    img.classList.remove('hidden');
-    img.classList.add('fade-in');
-    infoBox.classList.remove('hidden');
-    infoBox.classList.add('fade-in');
-  } catch (error) {
-    console.error('加载失败', error);
-    loadingBox.classList.add('hidden');
-    errorBox.classList.remove('hidden');
-    errorMessage.textContent = error.message || '信息加载失败';
-    errorDetail.textContent = '把上面这行错误信息发给管理员即可定位问题';
-  } finally {
-    isLoading = false;
-    refreshBtn.disabled = false;
-    refreshBtn.classList.remove('opacity-70', 'cursor-not-allowed');
-  }
 }
 
+// 刷新下一位
 function refreshBaby() {
   fetchBabyData();
 }
 
+// 图片加载错误兜底
 function handleImgError() {
   loadingBox.classList.add('hidden');
   errorBox.classList.remove('hidden');
   img.classList.add('hidden');
-  errorMessage.textContent = '图片加载失败';
-  errorDetail.textContent = '上游图片地址无法访问';
 }
 
+// 页面加载自动获取第一条数据
 window.addEventListener('DOMContentLoaded', fetchBabyData);
 </script>
 </body>
