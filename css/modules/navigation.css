@@ -1,4 +1,4 @@
-/* navigation.css 卡片统一高度 描述固定3行 文字垂直居中 */
+/* navigation.css 卡片统一高度 描述固定3行 文字垂直居中 无多余空白 */
 
 .nav-search-box {
     display: block;
@@ -147,7 +147,6 @@
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-    min-height: 200px;
 }
 
 .navigation-left {
@@ -259,14 +258,13 @@
 }
 
 .navigation-right {
-    flex: 1;
+    flex: 0 0 auto;
     min-width: 0;
     background: var(--bg-card);
     padding: 0;
     position: relative;
 }
 
-/* 网格容器 固定行高 让所有卡片统一高度 */
 .level3-content {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -274,6 +272,7 @@
     gap: 10px;
     padding: 12px;
     box-sizing: border-box;
+    align-content: start;
 }
 
 .scroll-loading-trigger {
@@ -297,7 +296,6 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* 卡片 高度由 grid 行高决定 */
 .site-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -322,7 +320,6 @@
     background: linear-gradient(135deg, var(--card-hover-bg-start), var(--card-hover-bg-end));
 }
 
-/* 顶部行 固定 28px */
 .card-top {
     display: flex;
     align-items: center;
@@ -393,7 +390,6 @@
     text-align: center;
 }
 
-/* 描述区域 flex:1 撑满中间 文字垂直居中 最多3行 */
 .site-description {
     flex: 1;
     min-height: 0;
@@ -433,7 +429,6 @@
     flex-shrink: 0;
 }
 
-/* 底部行 固定 20px */
 .card-bottom {
     display: flex;
     justify-content: space-between;
