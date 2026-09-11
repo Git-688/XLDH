@@ -1,4 +1,4 @@
-/* navigation.css 卡片统一高度 描述固定3行 文字垂直居中 无多余空白 */
+/* navigation.css 卡片自己定高 描述固定3行 无多余空白 */
 
 .nav-search-box {
     display: block;
@@ -265,14 +265,23 @@
     position: relative;
 }
 
+/* 网格容器 行高由内容决定 卡片自己定高 */
 .level3-content {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    grid-auto-rows: 130px;
     gap: 10px;
     padding: 12px;
     box-sizing: border-box;
     align-content: start;
+    align-items: stretch;
+}
+
+/* 隐藏的加载触发器 不占高度 */
+.load-more-trigger {
+    grid-column: 1 / -1;
+    height: 1px;
+    width: 100%;
+    visibility: hidden;
 }
 
 .scroll-loading-trigger {
@@ -296,6 +305,7 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* 卡片 固定高度 */
 .site-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -308,7 +318,7 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    height: 100%;
+    height: 130px;
     position: relative;
     overflow: hidden;
     box-sizing: border-box;
@@ -494,8 +504,8 @@
 
 @media (max-width: 768px) {
     .navigation-section { padding: 0 0 10px 0; }
-    .level3-content { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); grid-auto-rows: 120px; gap: 8px; padding: 10px; }
-    .site-card { padding: 5px; gap: 3px; }
+    .level3-content { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding: 10px; }
+    .site-card { padding: 5px; gap: 3px; height: 120px; }
     .card-top { height: 26px; gap: 4px; }
     .icon-container { width: 22px; height: 22px; font-size: 11px; }
     .card-top .site-title { font-size: 11px; }
@@ -507,8 +517,8 @@
 
 @media (max-width: 480px) {
     .navigation-section { padding: 0 0 10px 0; }
-    .level3-content { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); grid-auto-rows: 110px; gap: 6px; padding: 8px; }
-    .site-card { padding: 4px; gap: 3px; border-radius: 6px; }
+    .level3-content { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; padding: 8px; }
+    .site-card { padding: 4px; gap: 3px; border-radius: 6px; height: 110px; }
     .card-top { height: 22px; gap: 4px; }
     .icon-container { width: 18px; height: 18px; font-size: 9px; }
     .card-top .site-title { font-size: 9px; }
