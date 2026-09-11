@@ -1,6 +1,4 @@
-/* navigation.js - 异步分页加载 + 图标缓存持久化 + 预加载 + 自动重试 + 批量图标 + 搜索防抖节流
- * 本次修复：_createSiteCard 的描述外层包裹 span，配合 CSS 实现 3 行省略 + 垂直居中
- */
+
 
 class OptimizedNavigation {
     constructor() {
@@ -208,7 +206,6 @@ class OptimizedNavigation {
         const formattedViews = this._formatViews(views);
         const desc = site.description || '暂无描述';
 
-        // 描述外层包裹 span，配合 CSS 实现固定高度 + 3 行省略 + 垂直居中
         card.innerHTML = `
             <div class="card-top"></div>
             <div class="site-description"><span>${this._escapeHtml(desc)}</span></div>
@@ -366,34 +363,30 @@ class OptimizedNavigation {
         }
     }
 
+    // ===== 更新底部触发器/结束语 =====
     updateLoadMoreTrigger() {
         const container = this.level3Content;
         if (!container) return;
 
+        // 移除旧的
         const oldTrigger = container.querySelector('.load-more-trigger');
         if (oldTrigger) oldTrigger.remove();
 
+        // 搜索模式不显示
         if (this.isSearching) return;
 
+        // 已全部加载完 → 显示结束语
         if (!this.hasMoreData || this.currentLevel2 === null) {
             const footer = document.createElement('div');
-            footer.className = 'load-more-trigger';
-            footer.style.textAlign = 'center';
-            footer.style.padding = '20px';
-            footer.style.color = 'var(--text-secondary)';
-            footer.style.fontSize = '12px';
-            footer.style.gridColumn = '1 / -1';
-            footer.textContent = '— 已加载全部 —';
+            footer.className = 'load-more-trigger is-end';
+            footer.textContent = '已加载全部';
             container.appendChild(footer);
             return;
         }
 
+        // 还有更多 → 显示隐藏触发器（用于滚动加载）
         const trigger = document.createElement('div');
         trigger.className = 'load-more-trigger';
-        trigger.style.height = '1px';
-        trigger.style.width = '100%';
-        trigger.style.visibility = 'hidden';
-        trigger.style.gridColumn = '1 / -1';
         container.appendChild(trigger);
 
         this.setupIntersectionObserver(trigger);
@@ -671,7 +664,6 @@ class OptimizedNavigation {
         const input = document.getElementById('navSearchInput');
         const clearBtn = document.getElementById('navSearchClearBtn');
 
-        // 防抖 + 节流
         input.addEventListener('input', () => {
             const query = input.value.trim();
             clearBtn.style.display = query ? 'flex' : 'none';
@@ -706,7 +698,6 @@ class OptimizedNavigation {
         });
     }
 
-    // AbortController 取消上一次请求
     async performSearch(query) {
         if (!query.trim()) return;
 
@@ -849,7 +840,6 @@ class OptimizedNavigation {
         }
     }
 
-    // 批量图标预取
     async _prefetchIcons() {
         try {
             const domains = new Set();
