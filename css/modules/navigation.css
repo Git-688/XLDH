@@ -1,4 +1,4 @@
-/* navigation.css 卡片固定高度 描述最多3行 兜底兼容旧内核 底部"已加载全部" */
+/* navigation.css 卡片固定高度 描述最多3行 JS截断 兼容所有手机浏览器 */
 
 .nav-search-box {
     display: block;
@@ -275,7 +275,6 @@
     align-items: stretch;
 }
 
-/* 底部触发器 隐藏版本 只用来触发滚动加载 */
 .load-more-trigger {
     grid-column: 1 / -1;
     width: 100%;
@@ -288,7 +287,6 @@
     margin: 0;
 }
 
-/* 底部结束语 显示版本 */
 .load-more-trigger.is-end {
     height: auto;
     visibility: visible;
@@ -339,7 +337,6 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* 卡片 高度由内容撑开 */
 .site-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -434,18 +431,18 @@
     text-align: center;
 }
 
-/* 描述区域 撑满中间 外层 flex 让内部块垂直居中 */
+/* 描述区域：完全不用 flex，用 block + padding 兼容所有内核 */
 .site-description {
     flex: 1;
     min-height: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: block;
     overflow: hidden;
-    padding: 0 2px;
+    padding: 4px 2px 0 2px;
+    box-sizing: border-box;
+    width: 100%;
 }
 
-/* 描述文字 3 行显示 用最基础的标准 CSS 兼容所有浏览器 */
+/* 描述文字：block + width: 100% 是基础 CSS，所有内核都支持 */
 .site-description > span {
     font-size: 11px;
     line-height: 1.35;
@@ -456,7 +453,6 @@
     white-space: normal;
     display: block;
     width: 100%;
-    /* 3 行文字的高度 = 3 × line-height */
     max-height: 4.05em;
     overflow: hidden;
     font-weight: 400;
@@ -547,6 +543,7 @@
     .card-top { height: 26px; gap: 4px; }
     .icon-container { width: 22px; height: 22px; font-size: 11px; }
     .card-top .site-title { font-size: 11px; }
+    .site-description { padding: 3px 2px 0 2px; }
     .site-description > span { font-size: 10px; line-height: 1.35; max-height: 4.05em; }
     .card-bottom { height: 18px; }
     .view-count { font-size: 10px; }
@@ -563,6 +560,7 @@
     .card-top { height: 22px; gap: 4px; }
     .icon-container { width: 18px; height: 18px; font-size: 9px; }
     .card-top .site-title { font-size: 9px; }
+    .site-description { padding: 2px 1px 0 1px; }
     .site-description > span { font-size: 9px; line-height: 1.3; max-height: 3.9em; }
     .card-bottom { height: 16px; }
     .view-count { font-size: 9px; }
