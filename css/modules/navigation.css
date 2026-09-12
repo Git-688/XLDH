@@ -1,4 +1,4 @@
-/* navigation.css 描述垂直居中 带调试色块 */
+/* navigation.css 描述居中 顶部与图标同高 间距调整 内间距归零 带调试色块 */
 
 .nav-search-box { display: block; width: 100%; margin-top: 10px; }
 .search-input-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
@@ -75,20 +75,20 @@
 .scroll-loading-trigger .loading-spinner { width: 20px; height: 20px; border: 2px solid var(--border-color); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ===== 卡片 带调试色块 ===== */
+/* ===== 卡片 调试色块 ===== */
 .site-card {
-    background: rgba(67, 97, 238, 0.08);       /* 调试：淡蓝 = 卡片总范围 */
+    background: rgba(67, 97, 238, 0.08);       /* 淡蓝 卡片总范围 */
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 6px;
+    padding: 8px;                              /* 上下左右统一 8px */
     cursor: pointer;
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     text-decoration: none;
     color: inherit;
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    height: 124px;
+    gap: 6px;                                  /* 内部元素间距 6px */
+    height: 132px;
     position: relative;
     overflow: hidden;
     box-sizing: border-box;
@@ -99,20 +99,20 @@
     box-shadow: 0 6px 16px rgba(67, 97, 238, 0.12);
 }
 
-/* 顶部行 调试：淡绿 = 图标+标题 */
+/* 顶部行 淡绿 高度与图标一致 26px */
 .card-top {
     display: flex;
     align-items: center;
     gap: 5px;
     flex-shrink: 0;
-    height: 28px;
+    height: 26px;                              /* 与 .icon-container 一致 */
     padding: 0;
     background: rgba(16, 185, 129, 0.18);
     border-radius: 4px;
     box-sizing: border-box;
 }
 
-/* 图标框 调试：橙色 */
+/* 图标框 橙色 26px */
 .icon-container {
     position: relative;
     width: 26px;
@@ -138,7 +138,6 @@
 .dark-mode .icon-container.icon-placeholder { background: #2d2d2d; border-color: #3d3d3d; }
 .dark-mode .icon-container.icon-placeholder::after { background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent); z-index: -1; }
 
-/* 标题 调试：淡绿（同 card-top） */
 .card-top .site-title {
     flex: 1;
     font-size: 12px;
@@ -153,14 +152,14 @@
     border-radius: 3px;
 }
 
-/* 描述外层 wrap 调试：淡黄 = 描述区域（撑满卡片中间剩余空间） */
+/* 描述外层 淡黄 撑满中间 描述垂直居中 */
 .text-wrap {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    justify-content: center;       /* 描述垂直居中 */
+    justify-content: center;                   /* 描述垂直居中 */
     overflow: hidden;
     width: 100%;
     padding: 0;
@@ -170,20 +169,20 @@
     border-radius: 4px;
 }
 
-/* 描述文本 调试：淡粉 = 文字实际占位 */
+/* 描述文本 淡粉 内间距 0 字体 12px */
 .site-text {
-    font-size: 11px;
-    line-height: 1.35;
+    font-size: 12px;                           /* 字体调整 */
+    line-height: 1.3;
     color: var(--text-secondary);
     text-align: center;
     word-break: break-word;
     word-wrap: break-word;
     white-space: normal;
     overflow: hidden;
-    max-height: 4.05em;
+    max-height: 3.9em;                         /* 3 行 × 1.3 = 3.9em */
     font-weight: 400;
     margin: 0;
-    padding: 0 2px;
+    padding: 0;                                /* 描述内间距归零 */
     display: block;
     box-sizing: border-box;
     width: 100%;
@@ -191,7 +190,7 @@
     border-radius: 3px;
 }
 
-/* 分隔线 调试：红色 outline */
+/* 分隔线 红色描边 */
 .divider-line {
     height: 1px;
     background: repeating-linear-gradient(to right, transparent, transparent 2px, #ccc 2px, #ccc 4px);
@@ -202,7 +201,7 @@
     outline: 1px solid rgba(239, 68, 68, 0.8);
 }
 
-/* 底部行 调试：淡紫 = 数字+图标 */
+/* 底部行 淡紫 */
 .card-bottom {
     display: flex;
     justify-content: space-between;
@@ -235,14 +234,15 @@
 .view-count.increasing { animation: pulseView 0.3s ease; }
 @keyframes pulseView { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
+/* ===== 平板 ≤768px ===== */
 @media (max-width: 768px) {
     .navigation-section { padding: 0 0 10px 0; }
     .level3-content { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding: 10px; }
-    .site-card { padding: 5px; gap: 3px; height: 112px; }
-    .card-top { height: 26px; gap: 4px; }
+    .site-card { padding: 7px; gap: 5px; height: 118px; }
+    .card-top { height: 22px; gap: 4px; }
     .icon-container { width: 22px; height: 22px; font-size: 11px; }
     .card-top .site-title { font-size: 11px; }
-    .site-text { font-size: 10px; line-height: 1.35; max-height: 4.05em; }
+    .site-text { font-size: 11px; line-height: 1.3; max-height: 3.9em; }
     .card-bottom { height: 16px; }
     .view-count { font-size: 12px; }
     .report-dead-link-btn { width: 18px; height: 18px; font-size: 13px; }
@@ -252,14 +252,15 @@
     .load-more-trigger.is-end::before, .load-more-trigger.is-end::after { width: 24px; }
 }
 
+/* ===== 手机 ≤480px ===== */
 @media (max-width: 480px) {
     .navigation-section { padding: 0 0 10px 0; }
     .level3-content { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; padding: 8px; }
-    .site-card { padding: 4px; gap: 3px; border-radius: 6px; height: 100px; }
-    .card-top { height: 22px; gap: 4px; }
+    .site-card { padding: 6px; gap: 4px; border-radius: 6px; height: 106px; }
+    .card-top { height: 18px; gap: 4px; }
     .icon-container { width: 18px; height: 18px; font-size: 9px; }
-    .card-top .site-title { font-size: 9px; }
-    .site-text { font-size: 9px; line-height: 1.3; max-height: 3.9em; }
+    .card-top .site-title { font-size: 10px; }
+    .site-text { font-size: 10px; line-height: 1.3; max-height: 3.9em; }
     .card-bottom { height: 14px; }
     .view-count { font-size: 11px; }
     .report-dead-link-btn { width: 16px; height: 16px; font-size: 12px; }
