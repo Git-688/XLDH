@@ -1,6 +1,4 @@
-/* navigation.js - 异步分页加载 + 图标缓存持久化 + 预加载 + 自动重试 + 批量图标 + 搜索防抖节流
- * 描述用 p.site-text 结构，避开国产浏览器省流过滤
- */
+/* navigation.js 描述3行截断 + 支持 padding-top */
 
 class OptimizedNavigation {
     constructor() {
@@ -86,7 +84,7 @@ class OptimizedNavigation {
         try { return new URL(url).hostname; } catch { return ''; }
     }
 
-    // ===== 描述 3 行截断（基于 p 元素）=====
+    // ===== 描述 3 行截断（考虑 padding）=====
     _truncateDescription(el, maxLines = 3) {
         if (!el) return;
 
@@ -99,13 +97,16 @@ class OptimizedNavigation {
         const computedStyle = window.getComputedStyle(el);
         let lineHeight = parseFloat(computedStyle.lineHeight);
         const fontSize = parseFloat(computedStyle.fontSize);
+        const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
+        const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
 
         if (isNaN(lineHeight) || lineHeight <= 0) {
             lineHeight = (fontSize || 11) * 1.4;
         }
-        const maxHeight = lineHeight * maxLines;
+        // 3 行文字高度 + 上下 padding 才是实际总高
+        const maxTotalHeight = lineHeight * maxLines + paddingTop + paddingBottom;
 
-        if (el.scrollHeight <= maxHeight + 1) return;
+        if (el.scrollHeight <= maxTotalHeight + 1) return;
 
         let low = 0;
         let high = fullText.length;
@@ -115,7 +116,7 @@ class OptimizedNavigation {
             const mid = Math.floor((low + high) / 2);
             el.textContent = fullText.slice(0, mid) + '...';
 
-            if (el.scrollHeight <= maxHeight + 1) {
+            if (el.scrollHeight <= maxTotalHeight + 1) {
                 bestLength = mid;
                 low = mid + 1;
             } else {
@@ -134,7 +135,6 @@ class OptimizedNavigation {
         items.forEach(el => this._truncateDescription(el, 3));
     }
 
-    // ===== 创建图标元素 =====
     _createIconElement(site) {
         const container = document.createElement('span');
         container.className = 'icon-container';
@@ -207,7 +207,6 @@ class OptimizedNavigation {
         return container;
     }
 
-    // ===== 渲染站点卡片（首次） =====
     _renderSites(sites) {
         const container = this.level3Content;
         if (!container) return;
@@ -232,7 +231,6 @@ class OptimizedNavigation {
         this.updateLoadMoreTrigger();
     }
 
-    // ===== 创建单张站点卡片 =====
     _createSiteCard(site) {
         const card = document.createElement('a');
         card.className = 'site-card';
@@ -246,7 +244,6 @@ class OptimizedNavigation {
         const formattedViews = this._formatViews(views);
         const desc = site.description || '暂无描述';
 
-        // 描述用 <p class="site-text">，语义上属于正文，避开过滤器
         card.innerHTML = `
             <div class="card-top"></div>
             <p class="site-text" data-fulltext="${this._escapeHtml(desc)}">${this._escapeHtml(desc)}</p>
