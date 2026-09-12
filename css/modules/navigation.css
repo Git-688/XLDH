@@ -1,4 +1,4 @@
-/* navigation.css 描述3行 外层wrap垂直居中 底部紧凑 数字图标放大 */
+/* navigation.css 描述3行 贴底 底部内间距0 底部紧凑 数字图标放大 */
 
 .nav-search-box { display: block; width: 100%; margin-top: 10px; }
 .search-input-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
@@ -113,19 +113,22 @@
 
 .card-top .site-title { flex: 1; font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; text-align: center; }
 
-/* 描述外层 wrap 撑满中间，让内层文本垂直居中 */
+/* 描述外层 wrap 撑满中间 描述贴底 */
 .text-wrap {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    justify-content: center;
+    justify-content: flex-end;   /* 描述贴底 */
     overflow: hidden;
     width: 100%;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
 }
 
-/* 描述文本：内容自适应高度，scrollHeight 准确 */
+/* 描述文本 底部内间距 0 */
 .site-text {
     font-size: 11px;
     line-height: 1.35;
@@ -138,7 +141,7 @@
     max-height: 4.05em;
     font-weight: 400;
     margin: 0;
-    padding: 0 2px;
+    padding: 0 2px;              /* 上下 0 底部 0 */
     display: block;
     box-sizing: border-box;
     width: 100%;
