@@ -1,4 +1,4 @@
-/* navigation.css 描述固定3行 底部行紧凑 数字图标放大 */
+/* navigation.css 描述3行显示 底部区域紧凑 数字图标放大 */
 
 .nav-search-box {
     display: block;
@@ -334,7 +334,7 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* 卡片：高度精确对齐，描述固定 3 行，底部行紧凑 */
+/* ===== 卡片 ===== */
 .site-card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -346,8 +346,8 @@
     color: inherit;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    height: 118px;
+    gap: 3px;
+    height: 124px;
     position: relative;
     overflow: hidden;
     box-sizing: border-box;
@@ -429,22 +429,23 @@
     text-align: center;
 }
 
-/* 描述：固定为 3 行高度，不撑开也不留白 */
+/* 描述：3 行文字高度，文字往下移 padding-top */
 .site-text {
-    flex-shrink: 0;
+    flex: 1;
+    min-height: 0;
     font-size: 11px;
-    line-height: 1.4;
-    height: 4.2em;             /* 3 行 × 1.4 = 4.2em，固定高度 */
+    line-height: 1.35;
     color: var(--text-secondary);
     text-align: center;
     word-break: break-word;
     word-wrap: break-word;
     white-space: normal;
     overflow: hidden;
+    max-height: 4.05em;
     font-weight: 400;
     margin: 0;
-    padding: 0 2px;
-    box-sizing: border-box;
+    padding: 8px 2px 0 2px;
+    box-sizing: content-box;
     width: 100%;
     display: block;
 }
@@ -464,7 +465,7 @@
     flex-shrink: 0;
 }
 
-/* 底部行：紧凑高度，数字和图标上下无间距 */
+/* 底部行 高度缩小 padding 归零 */
 .card-bottom {
     display: flex;
     justify-content: space-between;
@@ -473,25 +474,31 @@
     height: 18px;
     padding: 0;
     margin: 0;
+    box-sizing: border-box;
 }
 
-/* 访问量数字：放大 */
+/* 次数数字 字体放大 padding 归零 */
 .view-count {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--primary-color);
     line-height: 1;
+    padding: 0;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    height: 100%;
 }
 
-/* 感叹号图标：放大 + 上下间距 0 */
+/* 感叹号图标 放大 padding 归零 */
 .report-dead-link-btn {
     background: transparent;
     border: none;
     cursor: pointer;
     padding: 0;
     margin: 0;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     border-radius: 4px;
     display: inline-flex;
     align-items: center;
@@ -500,9 +507,14 @@
     transition: all 0.2s ease;
     font-size: 14px;
     flex-shrink: 0;
+    line-height: 1;
 }
-.report-dead-link-btn i { font-size: 14px; }
-.report-dead-link-btn:hover { color: var(--error-color); transform: scale(1.1); }
+.report-dead-link-btn i {
+    font-size: 14px;
+    line-height: 1;
+    display: block;
+}
+.report-dead-link-btn:hover { color: var(--error-color); transform: scale(1.15); }
 .report-dead-link-btn:active { transform: scale(0.95); }
 
 .empty-state {
@@ -532,17 +544,18 @@
 .view-count.increasing { animation: pulseView 0.3s ease; }
 @keyframes pulseView { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
+/* ===== 平板 ≤768px ===== */
 @media (max-width: 768px) {
     .navigation-section { padding: 0 0 10px 0; }
     .level3-content { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding: 10px; }
-    .site-card { padding: 5px; gap: 3px; height: 104px; }
+    .site-card { padding: 5px; gap: 3px; height: 112px; }
     .card-top { height: 26px; gap: 4px; }
     .icon-container { width: 22px; height: 22px; font-size: 11px; }
     .card-top .site-title { font-size: 11px; }
-    .site-text { font-size: 10px; line-height: 1.4; height: 4.2em; }
+    .site-text { font-size: 10px; line-height: 1.35; max-height: 4.05em; padding: 6px 2px 0 2px; }
     .card-bottom { height: 16px; }
     .view-count { font-size: 12px; }
-    .report-dead-link-btn { width: 16px; height: 16px; }
+    .report-dead-link-btn { width: 18px; height: 18px; font-size: 13px; }
     .report-dead-link-btn i { font-size: 13px; }
     .level1-btn, .level2-btn { font-size: 12px; min-height: 36px; height: 36px; line-height: 36px; padding: 0 14px; }
     .load-more-trigger.is-end { font-size: 10px; padding: 8px 0 2px; }
@@ -550,17 +563,18 @@
     .load-more-trigger.is-end::after { width: 24px; }
 }
 
+/* ===== 手机 ≤480px ===== */
 @media (max-width: 480px) {
     .navigation-section { padding: 0 0 10px 0; }
     .level3-content { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; padding: 8px; }
-    .site-card { padding: 4px; gap: 3px; border-radius: 6px; height: 92px; }
+    .site-card { padding: 4px; gap: 3px; border-radius: 6px; height: 100px; }
     .card-top { height: 22px; gap: 4px; }
     .icon-container { width: 18px; height: 18px; font-size: 9px; }
     .card-top .site-title { font-size: 9px; }
-    .site-text { font-size: 9px; line-height: 1.4; height: 4.2em; }
+    .site-text { font-size: 9px; line-height: 1.3; max-height: 3.9em; padding: 6px 1px 0 1px; }
     .card-bottom { height: 14px; }
     .view-count { font-size: 11px; }
-    .report-dead-link-btn { width: 14px; height: 14px; }
+    .report-dead-link-btn { width: 16px; height: 16px; font-size: 12px; }
     .report-dead-link-btn i { font-size: 12px; }
     .level1-btn, .level2-btn { font-size: 11px; padding: 0 10px; min-height: 32px; height: 32px; line-height: 32px; }
     .level1-nav, .level2-nav { padding: 2px 6px; }
