@@ -1,3 +1,6 @@
+/* navigation.js - 异步分页加载 + 图标缓存持久化 + 预加载 + 自动重试 + 批量图标 + 搜索防抖节流
+ * 描述 3 行截断 + 省略号，用 JS 二分查找实现，兼容所有浏览器
+ */
 
 class OptimizedNavigation {
     constructor() {
@@ -86,6 +89,69 @@ class OptimizedNavigation {
 
     _getDomain(url) {
         try { return new URL(url).hostname; } catch { return ''; }
+    }
+
+    // ===== 描述截断（二分查找 + 省略号）=====
+    _truncateDescription(spanEl, maxLines = 3) {
+        if (!spanEl) return;
+
+        // 从 dataset 读原始文本，避免重复处理时基于截断后的文本再截
+        const fullText = spanEl.dataset.fulltext !== undefined ? spanEl.dataset.fulltext : spanEl.textContent;
+        if (!fullText || fullText.length < 2) return;
+
+        // 保存原始文本
+        spanEl.dataset.fulltext = fullText;
+
+        // 先重置为完整文本
+        spanEl.textContent = fullText;
+
+        // 计算最大高度
+        const computedStyle = window.getComputedStyle(spanEl);
+        let lineHeight = parseFloat(computedStyle.lineHeight);
+        const fontSize = parseFloat(computedStyle.fontSize);
+
+        if (isNaN(lineHeight) || lineHeight <= 0) {
+            // line-height: normal 或读不到时，用 fontSize * 1.2 估算
+            lineHeight = (fontSize || 11) * 1.2;
+        }
+        const maxHeight = lineHeight * maxLines;
+
+        // 检查是否需要截断
+        if (spanEl.scrollHeight <= maxHeight + 1) {
+            return;
+        }
+
+        // 二分查找最大可容纳的字符数
+        let low = 0;
+        let high = fullText.length;
+        let bestLength = 0;
+
+        while (low <= high) {
+            const mid = Math.floor((low + high) / 2);
+            spanEl.textContent = fullText.slice(0, mid) + '...';
+
+            if (spanEl.scrollHeight <= maxHeight + 1) {
+                bestLength = mid;
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+
+        // 应用最终结果
+        if (bestLength > 0) {
+            spanEl.textContent = fullText.slice(0, bestLength) + '...';
+        } else {
+            // 极端情况：一个字都放不下
+            spanEl.textContent = fullText.slice(0, 1) + '...';
+        }
+    }
+
+    // ===== 批量处理描述截断 =====
+    _processDescriptions(container) {
+        if (!container) return;
+        const spans = container.querySelectorAll('.site-description > span');
+        spans.forEach(span => this._truncateDescription(span, 3));
     }
 
     // ===== 创建图标元素 =====
@@ -177,7 +243,6 @@ class OptimizedNavigation {
             return;
         }
 
-        // 关键：渲染前先根据数据量判断是否还有更多
         this.hasMoreData = sites.length >= this.pageSize;
 
         const fragment = document.createDocumentFragment();
@@ -187,6 +252,10 @@ class OptimizedNavigation {
 
         container.innerHTML = '';
         container.appendChild(fragment);
+
+        // 渲染完成后异步截断描述（需要真实 DOM 测量高度）
+        requestAnimationFrame(() => this._processDescriptions(container));
+
         this.updateLoadMoreTrigger();
     }
 
@@ -215,6 +284,12 @@ class OptimizedNavigation {
                 </button>
             </div>
         `;
+
+        // 保存原始文本到 dataset，供截断函数使用
+        const descSpan = card.querySelector('.site-description > span');
+        if (descSpan) {
+            descSpan.dataset.fulltext = desc;
+        }
 
         const cardTop = card.querySelector('.card-top');
         cardTop.appendChild(iconEl);
@@ -310,14 +385,12 @@ class OptimizedNavigation {
         const container = this.level3Content;
         if (!container) return;
 
-        // 移除旧的触发器
         const existingTrigger = container.querySelector('.load-more-trigger');
         if (existingTrigger) existingTrigger.remove();
 
         const emptyState = container.querySelector('.empty-state');
         if (emptyState) emptyState.remove();
 
-        // 空数组也要更新底部状态
         if (!sites || !sites.length) {
             this.hasMoreData = false;
             this.updateLoadMoreTrigger();
@@ -330,7 +403,12 @@ class OptimizedNavigation {
         });
         container.appendChild(fragment);
 
-        // 根据本次返回数量判断是否还有更多
+        // 新追加的卡片处理描述截断
+        requestAnimationFrame(() => {
+            // 只处理新加入的（不含已处理的）——简单做法：处理全部（dataset 保存了原始文本，重复处理幂等）
+            this._processDescriptions(container);
+        });
+
         this.hasMoreData = sites.length >= this.pageSize;
         this.updateLoadMoreTrigger();
     }
@@ -372,19 +450,15 @@ class OptimizedNavigation {
         }
     }
 
-    // ===== 底部触发器 / 结束语 =====
     updateLoadMoreTrigger() {
         const container = this.level3Content;
         if (!container) return;
 
-        // 移除旧状态
         const oldTrigger = container.querySelector('.load-more-trigger');
         if (oldTrigger) oldTrigger.remove();
 
-        // 搜索模式不显示
         if (this.isSearching) return;
 
-        // 无更多数据 → 显示"已加载全部"
         if (!this.hasMoreData || this.currentLevel2 === null) {
             const footer = document.createElement('div');
             footer.className = 'load-more-trigger is-end';
@@ -393,7 +467,6 @@ class OptimizedNavigation {
             return;
         }
 
-        // 有更多数据 → 加隐藏触发器用于滚动加载
         const trigger = document.createElement('div');
         trigger.className = 'load-more-trigger';
         container.appendChild(trigger);
