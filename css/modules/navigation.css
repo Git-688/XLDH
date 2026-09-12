@@ -1,4 +1,4 @@
-/* navigation.css 描述3行 贴底 底部内间距0 底部紧凑 数字图标放大 */
+/* navigation.css 描述垂直居中 带调试色块 */
 
 .nav-search-box { display: block; width: 100%; margin-top: 10px; }
 .search-input-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
@@ -75,9 +75,9 @@
 .scroll-loading-trigger .loading-spinner { width: 20px; height: 20px; border: 2px solid var(--border-color); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ===== 卡片 ===== */
+/* ===== 卡片 带调试色块 ===== */
 .site-card {
-    background: var(--bg-card);
+    background: rgba(67, 97, 238, 0.08);       /* 调试：淡蓝 = 卡片总范围 */
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 6px;
@@ -97,12 +97,39 @@
     transform: translateY(-2px);
     border-color: var(--primary-color);
     box-shadow: 0 6px 16px rgba(67, 97, 238, 0.12);
-    background: linear-gradient(135deg, var(--card-hover-bg-start), var(--card-hover-bg-end));
 }
 
-.card-top { display: flex; align-items: center; gap: 5px; flex-shrink: 0; height: 28px; padding: 0; }
+/* 顶部行 调试：淡绿 = 图标+标题 */
+.card-top {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    height: 28px;
+    padding: 0;
+    background: rgba(16, 185, 129, 0.18);
+    border-radius: 4px;
+    box-sizing: border-box;
+}
 
-.icon-container { position: relative; width: 26px; height: 26px; border-radius: 6px; background: transparent; display: flex; align-items: center; justify-content: center; color: var(--primary-color); font-size: 12px; flex-shrink: 0; overflow: hidden; border: 1px solid rgba(0, 0, 0, 0.08); padding: 0; image-rendering: -webkit-optimize-contrast; }
+/* 图标框 调试：橙色 */
+.icon-container {
+    position: relative;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: rgba(245, 158, 11, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    font-size: 12px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 0;
+    image-rendering: -webkit-optimize-contrast;
+}
 .icon-container img { width: 100%; height: 100%; object-fit: contain; object-position: center; }
 .site-card:hover .icon-container { border-color: var(--primary-color); }
 .icon-container.icon-placeholder { background: #f0f2f5; border: 1px solid #e4e7ec; }
@@ -111,24 +138,39 @@
 .dark-mode .icon-container.icon-placeholder { background: #2d2d2d; border-color: #3d3d3d; }
 .dark-mode .icon-container.icon-placeholder::after { background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent); z-index: -1; }
 
-.card-top .site-title { flex: 1; font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; text-align: center; }
+/* 标题 调试：淡绿（同 card-top） */
+.card-top .site-title {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    text-align: center;
+    background: rgba(16, 185, 129, 0.15);
+    border-radius: 3px;
+}
 
-/* 描述外层 wrap 撑满中间 描述贴底 */
+/* 描述外层 wrap 调试：淡黄 = 描述区域（撑满卡片中间剩余空间） */
 .text-wrap {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    justify-content: flex-end;   /* 描述贴底 */
+    justify-content: center;       /* 描述垂直居中 */
     overflow: hidden;
     width: 100%;
     padding: 0;
     margin: 0;
     box-sizing: border-box;
+    background: rgba(250, 204, 21, 0.25);
+    border-radius: 4px;
 }
 
-/* 描述文本 底部内间距 0 */
+/* 描述文本 调试：淡粉 = 文字实际占位 */
 .site-text {
     font-size: 11px;
     line-height: 1.35;
@@ -141,21 +183,40 @@
     max-height: 4.05em;
     font-weight: 400;
     margin: 0;
-    padding: 0 2px;              /* 上下 0 底部 0 */
+    padding: 0 2px;
     display: block;
     box-sizing: border-box;
     width: 100%;
+    background: rgba(236, 72, 153, 0.18);
+    border-radius: 3px;
 }
 
-.divider-line { height: 1px; background: repeating-linear-gradient(to right, transparent, transparent 2px, #ccc 2px, #ccc 4px); margin: 0; opacity: 0.5; width: 100%; flex-shrink: 0; }
+/* 分隔线 调试：红色 outline */
+.divider-line {
+    height: 1px;
+    background: repeating-linear-gradient(to right, transparent, transparent 2px, #ccc 2px, #ccc 4px);
+    margin: 0;
+    opacity: 0.5;
+    width: 100%;
+    flex-shrink: 0;
+    outline: 1px solid rgba(239, 68, 68, 0.8);
+}
 
-/* 底部行 缩小内间距 */
-.card-bottom { display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; height: 18px; padding: 0; margin: 0; box-sizing: border-box; }
+/* 底部行 调试：淡紫 = 数字+图标 */
+.card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    height: 18px;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    background: rgba(139, 92, 246, 0.20);
+    border-radius: 4px;
+}
 
-/* 次数数字放大 内间距归零 */
 .view-count { font-size: 13px; font-weight: 700; color: var(--primary-color); line-height: 1; padding: 0; margin: 0; display: inline-flex; align-items: center; height: 100%; }
-
-/* 感叹号图标放大 内间距归零 */
 .report-dead-link-btn { background: transparent; border: none; cursor: pointer; padding: 0; margin: 0; width: 20px; height: 20px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); transition: all 0.2s ease; font-size: 14px; flex-shrink: 0; line-height: 1; }
 .report-dead-link-btn i { font-size: 14px; line-height: 1; display: block; }
 .report-dead-link-btn:hover { color: var(--error-color); transform: scale(1.15); }
@@ -215,7 +276,7 @@
 .dark-mode .level1-btn.active { color: var(--nav-level1-active); }
 .dark-mode .level2-btn.active { color: var(--nav-level2-active); }
 .dark-mode .level2-btn.active .level2-btn-count { background: var(--nav-level2-active); color: #1a1a1a; }
-.dark-mode .site-card { background: var(--bg-card); border-color: var(--border-color); }
+.dark-mode .site-card { background: rgba(67, 97, 238, 0.08); border-color: var(--border-color); }
 .dark-mode .site-card:hover { border-color: var(--nav-level1-active); }
 .dark-mode .icon-container { border-color: var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 .dark-mode .divider-line { background: repeating-linear-gradient(to right, transparent, transparent 2px, #888 2px, #888 4px); }
