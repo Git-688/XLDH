@@ -1,4 +1,4 @@
-/* navigation.css 卡片正方形 子元素完全贴边 带调试色块 */
+/* navigation.css 卡片正方形 子元素贴边 描述3行 */
 
 .nav-search-box { display: block; width: 100%; margin-top: 10px; }
 .search-input-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
@@ -75,9 +75,9 @@
 .scroll-loading-trigger .loading-spinner { width: 20px; height: 20px; border: 2px solid var(--border-color); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ===== 卡片 正方形 子元素完全贴边 带调试色块 ===== */
+/* ===== 卡片 ===== */
 .site-card {
-    background: rgba(67, 97, 238, 0.08);       /* 淡蓝 */
+    background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 0;
@@ -87,7 +87,7 @@
     color: inherit;
     display: flex;
     flex-direction: column;
-    gap: 1px;                                  /* 内部间距 1px */
+    gap: 1px;
     aspect-ratio: 1 / 1;
     position: relative;
     overflow: hidden;
@@ -98,9 +98,9 @@
     transform: translateY(-2px);
     border-color: var(--primary-color);
     box-shadow: 0 6px 16px rgba(67, 97, 238, 0.12);
+    background: linear-gradient(135deg, var(--card-hover-bg-start), var(--card-hover-bg-end));
 }
 
-/* 顶部行 淡绿 完全贴边 */
 .card-top {
     display: flex;
     align-items: center;
@@ -108,19 +108,16 @@
     flex-shrink: 0;
     height: 28px;
     padding: 0;
-    margin: 0;                                 /* 完全贴边 */
-    background: rgba(16, 185, 129, 0.18);
-    border-radius: 0;                          /* 去圆角 直接贴边 */
+    margin: 0;
     box-sizing: border-box;
 }
 
-/* 图标框 橙色 圆角正方形 */
 .icon-container {
     position: relative;
     width: 28px;
     height: 28px;
     border-radius: 8px;
-    background: rgba(245, 158, 11, 0.35);
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -152,11 +149,8 @@
     text-overflow: ellipsis;
     line-height: 1.2;
     text-align: center;
-    background: rgba(16, 185, 129, 0.15);
-    border-radius: 0;
 }
 
-/* 描述外层 淡黄 完全贴边 */
 .text-wrap {
     flex: 1;
     min-height: 0;
@@ -167,10 +161,8 @@
     overflow: hidden;
     width: auto;
     padding: 0;
-    margin: 0;                                 /* 完全贴边 */
+    margin: 0;
     box-sizing: border-box;
-    background: rgba(250, 204, 21, 0.25);
-    border-radius: 0;
 }
 
 .site-text {
@@ -189,22 +181,17 @@
     display: block;
     box-sizing: border-box;
     width: 100%;
-    background: rgba(236, 72, 153, 0.18);
-    border-radius: 0;
 }
 
-/* 分隔线 红色描边 完全贴边 */
 .divider-line {
     height: 1px;
     background: repeating-linear-gradient(to right, transparent, transparent 2px, #ccc 2px, #ccc 4px);
-    margin: 0;                                 /* 完全贴边 */
+    margin: 0;
     opacity: 0.5;
     width: auto;
     flex-shrink: 0;
-    outline: 1px solid rgba(239, 68, 68, 0.8);
 }
 
-/* 底部行 淡紫 完全贴边 */
 .card-bottom {
     display: flex;
     justify-content: space-between;
@@ -212,10 +199,8 @@
     flex-shrink: 0;
     height: 20px;
     padding: 0;
-    margin: 0;                                 /* 完全贴边 */
+    margin: 0;
     box-sizing: border-box;
-    background: rgba(139, 92, 246, 0.20);
-    border-radius: 0;
 }
 
 .view-count { font-size: 13px; font-weight: 700; color: var(--primary-color); line-height: 1; padding: 0 4px; margin: 0; display: inline-flex; align-items: center; height: 100%; }
@@ -280,7 +265,7 @@
 .dark-mode .level1-btn.active { color: var(--nav-level1-active); }
 .dark-mode .level2-btn.active { color: var(--nav-level2-active); }
 .dark-mode .level2-btn.active .level2-btn-count { background: var(--nav-level2-active); color: #1a1a1a; }
-.dark-mode .site-card { background: rgba(67, 97, 238, 0.08); border-color: var(--border-color); }
+.dark-mode .site-card { background: var(--bg-card); border-color: var(--border-color); }
 .dark-mode .site-card:hover { border-color: var(--nav-level1-active); }
 .dark-mode .icon-container { border-color: var(--border-color); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 .dark-mode .divider-line { background: repeating-linear-gradient(to right, transparent, transparent 2px, #888 2px, #888 4px); }
