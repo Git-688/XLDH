@@ -433,54 +433,30 @@
     text-align: center;
 }
 
-/* 描述区域 兜底 min-height 防止旧内核 flex 计算塌陷 */
+/* ========== 核心修复：描述区域兼容旧内核浏览器 ========== */
 .site-description {
     flex: 1;
     min-height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 6px 2px;
     overflow: hidden;
-    padding: 0 2px;
+    box-sizing: border-box;
 }
 
-/* 描述文字 兜底基础样式：任何内核都能显示 */
 .site-description > span {
     font-size: 11px;
     line-height: 1.35;
     color: var(--text-secondary);
     text-align: center;
-    display: block;
     overflow: hidden;
-    max-height: 4.05em;
     word-break: break-word;
     word-wrap: break-word;
-    white-space: normal;
     width: 100%;
-    padding: 0;
     margin: 0;
-}
 
-/* 支持 line-clamp 的内核：3 行 + 省略号 */
-@supports (-webkit-line-clamp: 3) {
-    .site-description > span {
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        -webkit-box-orient: vertical;
-        max-height: 4.05em;
-    }
-}
-
-/* 支持标准 line-clamp 的现代内核 */
-@supports (line-clamp: 3) {
-    .site-description > span {
-        display: -webkit-box;
-        -webkit-line-clamp: 3;
-        line-clamp: 3;
-        -webkit-box-orient: vertical;
-        box-orient: vertical;
-        max-height: 4.05em;
-    }
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    max-height: 4.05em;
 }
 
 .divider-line {
@@ -568,7 +544,7 @@
     .card-top { height: 26px; gap: 4px; }
     .icon-container { width: 22px; height: 22px; font-size: 11px; }
     .card-top .site-title { font-size: 11px; }
-    .site-description { min-height: 36px; }
+    .site-description { min-height: 36px; padding: 4px 2px; }
     .site-description > span { font-size: 10px; line-height: 1.35; max-height: 4.05em; }
     .card-bottom { height: 18px; }
     .view-count { font-size: 10px; }
@@ -585,7 +561,7 @@
     .card-top { height: 22px; gap: 4px; }
     .icon-container { width: 18px; height: 18px; font-size: 9px; }
     .card-top .site-title { font-size: 9px; }
-    .site-description { min-height: 32px; }
+    .site-description { min-height: 32px; padding: 3px 2px; }
     .site-description > span { font-size: 9px; line-height: 1.3; max-height: 3.9em; }
     .card-bottom { height: 16px; }
     .view-count { font-size: 9px; }
