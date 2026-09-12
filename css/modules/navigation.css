@@ -1,4 +1,4 @@
-/* navigation.css 卡片严格正方形 描述下移 */
+/* navigation.css 卡片正方形 图标左移 淡紫下移 */
 
 .nav-search-box { display: block; width: 100%; margin-top: 10px; }
 .search-input-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
@@ -64,17 +64,7 @@
 
 .navigation-right { flex: 0 0 auto; min-width: 0; background: var(--bg-card); padding: 0; position: relative; }
 
-/* 网格容器 关键：align-items 改为 start 防止卡片被拉伸 */
-.level3-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    grid-auto-rows: auto;
-    gap: 10px;
-    padding: 12px;
-    box-sizing: border-box;
-    align-content: start;
-    align-items: start;
-}
+.level3-content { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); grid-auto-rows: auto; gap: 10px; padding: 12px; box-sizing: border-box; align-content: start; align-items: start; }
 
 .load-more-trigger { grid-column: 1 / -1; width: 100%; }
 .load-more-trigger:not(.is-end) { height: 1px; visibility: hidden; padding: 0; margin: 0; }
@@ -125,6 +115,7 @@
     box-sizing: border-box;
 }
 
+/* 图标框 用负 margin 越过卡片左 1px 边框 让视觉上更贴左边 */
 .icon-container {
     position: relative;
     width: 28px;
@@ -140,7 +131,7 @@
     overflow: hidden;
     border: 1px solid rgba(0, 0, 0, 0.08);
     padding: 0;
-    margin: 0;
+    margin: 0 0 0 -2px;                        /* 左移 2px */
     box-sizing: border-box;
     image-rendering: -webkit-optimize-contrast;
 }
@@ -164,7 +155,6 @@
     text-align: center;
 }
 
-/* 描述外层 顶部 margin-top 让内容下移 */
 .text-wrap {
     flex: 1;
     min-height: 0;
@@ -206,6 +196,7 @@
     flex-shrink: 0;
 }
 
+/* 底部行 用负 margin 越过卡片底部 让淡紫贴到下边缘 */
 .card-bottom {
     display: flex;
     justify-content: space-between;
@@ -213,7 +204,7 @@
     flex-shrink: 0;
     height: 20px;
     padding: 0;
-    margin: 0;
+    margin: 0 0 -2px 0;                        /* 下移 2px 越过底边 */
     box-sizing: border-box;
 }
 
@@ -241,12 +232,12 @@
     .level3-content { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding: 10px; }
     .site-card { gap: 1px; }
     .card-top { height: 24px; gap: 4px; }
-    .icon-container { width: 24px; height: 24px; font-size: 11px; border-radius: 7px; }
+    .icon-container { width: 24px; height: 24px; font-size: 11px; border-radius: 7px; margin: 0 0 0 -2px; }
     .icon-container img { border-radius: 6px; }
     .card-top .site-title { font-size: 12px; }
     .text-wrap { margin: 6px 0 0 0; }
     .site-text { font-size: 12px; line-height: 1.3; max-height: 3.9em; }
-    .card-bottom { height: 18px; }
+    .card-bottom { height: 18px; margin: 0 0 -2px 0; }
     .view-count { font-size: 12px; padding: 0 3px; }
     .report-dead-link-btn { width: 18px; height: 18px; font-size: 13px; margin-right: 3px; }
     .report-dead-link-btn i { font-size: 13px; }
@@ -260,12 +251,12 @@
     .level3-content { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; padding: 8px; }
     .site-card { gap: 1px; border-radius: 6px; }
     .card-top { height: 20px; gap: 3px; }
-    .icon-container { width: 20px; height: 20px; font-size: 9px; border-radius: 6px; }
+    .icon-container { width: 20px; height: 20px; font-size: 9px; border-radius: 6px; margin: 0 0 0 -2px; }
     .icon-container img { border-radius: 5px; }
     .card-top .site-title { font-size: 11px; }
     .text-wrap { margin: 5px 0 0 0; }
     .site-text { font-size: 11px; line-height: 1.3; max-height: 3.9em; }
-    .card-bottom { height: 16px; }
+    .card-bottom { height: 16px; margin: 0 0 -2px 0; }
     .view-count { font-size: 11px; padding: 0 2px; }
     .report-dead-link-btn { width: 16px; height: 16px; font-size: 12px; margin-right: 2px; }
     .report-dead-link-btn i { font-size: 12px; }
