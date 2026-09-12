@@ -1,4 +1,4 @@
-/* navigation.css 卡片正方形 子元素贴边 描述3行 */
+/* navigation.css 卡片正方形 描述/分隔线/底部整体下移 */
 
 .nav-search-box { display: block; width: 100%; margin-top: 10px; }
 .search-input-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
@@ -151,6 +151,7 @@
     text-align: center;
 }
 
+/* 描述外层 顶部加 margin-top 把下面内容整体往下推 */
 .text-wrap {
     flex: 1;
     min-height: 0;
@@ -161,7 +162,7 @@
     overflow: hidden;
     width: auto;
     padding: 0;
-    margin: 0;
+    margin: 8px 0 0 0;                          /* 顶部 8px 下移 */
     box-sizing: border-box;
 }
 
@@ -230,6 +231,7 @@
     .icon-container { width: 24px; height: 24px; font-size: 11px; border-radius: 7px; }
     .icon-container img { border-radius: 6px; }
     .card-top .site-title { font-size: 12px; }
+    .text-wrap { margin: 6px 0 0 0; }
     .site-text { font-size: 12px; line-height: 1.3; max-height: 3.9em; }
     .card-bottom { height: 18px; }
     .view-count { font-size: 12px; padding: 0 3px; }
@@ -248,6 +250,7 @@
     .icon-container { width: 20px; height: 20px; font-size: 9px; border-radius: 6px; }
     .icon-container img { border-radius: 5px; }
     .card-top .site-title { font-size: 11px; }
+    .text-wrap { margin: 5px 0 0 0; }
     .site-text { font-size: 11px; line-height: 1.3; max-height: 3.9em; }
     .card-bottom { height: 16px; }
     .view-count { font-size: 11px; padding: 0 2px; }
