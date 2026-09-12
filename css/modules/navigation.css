@@ -1,4 +1,4 @@
-/* navigation.css 描述居中 顶部与图标同高 间距调整 内间距归零 带调试色块 */
+/* navigation.css 卡片正方形 图标圆角方形 描述填满 带调试色块 */
 
 .nav-search-box { display: block; width: 100%; margin-top: 10px; }
 .search-input-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
@@ -75,23 +75,24 @@
 .scroll-loading-trigger .loading-spinner { width: 20px; height: 20px; border: 2px solid var(--border-color); border-top-color: var(--primary-color); border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ===== 卡片 调试色块 ===== */
+/* ===== 卡片 正方形 带调试色块 ===== */
 .site-card {
-    background: rgba(67, 97, 238, 0.08);       /* 淡蓝 卡片总范围 */
+    background: rgba(67, 97, 238, 0.08);       /* 淡蓝 */
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 8px;                              /* 上下左右统一 8px */
+    padding: 6px;                              /* 内间距缩小 */
     cursor: pointer;
     transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
     text-decoration: none;
     color: inherit;
     display: flex;
     flex-direction: column;
-    gap: 6px;                                  /* 内部元素间距 6px */
-    height: 132px;
+    gap: 5px;                                  /* 内部间距 */
+    aspect-ratio: 1 / 1;                       /* 正方形 */
     position: relative;
     overflow: hidden;
     box-sizing: border-box;
+    min-height: 0;
 }
 .site-card:hover {
     transform: translateY(-2px);
@@ -99,25 +100,25 @@
     box-shadow: 0 6px 16px rgba(67, 97, 238, 0.12);
 }
 
-/* 顶部行 淡绿 高度与图标一致 26px */
+/* 顶部行 淡绿 高度 = 图标框高度 */
 .card-top {
     display: flex;
     align-items: center;
     gap: 5px;
     flex-shrink: 0;
-    height: 26px;                              /* 与 .icon-container 一致 */
+    height: 28px;
     padding: 0;
     background: rgba(16, 185, 129, 0.18);
     border-radius: 4px;
     box-sizing: border-box;
 }
 
-/* 图标框 橙色 26px */
+/* 图标框 橙色 圆角正方形 */
 .icon-container {
     position: relative;
-    width: 26px;
-    height: 26px;
-    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;                        /* 圆角更大 更圆润 */
     background: rgba(245, 158, 11, 0.35);
     display: flex;
     align-items: center;
@@ -128,9 +129,10 @@
     overflow: hidden;
     border: 1px solid rgba(0, 0, 0, 0.08);
     padding: 0;
+    box-sizing: border-box;
     image-rendering: -webkit-optimize-contrast;
 }
-.icon-container img { width: 100%; height: 100%; object-fit: contain; object-position: center; }
+.icon-container img { width: 100%; height: 100%; object-fit: contain; object-position: center; border-radius: 7px; }
 .site-card:hover .icon-container { border-color: var(--primary-color); }
 .icon-container.icon-placeholder { background: #f0f2f5; border: 1px solid #e4e7ec; }
 .icon-container.icon-placeholder::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent); animation: placeholder-shimmer 1.5s infinite; transform: translateX(-100%); z-index: -1; }
@@ -138,9 +140,10 @@
 .dark-mode .icon-container.icon-placeholder { background: #2d2d2d; border-color: #3d3d3d; }
 .dark-mode .icon-container.icon-placeholder::after { background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent); z-index: -1; }
 
+/* 标题 淡绿 */
 .card-top .site-title {
     flex: 1;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-primary);
     white-space: nowrap;
@@ -159,7 +162,7 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    justify-content: center;                   /* 描述垂直居中 */
+    justify-content: center;
     overflow: hidden;
     width: 100%;
     padding: 0;
@@ -169,9 +172,9 @@
     border-radius: 4px;
 }
 
-/* 描述文本 淡粉 内间距 0 字体 12px */
+/* 描述文本 淡粉 内间距 0 字体 13px */
 .site-text {
-    font-size: 12px;                           /* 字体调整 */
+    font-size: 13px;
     line-height: 1.3;
     color: var(--text-secondary);
     text-align: center;
@@ -179,10 +182,10 @@
     word-wrap: break-word;
     white-space: normal;
     overflow: hidden;
-    max-height: 3.9em;                         /* 3 行 × 1.3 = 3.9em */
+    max-height: 3.9em;                         /* 3 行 × 1.3 */
     font-weight: 400;
     margin: 0;
-    padding: 0;                                /* 描述内间距归零 */
+    padding: 0;
     display: block;
     box-sizing: border-box;
     width: 100%;
@@ -207,7 +210,7 @@
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
-    height: 18px;
+    height: 20px;
     padding: 0;
     margin: 0;
     box-sizing: border-box;
@@ -234,16 +237,16 @@
 .view-count.increasing { animation: pulseView 0.3s ease; }
 @keyframes pulseView { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
-/* ===== 平板 ≤768px ===== */
 @media (max-width: 768px) {
     .navigation-section { padding: 0 0 10px 0; }
     .level3-content { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; padding: 10px; }
-    .site-card { padding: 7px; gap: 5px; height: 118px; }
-    .card-top { height: 22px; gap: 4px; }
-    .icon-container { width: 22px; height: 22px; font-size: 11px; }
-    .card-top .site-title { font-size: 11px; }
-    .site-text { font-size: 11px; line-height: 1.3; max-height: 3.9em; }
-    .card-bottom { height: 16px; }
+    .site-card { padding: 5px; gap: 4px; }
+    .card-top { height: 24px; gap: 4px; }
+    .icon-container { width: 24px; height: 24px; font-size: 11px; border-radius: 7px; }
+    .icon-container img { border-radius: 6px; }
+    .card-top .site-title { font-size: 12px; }
+    .site-text { font-size: 12px; line-height: 1.3; max-height: 3.9em; }
+    .card-bottom { height: 18px; }
     .view-count { font-size: 12px; }
     .report-dead-link-btn { width: 18px; height: 18px; font-size: 13px; }
     .report-dead-link-btn i { font-size: 13px; }
@@ -252,16 +255,16 @@
     .load-more-trigger.is-end::before, .load-more-trigger.is-end::after { width: 24px; }
 }
 
-/* ===== 手机 ≤480px ===== */
 @media (max-width: 480px) {
     .navigation-section { padding: 0 0 10px 0; }
     .level3-content { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 6px; padding: 8px; }
-    .site-card { padding: 6px; gap: 4px; border-radius: 6px; height: 106px; }
-    .card-top { height: 18px; gap: 4px; }
-    .icon-container { width: 18px; height: 18px; font-size: 9px; }
-    .card-top .site-title { font-size: 10px; }
-    .site-text { font-size: 10px; line-height: 1.3; max-height: 3.9em; }
-    .card-bottom { height: 14px; }
+    .site-card { padding: 4px; gap: 3px; border-radius: 6px; }
+    .card-top { height: 20px; gap: 3px; }
+    .icon-container { width: 20px; height: 20px; font-size: 9px; border-radius: 6px; }
+    .icon-container img { border-radius: 5px; }
+    .card-top .site-title { font-size: 11px; }
+    .site-text { font-size: 11px; line-height: 1.3; max-height: 3.9em; }
+    .card-bottom { height: 16px; }
     .view-count { font-size: 11px; }
     .report-dead-link-btn { width: 16px; height: 16px; font-size: 12px; }
     .report-dead-link-btn i { font-size: 12px; }
