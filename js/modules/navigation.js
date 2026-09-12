@@ -1,4 +1,6 @@
-/* navigation.js 描述3行截断 + 支持 padding-top */
+/* navigation.js - 异步分页加载 + 图标缓存持久化 + 预加载 + 自动重试 + 批量图标 + 搜索防抖节流
+ * 描述外层 text-wrap 包裹 让 site-text 高度自适应 scrollHeight 准确
+ */
 
 class OptimizedNavigation {
     constructor() {
@@ -84,7 +86,7 @@ class OptimizedNavigation {
         try { return new URL(url).hostname; } catch { return ''; }
     }
 
-    // ===== 描述 3 行截断（考虑 padding）=====
+    // ===== 描述 3 行截断（二分查找 + 省略号）=====
     _truncateDescription(el, maxLines = 3) {
         if (!el) return;
 
@@ -103,7 +105,7 @@ class OptimizedNavigation {
         if (isNaN(lineHeight) || lineHeight <= 0) {
             lineHeight = (fontSize || 11) * 1.4;
         }
-        // 3 行文字高度 + 上下 padding 才是实际总高
+        // 3 行文字高度 + 上下 padding = 最大可容纳高度
         const maxTotalHeight = lineHeight * maxLines + paddingTop + paddingBottom;
 
         if (el.scrollHeight <= maxTotalHeight + 1) return;
@@ -131,10 +133,11 @@ class OptimizedNavigation {
 
     _processDescriptions(container) {
         if (!container) return;
-        const items = container.querySelectorAll('.site-card .site-text');
+        const items = container.querySelectorAll('.site-card .text-wrap .site-text');
         items.forEach(el => this._truncateDescription(el, 3));
     }
 
+    // ===== 创建图标元素 =====
     _createIconElement(site) {
         const container = document.createElement('span');
         container.className = 'icon-container';
@@ -207,6 +210,7 @@ class OptimizedNavigation {
         return container;
     }
 
+    // ===== 渲染站点卡片（首次） =====
     _renderSites(sites) {
         const container = this.level3Content;
         if (!container) return;
@@ -231,6 +235,7 @@ class OptimizedNavigation {
         this.updateLoadMoreTrigger();
     }
 
+    // ===== 创建单张站点卡片 =====
     _createSiteCard(site) {
         const card = document.createElement('a');
         card.className = 'site-card';
@@ -244,9 +249,12 @@ class OptimizedNavigation {
         const formattedViews = this._formatViews(views);
         const desc = site.description || '暂无描述';
 
+        // 描述外层包裹 text-wrap，让 site-text 高度自适应
         card.innerHTML = `
             <div class="card-top"></div>
-            <p class="site-text" data-fulltext="${this._escapeHtml(desc)}">${this._escapeHtml(desc)}</p>
+            <div class="text-wrap">
+                <p class="site-text" data-fulltext="${this._escapeHtml(desc)}">${this._escapeHtml(desc)}</p>
+            </div>
             <div class="divider-line"></div>
             <div class="card-bottom">
                 <span class="view-count" data-views="${views}">${formattedViews}</span>
@@ -345,6 +353,7 @@ class OptimizedNavigation {
         return card;
     }
 
+    // ===== 追加站点卡片（加载更多） =====
     _appendSites(sites) {
         const container = this.level3Content;
         if (!container) return;
