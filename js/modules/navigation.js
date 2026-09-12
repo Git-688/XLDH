@@ -1,5 +1,5 @@
 /* navigation.js - 异步分页加载 + 图标缓存持久化 + 预加载 + 自动重试 + 批量图标 + 搜索防抖节流
- * 描述 3 行截断 + 省略号，用 JS 二分查找实现，兼容所有浏览器
+ * 描述用 p.site-text 结构，避开国产浏览器省流过滤
  */
 
 class OptimizedNavigation {
@@ -45,7 +45,6 @@ class OptimizedNavigation {
         window.optimizedNavigation = this;
     }
 
-    // ===== 图标缓存 =====
     loadIconCache() {
         try {
             const raw = localStorage.getItem('nav_icon_cache');
@@ -73,17 +72,13 @@ class OptimizedNavigation {
         } catch (e) {}
     }
 
-    _getCachedIcon(domain) {
-        return this.iconCache[domain] || null;
-    }
-
+    _getCachedIcon(domain) { return this.iconCache[domain] || null; }
     _setCachedIcon(domain, iconUrl) {
         if (!domain) return;
         this.iconCache[domain] = iconUrl;
         this.saveIconCache();
     }
 
-    // ===== 工具方法 =====
     _escapeHtml(str) { return Utils.escapeHtml(str); }
     _formatViews(views) { return Utils.formatViews ? Utils.formatViews(views) : String(views || 0); }
 
@@ -91,46 +86,36 @@ class OptimizedNavigation {
         try { return new URL(url).hostname; } catch { return ''; }
     }
 
-    // ===== 描述截断（二分查找 + 省略号）=====
-    _truncateDescription(spanEl, maxLines = 3) {
-        if (!spanEl) return;
+    // ===== 描述 3 行截断（基于 p 元素）=====
+    _truncateDescription(el, maxLines = 3) {
+        if (!el) return;
 
-        // 从 dataset 读原始文本，避免重复处理时基于截断后的文本再截
-        const fullText = spanEl.dataset.fulltext !== undefined ? spanEl.dataset.fulltext : spanEl.textContent;
+        const fullText = el.dataset.fulltext !== undefined ? el.dataset.fulltext : el.textContent;
         if (!fullText || fullText.length < 2) return;
 
-        // 保存原始文本
-        spanEl.dataset.fulltext = fullText;
+        el.dataset.fulltext = fullText;
+        el.textContent = fullText;
 
-        // 先重置为完整文本
-        spanEl.textContent = fullText;
-
-        // 计算最大高度
-        const computedStyle = window.getComputedStyle(spanEl);
+        const computedStyle = window.getComputedStyle(el);
         let lineHeight = parseFloat(computedStyle.lineHeight);
         const fontSize = parseFloat(computedStyle.fontSize);
 
         if (isNaN(lineHeight) || lineHeight <= 0) {
-            // line-height: normal 或读不到时，用 fontSize * 1.2 估算
-            lineHeight = (fontSize || 11) * 1.2;
+            lineHeight = (fontSize || 11) * 1.4;
         }
         const maxHeight = lineHeight * maxLines;
 
-        // 检查是否需要截断
-        if (spanEl.scrollHeight <= maxHeight + 1) {
-            return;
-        }
+        if (el.scrollHeight <= maxHeight + 1) return;
 
-        // 二分查找最大可容纳的字符数
         let low = 0;
         let high = fullText.length;
         let bestLength = 0;
 
         while (low <= high) {
             const mid = Math.floor((low + high) / 2);
-            spanEl.textContent = fullText.slice(0, mid) + '...';
+            el.textContent = fullText.slice(0, mid) + '...';
 
-            if (spanEl.scrollHeight <= maxHeight + 1) {
+            if (el.scrollHeight <= maxHeight + 1) {
                 bestLength = mid;
                 low = mid + 1;
             } else {
@@ -138,20 +123,15 @@ class OptimizedNavigation {
             }
         }
 
-        // 应用最终结果
-        if (bestLength > 0) {
-            spanEl.textContent = fullText.slice(0, bestLength) + '...';
-        } else {
-            // 极端情况：一个字都放不下
-            spanEl.textContent = fullText.slice(0, 1) + '...';
-        }
+        el.textContent = bestLength > 0
+            ? fullText.slice(0, bestLength) + '...'
+            : fullText.slice(0, 1) + '...';
     }
 
-    // ===== 批量处理描述截断 =====
     _processDescriptions(container) {
         if (!container) return;
-        const spans = container.querySelectorAll('.site-description > span');
-        spans.forEach(span => this._truncateDescription(span, 3));
+        const items = container.querySelectorAll('.site-card .site-text');
+        items.forEach(el => this._truncateDescription(el, 3));
     }
 
     // ===== 创建图标元素 =====
@@ -203,13 +183,9 @@ class OptimizedNavigation {
             img.style.display = 'block';
             fallbackText.style.display = 'none';
             container.classList.remove('icon-placeholder');
-            if (domain && img.src) {
-                this._setCachedIcon(domain, img.src);
-            }
+            if (domain && img.src) this._setCachedIcon(domain, img.src);
             setTimeout(() => {
-                if (img.naturalWidth <= 1 && img.naturalHeight <= 1) {
-                    img.onerror();
-                }
+                if (img.naturalWidth <= 1 && img.naturalHeight <= 1) img.onerror();
             }, 100);
         };
 
@@ -228,7 +204,6 @@ class OptimizedNavigation {
 
         container.appendChild(img);
         container.appendChild(fallbackText);
-
         return container;
     }
 
@@ -253,9 +228,7 @@ class OptimizedNavigation {
         container.innerHTML = '';
         container.appendChild(fragment);
 
-        // 渲染完成后异步截断描述（需要真实 DOM 测量高度）
         requestAnimationFrame(() => this._processDescriptions(container));
-
         this.updateLoadMoreTrigger();
     }
 
@@ -273,9 +246,10 @@ class OptimizedNavigation {
         const formattedViews = this._formatViews(views);
         const desc = site.description || '暂无描述';
 
+        // 描述用 <p class="site-text">，语义上属于正文，避开过滤器
         card.innerHTML = `
             <div class="card-top"></div>
-            <div class="site-description"><span>${this._escapeHtml(desc)}</span></div>
+            <p class="site-text" data-fulltext="${this._escapeHtml(desc)}">${this._escapeHtml(desc)}</p>
             <div class="divider-line"></div>
             <div class="card-bottom">
                 <span class="view-count" data-views="${views}">${formattedViews}</span>
@@ -284,12 +258,6 @@ class OptimizedNavigation {
                 </button>
             </div>
         `;
-
-        // 保存原始文本到 dataset，供截断函数使用
-        const descSpan = card.querySelector('.site-description > span');
-        if (descSpan) {
-            descSpan.dataset.fulltext = desc;
-        }
 
         const cardTop = card.querySelector('.card-top');
         cardTop.appendChild(iconEl);
@@ -380,14 +348,12 @@ class OptimizedNavigation {
         return card;
     }
 
-    // ===== 追加站点卡片（加载更多） =====
     _appendSites(sites) {
         const container = this.level3Content;
         if (!container) return;
 
         const existingTrigger = container.querySelector('.load-more-trigger');
         if (existingTrigger) existingTrigger.remove();
-
         const emptyState = container.querySelector('.empty-state');
         if (emptyState) emptyState.remove();
 
@@ -403,11 +369,7 @@ class OptimizedNavigation {
         });
         container.appendChild(fragment);
 
-        // 新追加的卡片处理描述截断
-        requestAnimationFrame(() => {
-            // 只处理新加入的（不含已处理的）——简单做法：处理全部（dataset 保存了原始文本，重复处理幂等）
-            this._processDescriptions(container);
-        });
+        requestAnimationFrame(() => this._processDescriptions(container));
 
         this.hasMoreData = sites.length >= this.pageSize;
         this.updateLoadMoreTrigger();
@@ -443,9 +405,7 @@ class OptimizedNavigation {
         const retryBtn = container.querySelector('#navRetryBtn');
         if (retryBtn) {
             retryBtn.addEventListener('click', () => {
-                if (this.currentLevel2) {
-                    this.selectLevel2(this.currentLevel2, true);
-                }
+                if (this.currentLevel2) this.selectLevel2(this.currentLevel2, true);
             });
         }
     }
@@ -470,7 +430,6 @@ class OptimizedNavigation {
         const trigger = document.createElement('div');
         trigger.className = 'load-more-trigger';
         container.appendChild(trigger);
-
         this.setupIntersectionObserver(trigger);
     }
 
@@ -540,8 +499,7 @@ class OptimizedNavigation {
         const url = `${this.apiBase}/navigation/sites?subcategory_id=${subId}&page=${page}&limit=${this.pageSize}`;
         const response = await Utils.safeFetch(url, { timeout: 10000 });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        return data;
+        return await response.json();
     }
 
     async refreshCurrentSubcategory() {
@@ -576,8 +534,7 @@ class OptimizedNavigation {
 
         const subs = this.categoryCache[categoryName];
         if (subs && subs.length) {
-            const firstSub = subs[0];
-            await this.selectLevel2(firstSub.id, true);
+            await this.selectLevel2(subs[0].id, true);
         } else {
             this.level3Content.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-folder-open"></i></div><h3 class="empty-title">该分类下暂无子分类</h3></div>`;
         }
@@ -591,9 +548,7 @@ class OptimizedNavigation {
         const now = Date.now();
 
         if (!forceRefresh && cached && cached.data && cached.timestamp) {
-            if (now - cached.timestamp < 30 * 60 * 1000) {
-                return cached.data;
-            }
+            if (now - cached.timestamp < 30 * 60 * 1000) return cached.data;
         }
 
         const MAX_RETRIES = 3;
@@ -611,7 +566,6 @@ class OptimizedNavigation {
                 }
 
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
                 const json = await response.json();
                 if (!json.subcategories) throw new Error('Invalid response');
 
@@ -638,7 +592,7 @@ class OptimizedNavigation {
         const subIds = subs.map(s => s.id);
         this.fetchSubcategoryCounts(subIds).then(counts => {
             this.subCounts = counts;
-            this.level2Nav.innerHTML = subs.map((sub, idx) => {
+            this.level2Nav.innerHTML = subs.map((sub) => {
                 const count = counts[sub.id] || 0;
                 const isActive = (this.currentLevel2 === sub.id);
                 return `<button class="level2-btn ${isActive ? 'active' : ''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}">
@@ -649,12 +603,11 @@ class OptimizedNavigation {
 
             this.level2Nav.querySelectorAll('.level2-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    const id = parseInt(btn.dataset.level2);
-                    this.selectLevel2(id, true);
+                    this.selectLevel2(parseInt(btn.dataset.level2), true);
                 });
             });
         }).catch(() => {
-            this.level2Nav.innerHTML = subs.map((sub, idx) => {
+            this.level2Nav.innerHTML = subs.map((sub) => {
                 const isActive = (this.currentLevel2 === sub.id);
                 return `<button class="level2-btn ${isActive ? 'active' : ''}" data-level2="${sub.id}" data-level2-name="${this._escapeHtml(sub.name)}">
                     <span class="level2-btn-text">${this._escapeHtml(sub.name)}</span>
@@ -663,8 +616,7 @@ class OptimizedNavigation {
 
             this.level2Nav.querySelectorAll('.level2-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    const id = parseInt(btn.dataset.level2);
-                    this.selectLevel2(id, true);
+                    this.selectLevel2(parseInt(btn.dataset.level2), true);
                 });
             });
         });
@@ -672,14 +624,10 @@ class OptimizedNavigation {
 
     async fetchSubcategoryCounts(subIds) {
         if (!subIds || !subIds.length) return {};
-        const url = `${this.apiBase}/subcategory/counts?ids=${subIds.join(',')}`;
         try {
-            const response = await Utils.safeFetch(url, { timeout: 5000 });
-            const counts = await response.json();
-            return counts;
-        } catch (e) {
-            return {};
-        }
+            const response = await Utils.safeFetch(`${this.apiBase}/subcategory/counts?ids=${subIds.join(',')}`, { timeout: 5000 });
+            return await response.json();
+        } catch (e) { return {}; }
     }
 
     async selectLevel2(subId, forceRefresh = false) {
@@ -741,11 +689,9 @@ class OptimizedNavigation {
         input.addEventListener('input', () => {
             const query = input.value.trim();
             clearBtn.style.display = query ? 'flex' : 'none';
-
             const now = Date.now();
             if (now - this.lastInputTime < 100) return;
             this.lastInputTime = now;
-
             clearTimeout(this.searchTimer);
             this.searchTimer = setTimeout(() => {
                 if (query) this.performSearch(query);
@@ -774,10 +720,7 @@ class OptimizedNavigation {
 
     async performSearch(query) {
         if (!query.trim()) return;
-
-        if (this.searchAbortController) {
-            this.searchAbortController.abort();
-        }
+        if (this.searchAbortController) this.searchAbortController.abort();
         this.searchAbortController = new AbortController();
 
         this.isSearching = true;
@@ -824,9 +767,7 @@ class OptimizedNavigation {
         }
     }
 
-    async updateStats() {
-        await this.fetchTotalSitesCount();
-    }
+    async updateStats() { await this.fetchTotalSitesCount(); }
 
     async fetchTotalSitesCount() {
         try {
@@ -834,20 +775,15 @@ class OptimizedNavigation {
             const data = await response.json();
             if (data.total !== undefined) {
                 this.totalSites = data.total;
-                if (this.siteCountEl) {
-                    this.siteCountEl.textContent = this.totalSites + '+';
-                }
+                if (this.siteCountEl) this.siteCountEl.textContent = this.totalSites + '+';
             }
         } catch (error) {
-            if (this.siteCountEl && !this.siteCountEl.textContent) {
-                this.siteCountEl.textContent = '?+';
-            }
+            if (this.siteCountEl && !this.siteCountEl.textContent) this.siteCountEl.textContent = '?+';
         }
     }
 
     async init() {
         if (this.isInitialized) return;
-
         const MAX_RETRIES = 3;
         let lastError = null;
 
@@ -859,7 +795,6 @@ class OptimizedNavigation {
                     await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
                     continue;
                 }
-
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
                 const structure = await resp.json();
@@ -872,16 +807,11 @@ class OptimizedNavigation {
 
                 this.level1Nav.addEventListener('click', (e) => {
                     const btn = e.target.closest('.level1-btn');
-                    if (btn) {
-                        const cat = btn.dataset.level1;
-                        this.selectLevel1(cat, true);
-                    }
+                    if (btn) this.selectLevel1(btn.dataset.level1, true);
                 });
 
-                const firstCat = categories[0];
-                await this.selectLevel1(firstCat, false);
+                await this.selectLevel1(categories[0], false);
                 this.createSearchBox();
-
                 await this.updateStats();
 
                 if ('requestIdleCallback' in window) {
@@ -891,7 +821,6 @@ class OptimizedNavigation {
                 }
 
                 this.isInitialized = true;
-
                 setTimeout(() => this._prefetchIcons(), 2000);
                 return;
             } catch (error) {
@@ -960,13 +889,8 @@ class OptimizedNavigation {
             this.intersectionObserver.disconnect();
             this.intersectionObserver = null;
         }
-        if (this.loadMoreTrigger) {
-            this.loadMoreTrigger = null;
-        }
-        if (this.searchTimer) {
-            clearTimeout(this.searchTimer);
-            this.searchTimer = null;
-        }
+        if (this.loadMoreTrigger) this.loadMoreTrigger = null;
+        if (this.searchTimer) { clearTimeout(this.searchTimer); this.searchTimer = null; }
         if (this.searchAbortController) {
             this.searchAbortController.abort();
             this.searchAbortController = null;
