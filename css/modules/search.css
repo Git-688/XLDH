@@ -1,4 +1,7 @@
-/* search.css - 精简版（搜索模态框位于导航栏下方，移动端间距与主页一致；引擎下拉定位改为 JS 动态计算） */
+/* search.css - 精简版（搜索模态框位于导航栏下方，移动端间距与主页一致）
+   本次仅调整 .engine-dropdown 的定位，使其固定在引擎触发按钮正下方 */
+
+/* ===== 搜索模态框外壳 ===== */
 .search-modal {
     position: fixed;
     top: 0;
@@ -23,6 +26,7 @@
     pointer-events: auto;
 }
 
+/* ===== 模态框内容容器 ===== */
 .search-modal .modal-content {
     width: 100%;
     max-width: 560px;
@@ -34,14 +38,13 @@
     transform: scale(0.95) translateY(-10px);
     opacity: 0;
     transition: transform .3s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity .3s ease;
-    position: relative;                /* 让引擎下拉以此作为定位基准 */
 }
 .search-modal.active .modal-content {
     transform: scale(1) translateY(0);
     opacity: 1;
 }
 
-/* 搜索栏布局 */
+/* ===== 搜索栏布局 ===== */
 .search-bar {
     display: flex;
     align-items: center;
@@ -99,9 +102,15 @@
 }
 .search-submit-btn:hover { background: var(--secondary-color, #3a0ca3); }
 
-/* 引擎下拉：定位交由 JS 动态计算（top/left 由 positionDropdown 写入） */
+/* ===== 引擎下拉：定位到触发按钮正下方 =====
+   原理：.modal-content 带 transform，成为绝对定位后代的包含块，
+        其 padding box 即为定位基准。按钮位于 (20px, 16px)，
+        尺寸 40×40，故 bottom = 56px；下拉 top = 62px（多 6px 间距）。
+        仅修改 top / left 两处，其他属性完全不变。 */
 .engine-dropdown {
     position: absolute;
+    top: 62px;                 /* 16（padding-top）+ 40（按钮高度）+ 6（间距） */
+    left: 20px;                /* 与按钮左边缘对齐 */
     width: 180px;
     background: var(--bg-card, #ffffff);
     border: 1px solid var(--border-color, #e0e0e0);
@@ -148,7 +157,7 @@
     color: var(--text-secondary, #6c757d);
 }
 
-/* 建议 */
+/* ===== 搜索建议 ===== */
 .suggestions {
     max-height: 180px;
     overflow-y: auto;
@@ -177,7 +186,7 @@
 .suggestion-item:last-child { border-bottom: none; }
 .suggestion-item:hover { background: var(--bg-secondary, #f8f9fa); }
 
-/* 历史记录 */
+/* ===== 历史记录 ===== */
 .history-panel {
     margin-top: 8px;
     padding: 10px 12px;
@@ -235,7 +244,7 @@
     margin: 0;
 }
 
-/* 移动端适配：左右间距与主页一致 */
+/* ===== 移动端适配：左右间距与主页一致；同步调整下拉定位以匹配按钮位置 ===== */
 @media (max-width: 768px) {
     .search-modal {
         padding: 60px var(--container-padding-xs, 16px) var(--container-padding-xs, 16px);
@@ -248,10 +257,14 @@
     .search-input { height: 36px; font-size: .95rem; padding: 8px 12px; }
     .search-submit-btn { height: 36px; padding: 8px 14px; font-size: .9rem; }
     .engine-trigger-btn { width: 36px; height: 36px; }
-    .engine-dropdown { width: 160px; }
+    .engine-dropdown {
+        width: 160px;
+        top: 56px;             /* 14（padding-top）+ 36（按钮高度）+ 6（间距） */
+        left: 16px;            /* 与按钮左边缘对齐 */
+    }
 }
 
-/* 深色模式 */
+/* ===== 深色模式 ===== */
 .dark-mode .search-modal .modal-content {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
