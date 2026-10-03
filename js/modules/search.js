@@ -1,4 +1,4 @@
-/* search.js */
+/* search.js - 引擎下拉定位改为动态计算（跟随触发按钮下方） */
 class NewSearchModule {
     constructor() {
         if (window.Starlink && window.Starlink.search) return window.Starlink.search;
@@ -145,9 +145,35 @@ class NewSearchModule {
         }
     }
 
+    /**
+     * 让引擎下拉固定在「搜索引擎触发按钮」的正下方。
+     * 以 .modal-content 的 padding box 为参考系，实时计算 top/left。
+     * 说明：由于 .modal-content 带有 transform，其会成为绝对定位后代的包含块，
+     *       因此这里以它的 border-box 左上角作为坐标原点进行换算。
+     */
+    positionDropdown() {
+        if (!this.triggerBtn || !this.dropdown || !this.modal) return;
+        const contentEl = this.modal.querySelector('.modal-content');
+        if (!contentEl) return;
+
+        const triggerRect = this.triggerBtn.getBoundingClientRect();
+        const contentRect = contentEl.getBoundingClientRect();
+        const cs = window.getComputedStyle(contentEl);
+        const borderLeft = parseFloat(cs.borderLeftWidth) || 0;
+        const borderTop  = parseFloat(cs.borderTopWidth)  || 0;
+
+        // 左对齐按钮左侧；顶部对齐按钮底部 + 6px 间隙
+        this.dropdown.style.top  = `${triggerRect.bottom - contentRect.top  - borderTop  + 6}px`;
+        this.dropdown.style.left = `${triggerRect.left   - contentRect.left - borderLeft}px`;
+    }
+
     handleResize() {
         if (this.isOpen) {
             this.updateModalPosition();
+            // 下拉处于打开状态时，窗口变化后同步重算
+            if (this.dropdown && this.dropdown.classList.contains('active')) {
+                this.positionDropdown();
+            }
         }
     }
 
@@ -198,7 +224,13 @@ class NewSearchModule {
     }
 
     toggleDropdown() { this.dropdown.classList.contains('active') ? this.closeDropdown() : this.openDropdown(); }
-    openDropdown() { this.dropdown.classList.add('active'); }
+
+    openDropdown() {
+        if (!this.dropdown) return;
+        this.positionDropdown();       // 先计算位置，再显示，避免出现位置闪烁
+        this.dropdown.classList.add('active');
+    }
+
     closeDropdown() { this.dropdown.classList.remove('active'); }
 
     submitSearch() {
