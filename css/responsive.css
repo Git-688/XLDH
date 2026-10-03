@@ -239,3 +239,80 @@
     a { text-decoration: none; color: black; }
     a[href]:after { content: " (" attr(href) ")"; font-size: 10pt; }
 }
+
+/* ============================================================
+   ⭐ 星聚笔记模态框：适配移动端浏览器底部工具栏
+   ------------------------------------------------------------
+   1. 使用动态视口高度 100dvh，随工具栏显示/隐藏自动调整；
+   2. 通过 env(safe-area-inset-bottom) 预留 iPhone 安全区；
+   3. 通过 --browser-bottom-inset 变量（由 keyboard-adapter.js
+      用 visualViewport API 实时计算）精确扣除底部工具栏高度，
+      覆盖 Android Chrome / 微信 / iOS Safari 等场景。
+   注：本段仅作用于 #notebookModal，其他模块样式保持不变。
+   ============================================================ */
+
+#notebookModal {
+    /* 高度改用动态视口；不支持 dvh 的浏览器回退到 100vh */
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100vh;
+    max-height: 100dvh;
+    /* 取消 inset:0 里隐含的 bottom:0，避免与固定高度冲突 */
+    bottom: auto;
+}
+
+#notebookModal .feedback-modal-content {
+    /* 桌面端兜底：视口高度 - 顶部 60 - 底部留白 - 安全区 - 工具栏 */
+    max-height: calc(
+        100vh
+        - 60px
+        - 2 * var(--container-padding-xs, 16px)
+        - env(safe-area-inset-bottom, 0px)
+        - var(--browser-bottom-inset, 0px)
+    );
+    max-height: calc(
+        100dvh
+        - 60px
+        - 2 * var(--container-padding-xs, 16px)
+        - env(safe-area-inset-bottom, 0px)
+        - var(--browser-bottom-inset, 0px)
+    );
+}
+
+@media (max-width: 768px) {
+    #notebookModal .feedback-modal-content {
+        max-height: calc(
+            100vh
+            - 60px
+            - 2 * var(--container-padding-xs, 16px)
+            - env(safe-area-inset-bottom, 0px)
+            - var(--browser-bottom-inset, 0px)
+        ) !important;
+        max-height: calc(
+            100dvh
+            - 60px
+            - 2 * var(--container-padding-xs, 16px)
+            - env(safe-area-inset-bottom, 0px)
+            - var(--browser-bottom-inset, 0px)
+        ) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #notebookModal .feedback-modal-content {
+        max-height: calc(
+            100vh
+            - 56px
+            - 2 * var(--container-padding-xs, 16px)
+            - env(safe-area-inset-bottom, 0px)
+            - var(--browser-bottom-inset, 0px)
+        ) !important;
+        max-height: calc(
+            100dvh
+            - 56px
+            - 2 * var(--container-padding-xs, 16px)
+            - env(safe-area-inset-bottom, 0px)
+            - var(--browser-bottom-inset, 0px)
+        ) !important;
+    }
+}
