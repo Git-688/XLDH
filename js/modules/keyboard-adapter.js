@@ -1,4 +1,4 @@
-/* keyboard-adapter.js - 移动端键盘遮挡修复 + 浏览器底部工具栏高度计算 */
+/* keyboard-adapter.js - 移动端键盘遮挡修复+ 浏览器底部工具栏高度计算 */
 (function() {
     'use strict';
 
