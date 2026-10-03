@@ -1,4 +1,4 @@
-/* search.css - 精简版（搜索模态框位于导航栏下方，移动端间距与主页一致） */
+/* search.css - 精简版（搜索模态框位于导航栏下方，移动端间距与主页一致；引擎下拉定位改为 JS 动态计算） */
 .search-modal {
     position: fixed;
     top: 0;
@@ -34,6 +34,7 @@
     transform: scale(0.95) translateY(-10px);
     opacity: 0;
     transition: transform .3s cubic-bezier(0.2, 0.9, 0.4, 1.1), opacity .3s ease;
+    position: relative;                /* 让引擎下拉以此作为定位基准 */
 }
 .search-modal.active .modal-content {
     transform: scale(1) translateY(0);
@@ -98,11 +99,9 @@
 }
 .search-submit-btn:hover { background: var(--secondary-color, #3a0ca3); }
 
-/* 引擎下拉 */
+/* 引擎下拉：定位交由 JS 动态计算（top/left 由 positionDropdown 写入） */
 .engine-dropdown {
     position: absolute;
-    top: calc(100% + 6px);
-    left: 0;
     width: 180px;
     background: var(--bg-card, #ffffff);
     border: 1px solid var(--border-color, #e0e0e0);
