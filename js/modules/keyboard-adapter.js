@@ -1,4 +1,4 @@
-/* keyboard-adapter.js - 移动端键盘遮挡修复 */
+/* keyboard-adapter.js - 移动端键盘遮挡修复 + 浏览器底部工具栏高度计算 */
 (function() {
     'use strict';
 
@@ -115,4 +115,86 @@
         }
     }
 
+})();
+
+/* ============================================================
+   ⭐ 浏览器底部工具栏高度监听（星聚笔记专用）
+   ------------------------------------------------------------
+   原理：
+     layoutHeight   = 布局视口高度（包含被工具栏/键盘遮挡的部分）
+     visualHeight   = 视觉视口高度（用户实际可见区域）
+     vvOffsetTop    = 视觉视口相对布局视口的顶部偏移
+     底部遮挡高度   = layoutHeight - visualHeight - vvOffsetTop
+
+   若浏览器无 visualViewport API，则退化为仅依赖 CSS 的
+   100dvh + env(safe-area-inset-bottom)，不影响正常显示。
+   ============================================================ */
+(function() {
+    'use strict';
+
+    if (!window.visualViewport) return;
+
+    const vv = window.visualViewport;
+    const root = document.documentElement;
+    let rafId = null;
+    let lastInset = -1;
+
+    const computeBottomInset = () => {
+        if (rafId) return;
+        rafId = requestAnimationFrame(() => {
+            rafId = null;
+
+            const layoutHeight = Math.max(
+                window.innerHeight || 0,
+                root.clientHeight || 0
+            );
+            const visualHeight = vv.height || 0;
+            const vvOffsetTop = vv.offsetTop || 0;
+
+            // 底部被工具栏 / 键盘遮挡的高度
+            let bottomInset = layoutHeight - visualHeight - vvOffsetTop;
+            if (!isFinite(bottomInset) || bottomInset < 0) bottomInset = 0;
+
+            // 抖动过滤：变化小于 1px 不触发写入
+            if (Math.abs(bottomInset - lastInset) < 1) return;
+            lastInset = bottomInset;
+
+            root.style.setProperty('--browser-bottom-inset', bottomInset + 'px');
+        });
+    };
+
+    const resetBottomInset = () => {
+        if (rafId) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+        }
+        lastInset = -1;
+        root.style.setProperty('--browser-bottom-inset', '0px');
+    };
+
+    // 仅在星聚笔记模态框打开时计算，避免全局性能开销
+    const notebookModal = document.getElementById('notebookModal');
+    if (notebookModal) {
+        const observer = new MutationObserver(() => {
+            if (notebookModal.classList.contains('active')) {
+                computeBottomInset();
+            } else {
+                resetBottomInset();
+            }
+        });
+        observer.observe(notebookModal, { attributes: true, attributeFilter: ['class'] });
+
+        // 若初始化时笔记模态框已经打开（如快速点击）
+        if (notebookModal.classList.contains('active')) {
+            computeBottomInset();
+        }
+    }
+
+    // 事件监听
+    vv.addEventListener('resize', computeBottomInset);
+    vv.addEventListener('scroll', computeBottomInset, { passive: true });
+    window.addEventListener('orientationchange', () => {
+        // 旋转屏幕后工具栏高度通常会短暂变化，延后计算更准确
+        setTimeout(computeBottomInset, 300);
+    });
 })();
