@@ -1,4 +1,4 @@
-/* keyboard-adapter.js - 移动端键盘遮挡修复+ 浏览器底部工具栏高度计算 */
+/* keyboard-adapter.js - 移动端键盘遮挡修复 + 浏览器底部工具栏高度计算 */
 (function() {
     'use strict';
 
@@ -118,7 +118,7 @@
 })();
 
 /* ============================================================
-   ⭐ 浏览器底部工具栏高度监听（星聚笔记专用）
+   ⭐ 浏览器底部工具栏高度监听（星聚笔记 / 访问排行榜 共用）
    ------------------------------------------------------------
    原理：
      layoutHeight   = 布局视口高度（包含被工具栏/键盘遮挡的部分）
@@ -126,8 +126,11 @@
      vvOffsetTop    = 视觉视口相对布局视口的顶部偏移
      底部遮挡高度   = layoutHeight - visualHeight - vvOffsetTop
 
-   若浏览器无 visualViewport API，则退化为仅依赖 CSS 的
-   100dvh + env(safe-area-inset-bottom)，不影响正常显示。
+   逻辑：
+     - 任一目标模态框（#notebookModal / #rankModal）打开即计算；
+     - 全部关闭后归零；
+     - 无 visualViewport API 时自动退化为纯 CSS（100dvh + safe-area），
+       不影响正常显示。
    ============================================================ */
 (function() {
     'use strict';
@@ -138,6 +141,14 @@
     const root = document.documentElement;
     let rafId = null;
     let lastInset = -1;
+
+    // 需要联动计算底部遮挡高度的模态框 ID 列表
+    const TARGET_MODAL_IDS = ['notebookModal', 'rankModal'];
+    const targetModals = TARGET_MODAL_IDS
+        .map(id => document.getElementById(id))
+        .filter(Boolean);
+
+    if (targetModals.length === 0) return;
 
     const computeBottomInset = () => {
         if (rafId) return;
@@ -172,22 +183,26 @@
         root.style.setProperty('--browser-bottom-inset', '0px');
     };
 
-    // 仅在星聚笔记模态框打开时计算，避免全局性能开销
-    const notebookModal = document.getElementById('notebookModal');
-    if (notebookModal) {
-        const observer = new MutationObserver(() => {
-            if (notebookModal.classList.contains('active')) {
-                computeBottomInset();
-            } else {
-                resetBottomInset();
-            }
-        });
-        observer.observe(notebookModal, { attributes: true, attributeFilter: ['class'] });
+    // 是否有任一目标模态框处于打开状态
+    const isAnyTargetOpen = () => targetModals.some(m => m.classList.contains('active'));
 
-        // 若初始化时笔记模态框已经打开（如快速点击）
-        if (notebookModal.classList.contains('active')) {
+    const syncInset = () => {
+        if (isAnyTargetOpen()) {
             computeBottomInset();
+        } else {
+            resetBottomInset();
         }
+    };
+
+    // 为每个目标模态框挂上 class 变化的观察器
+    targetModals.forEach(modal => {
+        const observer = new MutationObserver(syncInset);
+        observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+    });
+
+    // 若初始化时已有目标模态框打开（如快速点击）
+    if (isAnyTargetOpen()) {
+        computeBottomInset();
     }
 
     // 事件监听
@@ -195,6 +210,6 @@
     vv.addEventListener('scroll', computeBottomInset, { passive: true });
     window.addEventListener('orientationchange', () => {
         // 旋转屏幕后工具栏高度通常会短暂变化，延后计算更准确
-        setTimeout(computeBottomInset, 300);
+        setTimeout(syncInset, 300);
     });
 })();
