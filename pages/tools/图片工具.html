@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>八合一图片工具箱</title>
+    <title>图片工具</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome 图标 -->
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <!-- 配置Tailwind 与查询工具完全一致 -->
+    <!-- 配置Tailwind -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -34,9 +34,6 @@
     </script>
     <style type="text/tailwindcss">
         @layer utilities {
-            .content-auto {
-                content-visibility: auto;
-            }
             .card-shadow {
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             }
@@ -48,10 +45,6 @@
             }
             .dark .search-focus {
                 box-shadow: 0 0 0 3px rgba(66, 99, 235, 0.2);
-            }
-            .btn-active {
-                background-color: #4263EB !important;
-                color: white !important;
             }
             .circle-btn {
                 width: 32px;
@@ -73,16 +66,140 @@
                 -ms-overflow-style: none;
                 scrollbar-width: none;
             }
+
+            /* 自定义下拉组件 */
+            .custom-select { position: relative; width: 100%; }
+            .select-trigger {
+                user-select: none;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 6px;
+                padding: 8px 12px;
+                border: 1px solid #E5E7EB;
+                border-radius: 8px;
+                background: #fff;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                font-size: 13px;
+            }
+            .dark .select-trigger {
+                border-color: #3D3D3D;
+                background: #1f2937;
+            }
+            .select-trigger:hover {
+                border-color: #4263EB;
+            }
+            .select-trigger.is-open .select-arrow {
+                transform: rotate(180deg);
+            }
+            .select-arrow {
+                font-size: 10px;
+                color: #6B7280;
+                transition: transform 0.2s ease;
+            }
+            .select-dropdown {
+                position: absolute;
+                top: calc(100% + 4px);
+                left: 0;
+                right: 0;
+                z-index: 20;
+                background: #fff;
+                border: 1px solid #E5E7EB;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+                opacity: 0;
+                visibility: hidden;
+                transform: translateY(-4px);
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .dark .select-dropdown {
+                border-color: #3D3D3D;
+                background: #1f2937;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            }
+            .select-dropdown.is-open {
+                opacity: 1;
+                visibility: visible;
+                transform: translateY(0);
+            }
+            .select-list {
+                max-height: 200px;
+                overflow-y: auto;
+                padding: 4px 0;
+            }
+            .select-option {
+                padding: 8px 12px;
+                font-size: 13px;
+                cursor: pointer;
+                transition: background-color 0.15s ease;
+            }
+            .select-option:hover {
+                background: #F5F7FA;
+            }
+            .dark .select-option:hover {
+                background: #2D2D2D;
+            }
+            .select-option.is-selected {
+                color: #4263EB;
+                font-weight: 500;
+                background: rgba(66, 99, 235, 0.08);
+            }
+            .dark .select-option.is-selected {
+                background: rgba(66, 99, 235, 0.18);
+            }
+
+            /* Toast 优化 */
+            .toast-wrap {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 10px 16px;
+                border-radius: 8px;
+                font-size: 13px;
+                font-weight: 500;
+                backdrop-filter: blur(8px);
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+                transform: translateY(-8px);
+                opacity: 0;
+                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                pointer-events: none;
+            }
+            .toast-wrap.show {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            .toast-info { background: rgba(66, 99, 235, 0.92); color: #fff; }
+            .toast-success { background: rgba(16, 185, 129, 0.92); color: #fff; }
+            .toast-warning { background: rgba(245, 158, 11, 0.92); color: #fff; }
+            .toast-error { background: rgba(239, 68, 68, 0.92); color: #fff; }
+
+            /* AI绘画结果强制上下布局 */
+            .draw-vertical #resultsWrap {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .draw-vertical #resultsList {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+            .draw-vertical #drawOnlyInfo {
+                width: 100%;
+                margin: 0;
+            }
         }
     </style>
 </head>
 <body class="bg-white dark:bg-gray-900 text-textPrimary dark:text-darkTextPrimary min-h-screen flex flex-col transition-colors duration-300 text-sm">
 
-    <!-- 1. 头部导航 - 与查询工具完全一致 -->
+    <!-- 1. 头部导航 -->
     <header class="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-neutral dark:border-darkNeutral backdrop-blur-sm bg-white/90 dark:bg-gray-900/90 transition-colors duration-300">
         <div class="container mx-auto px-4 py-2 flex items-center justify-center relative">
             <h1 class="text-base font-bold text-primary flex items-center">
-                <i class="fa fa-picture-o mr-1.5"></i>图片工具箱
+                <i class="fa fa-picture-o mr-1.5"></i>图片工具
             </h1>
             <div class="flex items-center gap-2 absolute right-4">
                 <button id="themeToggle" class="circle-btn bg-secondary dark:bg-darkSecondary hover:bg-primary hover:text-white transition-colors">
@@ -93,7 +210,7 @@
         </div>
     </header>
 
-    <!-- 2. 功能标签栏 - 与查询工具完全一致的下划线样式 -->
+    <!-- 2. 功能标签栏 -->
     <section class="border-b border-neutral dark:border-darkNeutral bg-white dark:bg-gray-900 transition-colors duration-300">
         <div class="container mx-auto px-4 flex gap-6 justify-start flex-nowrap overflow-x-auto scrollbar-hide">
             <button class="tab-btn py-2.5 text-sm font-medium border-b-2 border-transparent tab-active whitespace-nowrap" data-mode="1">去水印</button>
@@ -109,6 +226,11 @@
 
     <!-- 3. 主内容区 -->
     <main class="flex-grow container mx-auto px-4 py-4">
+        
+        <!-- 全局 Toast -->
+        <div id="toastBox" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100]">
+            <div id="toastContent" class="toast-wrap"></div>
+        </div>
         
         <!-- 功能输入卡片 -->
         <section class="mb-6">
@@ -133,20 +255,128 @@
                     <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">绘画描述</label>
                     <input type="text" class="w-full px-3 py-2 rounded-lg border border-neutral dark:border-darkNeutral bg-white dark:bg-gray-800 focus:border-primary focus:outline-none focus:search-focus transition-all text-sm mb-3" data-id="draw-text" placeholder="例如：二次元猫娘、海边日落">
                     
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- 绘画引擎选择 -->
+                    <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">绘画引擎</label>
+                    <div class="custom-select mb-3" data-select="drawEngine" data-default="baidu">
+                        <div class="select-trigger">
+                            <span class="select-value">百度绘画</span>
+                            <i class="fa fa-chevron-down select-arrow"></i>
+                        </div>
+                        <div class="select-dropdown">
+                            <div class="select-list scrollbar-hide">
+                                <div class="select-option" data-value="baidu">百度绘画</div>
+                                <div class="select-option" data-value="kuaishou">快手绘画</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 百度绘画专属参数 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" data-draw-params="baidu">
                         <div>
                             <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">绘画风格</label>
-                            <select class="w-full px-3 py-2 rounded-lg border border-neutral dark:border-darkNeutral bg-white dark:bg-gray-800 focus:border-primary focus:outline-none focus:search-focus transition-all text-sm" data-id="draw-style">
-                                <option>二次元</option><option>卡通</option><option>古风</option><option>人像摄影</option>
-                                <option>电影写真</option><option>插画</option><option>宫崎骏</option><option>赛博朋克</option>
-                                <option>复古胶片</option><option>莫奈画作</option><option>梵高风格</option><option>风景</option>
-                            </select>
+                            <div class="custom-select" data-select="drawStyle" data-default="二次元">
+                                <div class="select-trigger">
+                                    <span class="select-value">二次元</span>
+                                    <i class="fa fa-chevron-down select-arrow"></i>
+                                </div>
+                                <div class="select-dropdown">
+                                    <div class="select-list scrollbar-hide">
+                                        <div class="select-option" data-value="二次元">二次元</div>
+                                        <div class="select-option" data-value="卡通">卡通</div>
+                                        <div class="select-option" data-value="古风">古风</div>
+                                        <div class="select-option" data-value="人像摄影">人像摄影</div>
+                                        <div class="select-option" data-value="电影写真">电影写真</div>
+                                        <div class="select-option" data-value="插画">插画</div>
+                                        <div class="select-option" data-value="宫崎骏">宫崎骏</div>
+                                        <div class="select-option" data-value="赛博朋克">赛博朋克</div>
+                                        <div class="select-option" data-value="复古胶片">复古胶片</div>
+                                        <div class="select-option" data-value="莫奈画作">莫奈画作</div>
+                                        <div class="select-option" data-value="梵高风格">梵高风格</div>
+                                        <div class="select-option" data-value="风景">风景</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div>
                             <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">图片比例</label>
-                            <select class="w-full px-3 py-2 rounded-lg border border-neutral dark:border-darkNeutral bg-white dark:bg-gray-800 focus:border-primary focus:outline-none focus:search-focus transition-all text-sm" data-id="draw-ratio">
-                                <option>1:1</option><option>4:3</option><option>16:9</option><option>3:4</option><option>9:16</option>
-                            </select>
+                            <div class="custom-select" data-select="drawRatio" data-default="1:1">
+                                <div class="select-trigger">
+                                    <span class="select-value">1:1</span>
+                                    <i class="fa fa-chevron-down select-arrow"></i>
+                                </div>
+                                <div class="select-dropdown">
+                                    <div class="select-list scrollbar-hide">
+                                        <div class="select-option" data-value="1:1">1:1</div>
+                                        <div class="select-option" data-value="4:3">4:3</div>
+                                        <div class="select-option" data-value="16:9">16:9</div>
+                                        <div class="select-option" data-value="3:4">3:4</div>
+                                        <div class="select-option" data-value="9:16">9:16</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 快手绘画专属参数 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 hidden" data-draw-params="kuaishou">
+                        <div>
+                            <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">图像尺寸</label>
+                            <div class="custom-select" data-select="ksSize" data-default="1024x1024">
+                                <div class="select-trigger">
+                                    <span class="select-value">1024x1024</span>
+                                    <i class="fa fa-chevron-down select-arrow"></i>
+                                </div>
+                                <div class="select-dropdown">
+                                    <div class="select-list scrollbar-hide">
+                                        <div class="select-option" data-value="256x256">256x256</div>
+                                        <div class="select-option" data-value="512x512">512x512</div>
+                                        <div class="select-option" data-value="768x768">768x768</div>
+                                        <div class="select-option" data-value="1024x1024">1024x1024</div>
+                                        <div class="select-option" data-value="1536x1536">1536x1536</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">引导强度</label>
+                            <div class="custom-select" data-select="ksGuidance" data-default="7.5">
+                                <div class="select-trigger">
+                                    <span class="select-value">7.5</span>
+                                    <i class="fa fa-chevron-down select-arrow"></i>
+                                </div>
+                                <div class="select-dropdown">
+                                    <div class="select-list scrollbar-hide">
+                                        <div class="select-option" data-value="1">1</div>
+                                        <div class="select-option" data-value="2">2</div>
+                                        <div class="select-option" data-value="3">3</div>
+                                        <div class="select-option" data-value="4">4</div>
+                                        <div class="select-option" data-value="5">5</div>
+                                        <div class="select-option" data-value="6">6</div>
+                                        <div class="select-option" data-value="7">7</div>
+                                        <div class="select-option" data-value="7.5">7.5</div>
+                                        <div class="select-option" data-value="8">8</div>
+                                        <div class="select-option" data-value="9">9</div>
+                                        <div class="select-option" data-value="10">10</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">生成数量</label>
+                            <div class="custom-select" data-select="ksBatch" data-default="1">
+                                <div class="select-trigger">
+                                    <span class="select-value">1张</span>
+                                    <i class="fa fa-chevron-down select-arrow"></i>
+                                </div>
+                                <div class="select-dropdown">
+                                    <div class="select-list scrollbar-hide">
+                                        <div class="select-option" data-value="1">1张</div>
+                                        <div class="select-option" data-value="2">2张</div>
+                                        <div class="select-option" data-value="3">3张</div>
+                                        <div class="select-option" data-value="4">4张</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -158,10 +388,22 @@
                     <input type="text" class="w-full px-3 py-2 rounded-lg border border-neutral dark:border-darkNeutral bg-white dark:bg-gray-800 focus:border-primary focus:outline-none focus:search-focus transition-all text-sm mb-3" data-id="redraw-url" placeholder="请输入需要重绘的图片地址">
                     
                     <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">重绘等级</label>
-                    <select class="w-full px-3 py-2 rounded-lg border border-neutral dark:border-darkNeutral bg-white dark:bg-gray-800 focus:border-primary focus:outline-none focus:search-focus transition-all text-sm" data-id="redraw-level">
-                        <option value="1">1级</option><option value="2">2级</option><option value="3" selected>3级</option>
-                        <option value="4">4级</option><option value="5">5级</option><option value="6">6级</option>
-                    </select>
+                    <div class="custom-select" data-select="redrawLevel" data-default="3">
+                        <div class="select-trigger">
+                            <span class="select-value">3级</span>
+                            <i class="fa fa-chevron-down select-arrow"></i>
+                        </div>
+                        <div class="select-dropdown">
+                            <div class="select-list scrollbar-hide">
+                                <div class="select-option" data-value="1">1级</div>
+                                <div class="select-option" data-value="2">2级</div>
+                                <div class="select-option" data-value="3">3级</div>
+                                <div class="select-option" data-value="4">4级</div>
+                                <div class="select-option" data-value="5">5级</div>
+                                <div class="select-option" data-value="6">6级</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 图片抠图 -->
@@ -178,9 +420,19 @@
                     <input type="text" class="w-full px-3 py-2 rounded-lg border border-neutral dark:border-darkNeutral bg-white dark:bg-gray-800 focus:border-primary focus:outline-none focus:search-focus transition-all text-sm mb-3" data-id="expand-url" placeholder="请输入需要扩图的图片地址">
                     
                     <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">扩图比例</label>
-                    <select class="w-full px-3 py-2 rounded-lg border border-neutral dark:border-darkNeutral bg-white dark:bg-gray-800 focus:border-primary focus:outline-none focus:search-focus transition-all text-sm" data-id="expand-ratio">
-                        <option value="1:1" selected>1:1</option><option value="4:3">4:3</option><option value="3:4">3:4</option>
-                    </select>
+                    <div class="custom-select" data-select="expandRatio" data-default="1:1">
+                        <div class="select-trigger">
+                            <span class="select-value">1:1</span>
+                            <i class="fa fa-chevron-down select-arrow"></i>
+                        </div>
+                        <div class="select-dropdown">
+                            <div class="select-list scrollbar-hide">
+                                <div class="select-option" data-value="1:1">1:1</div>
+                                <div class="select-option" data-value="4:3">4:3</div>
+                                <div class="select-option" data-value="3:4">3:4</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 变清晰 -->
@@ -233,7 +485,7 @@
                     </div>
                 </div>
 
-                <!-- 提交按钮 - 与查询工具按钮风格一致 -->
+                <!-- 提交按钮 -->
                 <button id="globalSubmit" class="w-full mt-4 bg-primary text-white px-3 py-2 rounded-md hover:bg-primary/90 transition-colors text-sm font-medium flex items-center justify-center gap-1.5">
                     <i class="fa fa-magic text-xs"></i>
                     <span>开始处理</span>
@@ -241,13 +493,13 @@
             </div>
         </section>
 
-        <!-- 加载状态 - 与查询工具完全一致 -->
+        <!-- 加载状态 -->
         <section id="loadingSection" class="hidden flex-col items-center justify-center py-12">
             <div class="w-10 h-10 border-3 border-neutral dark:border-darkNeutral border-t-primary rounded-full animate-spin mb-3"></div>
             <p class="text-textSecondary dark:text-darkTextSecondary text-xs text-center">正在处理中...</p>
         </section>
 
-        <!-- 错误提示 - 与查询工具完全一致 -->
+        <!-- 错误提示 -->
         <section id="errorSection" class="hidden flex-col items-center justify-center py-12">
             <i class="fa fa-exclamation-circle text-3xl text-red-500 mb-3"></i>
             <p class="text-textSecondary dark:text-darkTextSecondary mb-2 text-xs text-center" id="errorMessage">处理失败，请稍后重试</p>
@@ -256,25 +508,23 @@
             </button>
         </section>
 
-        <!-- 初始空状态 - 与查询工具完全一致 -->
+        <!-- 初始空状态 -->
         <section id="emptySection" class="flex flex-col items-center justify-center py-12">
             <i class="fa fa-picture-o text-3xl text-neutral dark:text-darkNeutral mb-3"></i>
             <p class="text-textSecondary dark:text-darkTextSecondary text-xs text-center">请选择功能并输入内容</p>
             <p class="text-textSecondary/80 dark:text-darkTextSecondary/80 text-xs mt-1 text-center">点击开始处理获取结果</p>
         </section>
 
-        <!-- 结果区域 -->
+        <!-- 结果区域：文字在上、图片在下，垂直单列布局 -->
         <section id="resultsSection" class="hidden">
-            <div class="flex justify-between items-center mb-3">
-                <h2 class="text-base font-semibold">处理结果</h2>
-            </div>
-            <!-- AI绘画专属说明 -->
-            <div id="drawOnlyInfo" class="mb-3 p-3 bg-primary/5 rounded-lg text-xs space-y-1 hidden">
-                <p class="font-medium text-primary" id="drawOnlyMsg"></p>
-                <p class="text-textSecondary dark:text-darkTextSecondary leading-relaxed" id="drawOnlyDesc"></p>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5" id="resultsList">
-                <!-- 结果图片动态生成 -->
+            <div id="resultsWrap" class="flex flex-col gap-3">
+                <!-- AI绘画说明文字：在上、居中 -->
+                <div id="drawOnlyInfo" class="w-full p-3 bg-primary/5 rounded-lg text-xs space-y-1 text-center hidden">
+                    <p class="font-medium text-primary" id="drawOnlyMsg"></p>
+                    <p class="text-textSecondary dark:text-darkTextSecondary leading-relaxed" id="drawOnlyDesc"></p>
+                </div>
+                <!-- 生成图片：在文字下方，垂直排列 -->
+                <div id="resultsList" class="flex flex-col gap-3"></div>
             </div>
         </section>
     </main>
@@ -291,6 +541,7 @@
             CUTOUT: 5, EXPAND: 6, SHARPEN: 7, OVERLAY: 8
         };
         const API_KEY = '5c7f37a79ce1eef4eb1b79dc5d7a752ab139ac681ce02447389e6fc6a2eb5a52';
+        const KS_TOKEN = 'XIZhAXKnSQcH';
         const API_MAP = {
             [FUNC_MODE.WATERMARK]: 'https://missqiu.icu/API/baiduqsy.php',
             [FUNC_MODE.LINE]: 'https://missqiu.icu/API/baidutqxg.php',
@@ -299,21 +550,15 @@
             [FUNC_MODE.CUTOUT]: 'https://missqiu.icu/API/baidukoutu.php',
             [FUNC_MODE.EXPAND]: 'https://missqiu.icu/API/baidukt.php',
             [FUNC_MODE.SHARPEN]: 'https://missqiu.icu/API/baiduimage.php',
-            [FUNC_MODE.OVERLAY]: 'https://api.pearktrue.cn/api/phantom_tank'
+            [FUNC_MODE.OVERLAY]: 'https://api.pearktrue.cn/api/phantom_tank',
+            KUAISHOU_DRAW: 'https://yunzhiapi.cn/API/ks/api.php'
         };
 
         let currentFuncMode = FUNC_MODE.WATERMARK;
         const $ = (sel) => document.querySelector(sel);
         const $$ = (sel) => document.querySelectorAll(sel);
 
-        // 初始化
-        document.addEventListener('DOMContentLoaded', () => {
-            loadThemePreference();
-            bindEvents();
-            toggleSections('empty');
-        });
-
-        // 加载主题偏好
+        // ========== 主题切换 ==========
         function loadThemePreference() {
             const savedTheme = localStorage.getItem('theme');
             const isDarkMode = savedTheme === 'dark' || 
@@ -326,43 +571,101 @@
             }
         }
 
-        // 切换主题
         function toggleTheme() {
             const isDarkMode = document.documentElement.classList.toggle('dark');
             localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
         }
 
-        // 绑定事件
-        function bindEvents() {
-            // 主题切换
-            $('#themeToggle').addEventListener('click', toggleTheme);
+        // ========== 自定义下拉组件 ==========
+        function initCustomSelects() {
+            const selects = document.querySelectorAll('.custom-select');
             
-            // 标签切换
-            $$('.tab-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    switchTab(Number(btn.dataset.mode));
+            selects.forEach(select => {
+                const trigger = select.querySelector('.select-trigger');
+                const dropdown = select.querySelector('.select-dropdown');
+                const options = select.querySelectorAll('.select-option');
+                const defaultValue = select.dataset.default;
+
+                setSelectValue(select, defaultValue, false);
+
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isOpen = dropdown.classList.contains('is-open');
+                    closeAllSelects();
+                    if (!isOpen) {
+                        dropdown.classList.add('is-open');
+                        trigger.classList.add('is-open');
+                    }
+                });
+
+                options.forEach(option => {
+                    option.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const value = option.dataset.value;
+                        setSelectValue(select, value);
+                        closeAllSelects();
+                    });
                 });
             });
 
-            // 提交按钮
-            $('#globalSubmit').addEventListener('click', handleSubmit);
-            $('#retryBtn').addEventListener('click', handleSubmit);
-
-            // 图片叠加模块初始化
-            initOverlayModule();
-
-            // 弹窗关闭
-            $('#imgModal').addEventListener('click', () => {
-                $('#imgModal').classList.add('hidden');
-                $('#imgModal').classList.remove('flex');
-            });
+            document.addEventListener('click', closeAllSelects);
         }
 
-        // 切换标签
+        function closeAllSelects() {
+            document.querySelectorAll('.select-dropdown').forEach(d => d.classList.remove('is-open'));
+            document.querySelectorAll('.select-trigger').forEach(t => t.classList.remove('is-open'));
+        }
+
+        function setSelectValue(select, value, triggerChange = true) {
+            const valueEl = select.querySelector('.select-value');
+            const options = select.querySelectorAll('.select-option');
+            
+            options.forEach(opt => {
+                opt.classList.toggle('is-selected', opt.dataset.value === value);
+                if (opt.dataset.value === value) {
+                    valueEl.textContent = opt.textContent.trim();
+                }
+            });
+            select.dataset.value = value;
+        }
+
+        function getSelectValue(name) {
+            const select = document.querySelector(`[data-select="${name}"]`);
+            return select ? select.dataset.value : '';
+        }
+
+        // ========== Toast 优化 ==========
+        let toastTimer = null;
+        function showToast(message, type = 'info') {
+            const box = document.getElementById('toastBox');
+            const content = document.getElementById('toastContent');
+            
+            const iconMap = {
+                info: 'fa-info-circle',
+                success: 'fa-check-circle',
+                warning: 'fa-exclamation-triangle',
+                error: 'fa-times-circle'
+            };
+
+            if (toastTimer) clearTimeout(toastTimer);
+            content.classList.remove('show');
+            
+            content.className = `toast-wrap toast-${type}`;
+            content.innerHTML = `<i class="fa ${iconMap[type]}"></i><span>${message}</span>`;
+            
+            requestAnimationFrame(() => {
+                content.classList.add('show');
+            });
+
+            toastTimer = setTimeout(() => {
+                content.classList.remove('show');
+            }, 2200);
+        }
+
+        // ========== 标签切换 ==========
         function switchTab(mode) {
             currentFuncMode = mode;
             
-            // 更新标签样式
             $$('.tab-btn').forEach(btn => {
                 if (Number(btn.dataset.mode) === mode) {
                     btn.classList.add('tab-active');
@@ -373,26 +676,45 @@
                 }
             });
 
-            // 切换功能面板
             $$('.func-panel').forEach(panel => {
                 panel.classList.toggle('hidden', Number(panel.dataset.panel) !== mode);
             });
 
-            // 重置状态
             toggleSections('empty');
+            closeAllSelects();
         }
 
-        // 图片叠加模块
+        // ========== AI绘画引擎切换 ==========
+        function initDrawEngineSwitch() {
+            $$('[data-select="drawEngine"] .select-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    const engine = opt.dataset.value;
+                    const baiduParams = document.querySelector('[data-draw-params="baidu"]');
+                    const kuaishouParams = document.querySelector('[data-draw-params="kuaishou"]');
+                    
+                    if (engine === 'baidu') {
+                        baiduParams.classList.remove('hidden');
+                        kuaishouParams.classList.add('hidden');
+                    } else {
+                        baiduParams.classList.add('hidden');
+                        kuaishouParams.classList.remove('hidden');
+                    }
+                    
+                    toggleSections('empty');
+                    $('#drawOnlyInfo').classList.add('hidden');
+                });
+            });
+        }
+
+        // ========== 图片叠加模块 ==========
         function initOverlayModule() {
             let modeMap = { table: 'local', rito: 'local' };
 
-            // 切换模式
             $$('[data-oly-type]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const type = btn.dataset.olyType;
                     const mode = btn.dataset.olyMode;
                     modeMap[type] = mode;
-
                     $$(`[data-oly-type="${type}"]`).forEach(b => {
                         if (b.dataset.olyMode === mode) {
                             b.classList.add('bg-primary', 'text-white');
@@ -402,14 +724,12 @@
                             b.classList.add('bg-secondary', 'dark:bg-darkSecondary', 'text-textSecondary', 'dark:text-darkTextSecondary');
                         }
                     });
-
                     $$(`[data-oly-box^="${type}-"]`).forEach(box => {
                         box.classList.toggle('hidden', !box.dataset.olyBox.endsWith(mode));
                     });
                 });
             });
 
-            // 预览图
             $$('[data-oly-upload]').forEach(input => {
                 input.addEventListener('change', (e) => {
                     const type = e.target.dataset.olyUpload;
@@ -421,7 +741,6 @@
                 });
             });
 
-            // 暴露获取数据方法
             window.getOverlayData = function() {
                 const data = { formData: new FormData(), error: '' };
                 
@@ -434,7 +753,6 @@
                     if (!url) data.error = '请输入表图URL';
                     else data.formData.append('table_chart_image', url);
                 }
-
                 if (!data.error) {
                     if (modeMap.rito === 'local') {
                         const file = $('[data-oly-upload="rito"]').files[0];
@@ -450,14 +768,13 @@
             };
         }
 
-        // 处理提交
+        // ========== 提交处理 ==========
         function handleSubmit() {
             const submitData = getSubmitData();
             if (submitData.error) {
-                showToast(submitData.error);
+                showToast(submitData.error, 'warning');
                 return;
             }
-
             toggleSections('loading');
             $('#globalSubmit').disabled = true;
 
@@ -478,6 +795,7 @@
                     if (imgList.length > 0) {
                         renderResults(imgList);
                         toggleSections('results');
+                        showToast('处理成功', 'success');
                     } else {
                         $('#errorMessage').textContent = '未获取到有效图片';
                         toggleSections('error');
@@ -496,41 +814,51 @@
         // 获取提交数据
         function getSubmitData() {
             const result = { url: '', data: null, method: 'GET', error: '' };
-
             switch (currentFuncMode) {
                 case FUNC_MODE.WATERMARK:
                     const wUrl = $('[data-id="watermark-url"]').value.trim();
                     result.url = wUrl;
                     result.error = wUrl ? '' : '请输入图片链接';
                     break;
-
                 case FUNC_MODE.LINE:
                     const lUrl = $('[data-id="line-url"]').value.trim();
                     result.url = lUrl;
                     result.error = lUrl ? '' : '请输入图片链接';
                     break;
-
                 case FUNC_MODE.DRAW:
                     const text = $('[data-id="draw-text"]').value.trim();
-                    const style = $('[data-id="draw-style"]').value;
-                    const ratio = $('[data-id="draw-ratio"]').value;
                     if (!text) {
                         result.error = '请输入绘画描述';
-                    } else {
+                        break;
+                    }
+                    const engine = getSelectValue('drawEngine');
+                    if (engine === 'baidu') {
+                        const style = getSelectValue('drawStyle');
+                        const ratio = getSelectValue('drawRatio');
                         result.url = `${API_MAP[currentFuncMode]}?text=${encodeURIComponent(text)}&style=${encodeURIComponent(style)}&ratio=${encodeURIComponent(ratio)}&apikey=${API_KEY}`;
+                    } else {
+                        const size = getSelectValue('ksSize');
+                        const guidance = getSelectValue('ksGuidance');
+                        const batch = getSelectValue('ksBatch');
+                        const params = new URLSearchParams({
+                            token: KS_TOKEN,
+                            msg: text,
+                            size: size,
+                            guidance: guidance,
+                            batch: batch
+                        });
+                        result.url = `${API_MAP.KUAISHOU_DRAW}?${params.toString()}`;
                     }
                     break;
-
                 case FUNC_MODE.REDRAW:
                     const rUrl = $('[data-id="redraw-url"]').value.trim();
-                    const rLevel = $('[data-id="redraw-level"]').value;
+                    const rLevel = getSelectValue('redrawLevel');
                     if (!rUrl) {
                         result.error = '请输入重绘图片链接';
                     } else {
                         result.url = `${API_MAP[currentFuncMode]}?url=${encodeURIComponent(rUrl)}&gs=${rLevel}&type=json&apikey=${API_KEY}`;
                     }
                     break;
-
                 case FUNC_MODE.CUTOUT:
                     const cUrl = $('[data-id="cutout-url"]').value.trim();
                     if (!cUrl) {
@@ -539,17 +867,15 @@
                         result.url = `${API_MAP[currentFuncMode]}?url=${encodeURIComponent(cUrl)}&type=json&apikey=${API_KEY}`;
                     }
                     break;
-
                 case FUNC_MODE.EXPAND:
                     const eUrl = $('[data-id="expand-url"]').value.trim();
-                    const eRatio = $('[data-id="expand-ratio"]').value;
+                    const eRatio = getSelectValue('expandRatio');
                     if (!eUrl) {
                         result.error = '请输入扩图图片链接';
                     } else {
                         result.url = `${API_MAP[currentFuncMode]}?url=${encodeURIComponent(eUrl)}&gs=${encodeURIComponent(eRatio)}&type=json&apikey=${API_KEY}`;
                     }
                     break;
-
                 case FUNC_MODE.SHARPEN:
                     const sUrl = $('[data-id="sharpen-url"]').value.trim();
                     if (!sUrl) {
@@ -558,7 +884,6 @@
                         result.url = `${API_MAP[currentFuncMode]}?url=${encodeURIComponent(sUrl)}&type=json&apikey=${API_KEY}`;
                     }
                     break;
-
                 case FUNC_MODE.OVERLAY:
                     const olyData = getOverlayData();
                     result.error = olyData.error;
@@ -573,27 +898,36 @@
         // 处理返回结果
         function handleResult(data) {
             let imgList = [];
-
             switch (currentFuncMode) {
                 case FUNC_MODE.DRAW:
-                    if (data.msg) $('#drawOnlyMsg').textContent = data.msg;
-                    if (data.text) $('#drawOnlyDesc').textContent = data.text;
-                    $('#drawOnlyInfo').classList.remove('hidden');
-
-                    let rawImgList = [];
-                    if (data.image_url) rawImgList = Array.isArray(data.image_url) ? data.image_url : [data.image_url];
-                    else if (data.images) rawImgList = Array.isArray(data.images) ? data.images : [data.images];
-                    else if (data.img) rawImgList = Array.isArray(data.img) ? data.img : [data.img];
-                    
-                    imgList = rawImgList.filter(src => src && typeof src === 'string' && src.startsWith('http'));
+                    const engine = getSelectValue('drawEngine');
+                    if (engine === 'baidu') {
+                        if (data.msg) $('#drawOnlyMsg').textContent = data.msg;
+                        if (data.text) $('#drawOnlyDesc').textContent = data.text;
+                        $('#drawOnlyInfo').classList.remove('hidden');
+                        let rawImgList = [];
+                        if (data.image_url) rawImgList = Array.isArray(data.image_url) ? data.image_url : [data.image_url];
+                        else if (data.images) rawImgList = Array.isArray(data.images) ? data.images : [data.images];
+                        else if (data.img) rawImgList = Array.isArray(data.img) ? data.img : [data.img];
+                        imgList = rawImgList.filter(src => src && typeof src === 'string' && src.startsWith('http'));
+                    } else {
+                        $('#drawOnlyInfo').classList.add('hidden');
+                        let urls = [];
+                        if (data.url) {
+                            urls = Array.isArray(data.url) ? data.url : [data.url];
+                        } else if (data.images) {
+                            urls = Array.isArray(data.images) ? data.images : [data.images];
+                        } else if (data.raw && data.raw.trim().startsWith('http')) {
+                            urls = [data.raw.trim()];
+                        }
+                        imgList = urls.filter(src => src && typeof src === 'string' && src.startsWith('http'));
+                    }
                     break;
-
                 case FUNC_MODE.OVERLAY:
                     if (data.code === 200 && data.image_url) {
                         imgList = [data.image_url];
                     }
                     break;
-
                 default:
                     const url = data.url || data.img || data.raw || '';
                     imgList = url.startsWith('http') ? [url] : [];
@@ -605,7 +939,21 @@
         // 渲染结果图片
         function renderResults(imgList) {
             const container = $('#resultsList');
+            const resultsSection = $('#resultsSection');
+            const wrap = $('#resultsWrap');
+
             container.innerHTML = '';
+
+            // AI绘画：强制上下单列布局；其他功能：响应式网格
+            if (currentFuncMode === FUNC_MODE.DRAW) {
+                resultsSection.classList.add('draw-vertical');
+                wrap.className = 'flex flex-col gap-3';
+                container.className = 'flex flex-col gap-3';
+            } else {
+                resultsSection.classList.remove('draw-vertical');
+                wrap.className = 'grid grid-cols-1 sm:grid-cols-2 gap-2.5';
+                container.className = 'contents';
+            }
 
             imgList.forEach(src => {
                 if (!src.startsWith('http')) return;
@@ -639,18 +987,35 @@
             try { return JSON.parse(str) } catch (e) { return { raw: str?.trim() || '' } }
         }
 
-        // 全局提示
-        function showToast(msg) {
-            const toast = document.createElement('div');
-            toast.className = 'fixed top-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg bg-black/80 text-white text-xs z-50 backdrop-blur-sm';
-            toast.textContent = msg;
-            document.body.appendChild(toast);
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.3s';
-                setTimeout(() => toast.remove(), 300);
-            }, 2000);
+        // 绑定事件
+        function bindEvents() {
+            $('#themeToggle').addEventListener('click', toggleTheme);
+            
+            $$('.tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    switchTab(Number(btn.dataset.mode));
+                });
+            });
+
+            $('#globalSubmit').addEventListener('click', handleSubmit);
+            $('#retryBtn').addEventListener('click', handleSubmit);
+
+            initOverlayModule();
+            initDrawEngineSwitch();
+
+            $('#imgModal').addEventListener('click', () => {
+                $('#imgModal').classList.add('hidden');
+                $('#imgModal').classList.remove('flex');
+            });
         }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadThemePreference();
+            bindEvents();
+            initCustomSelects();
+            toggleSections('empty');
+        });
     </script>
 </body>
 </html>
