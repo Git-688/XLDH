@@ -109,9 +109,6 @@
             <button class="tab-btn py-2.5 text-sm font-medium border-b-2 border-transparent text-textSecondary dark:text-darkTextSecondary hover:text-primary transition-colors whitespace-nowrap" data-tab="girlfriend">
                 <i class="fa fa-heart mr-1 text-xs"></i>女友潜台词
             </button>
-            <button class="tab-btn py-2.5 text-sm font-medium border-b-2 border-transparent text-textSecondary dark:text-darkTextSecondary hover:text-primary transition-colors whitespace-nowrap" data-tab="king">
-                <i class="fa fa-gamepad mr-1 text-xs"></i>王者战力
-            </button>
             <button class="tab-btn py-2.5 text-sm font-medium border-b-2 border-transparent text-textSecondary dark:text-darkTextSecondary hover:text-primary transition-colors whitespace-nowrap" data-tab="oil">
                 <i class="fa fa-tint mr-1 text-xs"></i>全国油价
             </button>
@@ -181,7 +178,6 @@
         const GARBAGE_API = 'https://yunzhiapi.cn/API/ljflcx.php';
         const SINGER_API = 'https://yunzhiapi.cn/API/gsxxss.php';
         const GIRLFRIEND_API = 'https://yunzhiapi.cn/API/nyzyz.php';
-        const KING_API = 'https://yunzhiapi.cn/API/wzzlcx.php';
         const OIL_API = 'https://yunzhiapi.cn/API/qgyjcx.php';
         const DEFAULT_TOKEN = 'XIZhAXKnSQcH';
         
@@ -267,12 +263,6 @@
                 <a href="javascript:doSearch('我没事')" class="text-primary hover:underline mx-1">我没事</a>
                 <a href="javascript:doSearch('随便')" class="text-primary hover:underline mx-1">随便</a>
                 <a href="javascript:doSearch('你忙吧')" class="text-primary hover:underline mx-1">你忙吧</a>`;
-            } else if (tab === 'king') {
-                searchInput.placeholder = '输入英雄名称查询战力（如：李白）';
-                hotSearch.innerHTML = `热门搜索：<a href="javascript:doSearch('李白')" class="text-primary hover:underline mx-1">李白</a>
-                <a href="javascript:doSearch('韩信')" class="text-primary hover:underline mx-1">韩信</a>
-                <a href="javascript:doSearch('瑶')" class="text-primary hover:underline mx-1">瑶</a>
-                <a href="javascript:doSearch('孙悟空')" class="text-primary hover:underline mx-1">孙悟空</a>`;
             } else {
                 searchInput.placeholder = '输入省份名称查询油价（如：广东）';
                 hotSearch.innerHTML = `热门搜索：<a href="javascript:doSearch('广东')" class="text-primary hover:underline mx-1">广东</a>
@@ -331,8 +321,6 @@
                 searchSinger(keyword);
             } else if (currentTab === 'girlfriend') {
                 searchGirlfriend(keyword);
-            } else if (currentTab === 'king') {
-                searchKing(keyword);
             } else {
                 searchOil(keyword);
             }
@@ -414,35 +402,6 @@
                         toggleSections('results');
                     } else {
                         errorMessage.textContent = '未分析出有效潜台词，请换一句话试试';
-                        toggleSections('error');
-                    }
-                })
-                .catch(error => {
-                    console.error('查询错误:', error);
-                    errorMessage.textContent = '网络异常，请检查网络连接后重试';
-                    toggleSections('error');
-                });
-        }
-
-        // 王者战力查询
-        function searchKing(keyword) {
-            const params = new URLSearchParams({
-                token: DEFAULT_TOKEN,
-                hero: keyword,
-                type: 'json'
-            });
-
-            fetch(`${KING_API}?${params.toString()}`)
-                .then(response => {
-                    if (!response.ok) throw new Error('网络请求失败');
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.code === 200 && data.data && data.data.hero_data) {
-                        renderKingResult(data.data, keyword);
-                        toggleSections('results');
-                    } else {
-                        errorMessage.textContent = data.message || '未找到该英雄战力信息';
                         toggleSections('error');
                     }
                 })
@@ -572,64 +531,6 @@
             `;
             
             resultsList.appendChild(resultItem);
-        }
-
-        // 渲染王者战力结果
-        function renderKingResult(data, keyword) {
-            const hero = data.hero_data;
-            const platforms = data.platforms;
-            resultsCount.textContent = `共 ${data.total_platforms} 个战区数据`;
-            searchKeyword.textContent = `英雄：${keyword}`;
-            resultsList.innerHTML = '';
-
-            // 英雄头部信息
-            const heroHeader = document.createElement('div');
-            heroHeader.className = `bg-white dark:bg-gray-800 rounded-lg p-3 border border-neutral dark:border-darkNeutral card-shadow transition-all`;
-            heroHeader.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <div class="w-14 h-14 rounded-md overflow-hidden bg-secondary dark:bg-darkSecondary flex items-center justify-center flex-shrink-0">
-                        ${hero.photo ? `<img src="${hero.photo}" alt="${hero.name}" class="w-full h-full object-cover" onerror="this.parentNode.innerHTML='<i class=\\'fa fa-gamepad text-lg text-textSecondary dark:text-darkTextSecondary\\'></i>'">` : '<i class="fa fa-gamepad text-lg text-textSecondary dark:text-darkTextSecondary"></i>'}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h3 class="font-medium text-base">${hero.name || '未知英雄'}</h3>
-                        <p class="text-xs text-textSecondary dark:text-darkTextSecondary mt-0.5">数据更新时间：${hero.updatetime || '-'}</p>
-                    </div>
-                </div>
-            `;
-            resultsList.appendChild(heroHeader);
-
-            // 平台战力列表
-            const platformGrid = document.createElement('div');
-            platformGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-2.5';
-
-            Object.values(platforms).forEach(platform => {
-                const platformCard = document.createElement('div');
-                platformCard.className = `bg-white dark:bg-gray-800 rounded-lg p-3 border border-neutral dark:border-darkNeutral card-shadow transition-all`;
-                platformCard.innerHTML = `
-                    <div class="font-medium text-sm mb-2 text-primary">${platform.platform_name || '未知平台'}</div>
-                    <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
-                        <div class="flex justify-between">
-                            <span class="text-textSecondary dark:text-darkTextSecondary">县区：</span>
-                            <span class="font-medium">${platform.area || '-'} ${platform.areaPower || 0}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-textSecondary dark:text-darkTextSecondary">市区：</span>
-                            <span class="font-medium">${platform.city || '-'} ${platform.cityPower || 0}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-textSecondary dark:text-darkTextSecondary">省区：</span>
-                            <span class="font-medium">${platform.province || '-'} ${platform.provincePower || 0}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-textSecondary dark:text-darkTextSecondary">国标：</span>
-                            <span class="font-medium text-primary">${platform.guobiao || 0}</span>
-                        </div>
-                    </div>
-                `;
-                platformGrid.appendChild(platformCard);
-            });
-
-            resultsList.appendChild(platformGrid);
         }
 
         // 渲染全国油价结果
