@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查询工具 - 多功能查询平台</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome 图标 -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- 配置Tailwind -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4263EB',
+                        secondary: '#F5F7FA',
+                        darkSecondary: '#2D2D2D',
+                        neutral: '#E5E7EB',
+                        darkNeutral: '#3D3D3D',
+                        textPrimary: '#374151',
+                        darkTextPrimary: '#E0E0E0',
+                        textSecondary: '#6B7280',
+                        darkTextSecondary: '#A0A0A0',
+                        kitchen: '#10B981',
+                        recyclable: '#3B82F6',
+                        harmful: '#EF4444',
+                        other: '#6B7280',
+                        pink: '#EC4899',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            }
+            .dark .card-shadow {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            }
+            .search-focus {
+                box-shadow: 0 0 0 3px rgba(66, 99, 235, 0.1);
+            }
+            .dark .search-focus {
+                box-shadow: 0 0 0 3px rgba(66, 99, 235, 0.2);
+            }
+            .btn-active {
+                background-color: #4263EB !important;
+                color: white !important;
+            }
+            .circle-btn {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: all 0.2s ease;
+            }
+            .tab-active {
+                color: #4263EB;
+                border-bottom: 2px solid #4263EB;
+            }
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+            /* ==========复制图片工具的custom‑select下拉样式========== */
+            .custom-select { position: relative; width: 100%; }
+            .select-trigger {
+                user-select: none;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 6px;
+                padding: 8px 12px;
+                border: 1px solid #E5E7EB;
+                border-radius: 8px;
+                background: #fff;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                font-size: 13px;
+            }
+            .dark .select-trigger {
+                border-color: #3D3D3D;
+                background: #1f2937;
+            }
+            .select-trigger:hover {
+                border-color: #4263EB;
+            }
+            .select-trigger.is-open .select-arrow {
+                transform: rotate(180deg);
+            }
+            .select-arrow {
+                font-size: 10px;
+                color: #6B7280;
+                transition: transform 0.2s ease;
+            }
+            .select-dropdown {
+                position: absolute;
+                top: calc(100% + 4px);
+                left: 0;
+                right: 0;
+                z-index: 20;
+                background: #fff;
+                border: 1px solid #E5E7EB;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                overflow: hidden;
+                opacity: 0;
+                visibility: hidden;
+                transform: translateY(-4px);
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .dark .select-dropdown {
+                border-color: #3D3D3D;
+                background: #1f2937;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            }
+            .select-dropdown.is-open {
+                opacity: 1;
+                visibility: visible;
+                transform: translateY(0);
+            }
+            .select-list {
+                max-height: 200px;
+                overflow-y: auto;
+                padding: 4px 0;
+            }
+            .select-option {
+                padding: 8px 12px;
+                font-size: 13px;
+                cursor: pointer;
+                transition: background-color 0.15s ease;
+            }
+            .select-option:hover {
+                background: #F5F7FA;
+            }
+            .dark .select-option:hover {
+                background: #2D2D2D;
+            }
+            .select-option.is-selected {
+                color: #4263EB;
+                font-weight: 500;
+                background: rgba(66, 99, 235, 0.08);
+            }
+            .dark .select-option.is-selected {
+                background: rgba(66, 99, 235, 0.18);
+            }
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-textPrimary dark:text-darkTextPrimary min-h-screen flex flex-col transition-colors duration-300 text-sm">
+    <!-- 头部导航 - 标题居中 -->
+    <header class="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-neutral dark:border-darkNeutral backdrop-blur-sm bg-white/90 dark:bg-gray-900/90 transition-colors duration-300">
+        <div class="container mx-auto px-4 py-2 flex items-center justify-center relative">
+            <h1 class="text-base font-bold text-primary flex items-center">
+                <i class="fa fa-search mr-1.5"></i>查询工具
+            </h1>
+            <div class="flex items-center gap-2 absolute right-4">
+                <button id="themeToggle" class="circle-btn bg-secondary dark:bg-darkSecondary hover:bg-primary hover:text-white transition-colors">
+                    <i class="fa fa-moon-o dark:hidden text-xs"></i>
+                    <i class="fa fa-sun-o hidden dark:inline-block text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+    <!-- 功能标签栏 - 横向可滚动 -->
+    <section class="border-b border-neutral dark:border-darkNeutral bg-white dark:bg-gray-900 transition-colors duration-300">
+        <div class="container mx-auto px-4 flex gap-6 justify-start flex-nowrap overflow-x-auto scrollbar-hide">
+            <button class="tab-btn py-2.5 text-sm font-medium border-b-2 border-transparent tab-active whitespace-nowrap" data-tab="garbage">
+                <i class="fa fa-recycle mr-1 text-xs"></i>垃圾分类
+            </button>
+            <button class="tab-btn py-2.5 text-sm font-medium border-b-2 border-transparent text-textSecondary dark:text-darkTextSecondary hover:text-primary transition-colors whitespace-nowrap" data-tab="singer">
+                <i class="fa fa-user mr-1 text-xs"></i>歌手信息
+            </button>
+            <button class="tab-btn py-2.5 text-sm font-medium border-b-2 border-transparent text-textSecondary dark:text-darkTextSecondary hover:text-primary transition-colors whitespace-nowrap" data-tab="girlfriend">
+                <i class="fa fa-heart mr-1 text-xs"></i>女友潜台词
+            </button>
+            <button class="tab-btn py-2.5 text-sm font-medium border-b-2 border-transparent text-textSecondary dark:text-darkTextSecondary hover:text-primary transition-colors whitespace-nowrap" data-tab="oil">
+                <i class="fa fa-tint mr-1 text-xs"></i>全国油价
+            </button>
+            <!-- 新增汇率转换标签 -->
+            <button class="tab-btn py-2.5 text-sm font-medium border-b-2 border-transparent text-textSecondary dark:text-darkTextSecondary hover:text-primary transition-colors whitespace-nowrap" data-tab="currency">
+                <i class="fa fa-money mr-1 text-xs"></i>汇率换算
+            </button>
+        </div>
+    </section>
+    <!-- 主内容区 -->
+    <main class="flex-grow container mx-auto px-4 py-4">
+        <!-- 搜索区域 -->
+        <section class="mb-6" id="searchWrap">
+            <div class="relative max-w-2xl mx-auto">
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="输入垃圾名称查询分类（如：苹果）"
+                    class="w-full px-3 py-2 pl-8 pr-10 rounded-lg border border-neutral dark:border-darkNeutral bg-white dark:bg-gray-800 focus:border-primary focus:outline-none focus:search-focus transition-all text-sm"
+                >
+                <i class="fa fa-search absolute left-2.5 top-1/2 -translate-y-1/2 text-textSecondary dark:text-darkTextSecondary text-xs"></i>
+                <button id="searchBtn" class="absolute right-2.5 top-1/2 -translate-y-1/2 bg-primary text-white px-2.5 py-0.5 rounded-md hover:bg-primary/90 transition-colors text-xs">
+                    查询
+                </button>
+            </div>
+            <div class="mt-2 text-center text-xs text-textSecondary dark:text-darkTextSecondary" id="hotSearch">
+                热门搜索：<a href="javascript:doSearch('电池')" class="text-primary hover:underline mx-1">电池</a>
+                <a href="javascript:doSearch('塑料瓶')" class="text-primary hover:underline mx-1">塑料瓶</a>
+                <a href="javascript:doSearch('剩菜')" class="text-primary hover:underline mx-1">剩菜</a>
+                <a href="javascript:doSearch('过期药品')" class="text-primary hover:underline mx-1">过期药品</a>
+            </div>
+        </section>
+        <!-- ==========汇率换算自定义面板【已替换为图片工具custom‑select结构】========== -->
+        <section id="currencyPanel" class="hidden max-w-2xl mx-auto">
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-4 border border-neutral dark:border-darkNeutral card-shadow">
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <!-- 源货币 custom‑select -->
+                    <div class="custom-select" data-select="fromCurrency" data-default="CNY">
+                        <label class="block text-xs mb-1 text-textSecondary dark:text-darkTextSecondary">源货币</label>
+                        <div class="select-trigger">
+                            <span class="select-value">人民币（CNY）</span>
+                            <i class="fa fa-chevron-down select-arrow"></i>
+                        </div>
+                        <div class="select-dropdown">
+                            <div class="select-list scrollbar-hide" id="fromOptionList"></div>
+                        </div>
+                    </div>
+                    <!-- 目标货币 custom‑select -->
+                    <div class="custom-select" data-select="toCurrency" data-default="USD">
+                        <label class="block text-xs mb-1 text-textSecondary dark:text-darkTextSecondary">目标货币</label>
+                        <div class="select-trigger">
+                            <span class="select-value">美元（USD）</span>
+                            <i class="fa fa-chevron-down select-arrow"></i>
+                        </div>
+                        <div class="select-dropdown">
+                            <div class="select-list scrollbar-hide" id="toOptionList"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-3 items-end mb-4">
+                    <div class="flex‑1">
+                        <label class="block text-xs mb-1 text-textSecondary dark:text-darkTextSecondary">输入金额</label>
+                        <input type="number" id="currencyAmount" value="1" min="0" step="0.01" class="w-full px-2 py-1.5 rounded border border-neutral dark:border-darkNeutral bg-white dark:bg-gray-700 text-sm">
+                    </div>
+                    <button id="swapCurrencyBtn" class="circle-btn bg-secondary dark:bg-darkSecondary hover:bg-primary hover:text-white">
+                        <i class="fa fa-exchange"></i>
+                    </button>
+                    <button id="currencyCalcBtn" class="bg-primary text-white px-3 py-1.5 rounded text-xs hover:bg-primary/90">换算</button>
+                </div>
+                <div class="mt-2">
+                    <div class="text-xs text-textSecondary dark:text-darkTextSecondary mb-1">换算结果</div>
+                    <div id="currencyResult" class="text-lg font-semibold text-primary">-</div>
+                    <div id="currencyRateInfo" class="text-xs mt-1 text-textSecondary dark:text-darkTextSecondary"></div>
+                </div>
+            </div>
+        </section>
+        <!-- 加载状态 - 图标文字全居中 -->
+        <section id="loadingSection" class="hidden flex flex-col items-center justify-center py-12">
+            <div class="w-10 h-10 border-3 border-neutral dark:border-darkNeutral border-t-primary rounded-full animate-spin mb-3"></div>
+            <p class="text-textSecondary dark:text-darkTextSecondary text-xs text-center">正在查询中...</p>
+        </section>
+        <!-- 错误提示 - 图标文字全居中 -->
+        <section id="errorSection" class="hidden flex flex-col items-center justify-center py-12">
+            <i class="fa fa-exclamation-circle text-3xl text-red-500 mb-3"></i>
+            <p class="text-textSecondary dark:text-darkTextSecondary mb-2 text-xs text-center" id="errorMessage">查询失败，请稍后重试</p>
+            <button id="retryBtn" class="mt-3 px-3 py-1.5 border border-primary text-primary rounded-md hover:bg-primary hover:text-white transition-colors text-xs">
+                重新查询
+            </button>
+        </section>
+        <!-- 结果为空/初始状态 - 图标文字全居中 -->
+        <section id="emptySection" class="flex flex-col items-center justify-center py-12">
+            <i class="fa fa-search text-3xl text-neutral dark:text-darkNeutral mb-3"></i>
+            <p class="text-textSecondary dark:text-darkTextSecondary text-xs text-center">请输入关键词开始查询</p>
+            <p class="text-textSecondary/80 dark:text-darkTextSecondary/80 text-xs mt-1 text-center">也可以点击上方热门搜索快速查询</p>
+        </section>
+        <!-- 查询结果 -->
+        <section id="resultsSection" class="hidden">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-base font-semibold" id="resultsCount">找到 0 条结果</h2>
+                <span class="text-xs text-textSecondary dark:text-darkTextSecondary" id="searchKeyword">关键词：-</span>
+            </div>
+            <div class="grid grid-cols-1 gap-2.5" id="resultsList">
+                <!-- 结果项将通过JS动态生成 -->
+            </div>
+        </section>
+    </main>
+    <script>
+        // 全局配置
+        const GARBAGE_API = 'https://yunzhiapi.cn/API/ljflcx.php';
+        const SINGER_API = 'https://yunzhiapi.cn/API/gsxxss.php';
+        const GIRLFRIEND_API = 'https://yunzhiapi.cn/API/nyzyz.php';
+        const OIL_API = 'https://yunzhiapi.cn/API/qgyjcx.php';
+        const DEFAULT_TOKEN = 'XIZhAXKnSQcH';
+        // 扩充货币列表 共42种
+        const CURRENCY_LIST = [
+            {code:"CNY",name:"人民币"},
+            {code:"USD",name:"美元"},
+            {code:"EUR",name:"欧元"},
+            {code:"GBP",name:"英镑"},
+            {code:"JPY",name:"日元"},
+            {code:"HKD",name:"港币"},
+            {code:"MOP",name:"澳门元"},
+            {code:"TWD",name:"新台币"},
+            {code:"AUD",name:"澳元"},
+            {code:"CAD",name:"加元"},
+            {code:"SGD",name:"新加坡元"},
+            {code:"CHF",name:"瑞士法郎"},
+            {code:"KRW",name:"韩元"},
+            {code:"THB",name:"泰铢"},
+            {code:"VND",name:"越南盾"},
+            {code:"MYR",name:"马来西亚林吉特"},
+            {code:"INR",name:"印度卢比"},
+            {code:"RUB",name:"俄罗斯卢布"},
+            {code:"ZAR",name:"南非兰特"},
+            {code:"BRL",name:"巴西雷亚尔"},
+            {code:"MXN",name:"墨西哥比索"},
+            {code:"ARS",name:"阿根廷比索"},
+            {code:"CLP",name:"智利比索"},
+            {code:"COP",name:"哥伦比亚比索"},
+            {code:"IDR",name:"印尼盾"},
+            {code:"PHP",name:"菲律宾比索"},
+            {code:"PKR",name:"巴基斯坦卢比"},
+            {code:"BDT",name:"孟加拉塔卡"},
+            {code:"AED",name:"阿联酋迪拉姆"},
+            {code:"SAR",name:"沙特里亚尔"},
+            {code:"QAR",name:"卡塔尔里亚尔"},
+            {code:"KWD",name:"科威特第纳尔"},
+            {code:"TRY",name:"土耳其里拉"},
+            {code:"PLN",name:"波兰兹罗提"},
+            {code:"CZK",name:"捷克克朗"},
+            {code:"HUF",name:"匈牙利福林"},
+            {code:"SEK",name:"瑞典克朗"},
+            {code:"NOK",name:"挪威克朗"},
+            {code:"DKK",name:"丹麦克朗"},
+            {code:"NZD",name:"新西兰元"},
+            {code:"ILS",name:"以色列谢克尔"},
+            {code:"EGP",name:"埃及镑"}
+        ];
+        let currentTab = 'garbage';
+        let searchHistory = [];
+        // 当前选中货币code
+        let fromCurrencyCode = "CNY";
+        let toCurrencyCode = "USD";
+
+        // ============复制图片工具的custom‑select工具函数============
+        function initCustomSelects() {
+            const selects = document.querySelectorAll('.custom-select');
+            selects.forEach(select => {
+                const trigger = select.querySelector('.select-trigger');
+                const dropdown = select.querySelector('.select-dropdown');
+                const optionsWrap = select.querySelector('.select-list');
+                const defaultValue = select.dataset.default;
+                // 渲染货币选项（汇率面板两个下拉）
+                if(select.dataset.select === "fromCurrency"){
+                    optionsWrap.innerHTML = '';
+                    CURRENCY_LIST.forEach(item=>{
+                        const div = document.createElement('div');
+                        div.className = "select-option";
+                        div.dataset.value = item.code;
+                        div.innerText = `${item.name}（${item.code}）`;
+                        div.addEventListener('click',()=>{
+                            selectCurrency('from', item.code);
+                            setSelectValue(select, item.code);
+                            closeAllSelects();
+                        })
+                        optionsWrap.appendChild(div);
+                    })
+                }
+                if(select.dataset.select === "toCurrency"){
+                    optionsWrap.innerHTML = '';
+                    CURRENCY_LIST.forEach(item=>{
+                        const div = document.createElement('div');
+                        div.className = "select-option";
+                        div.dataset.value = item.code;
+                        div.innerText = `${item.name}（${item.code}）`;
+                        div.addEventListener('click',()=>{
+                            selectCurrency('to', item.code);
+                            setSelectValue(select, item.code);
+                            closeAllSelects();
+                        })
+                        optionsWrap.appendChild(div);
+                    })
+                }
+                setSelectValue(select, defaultValue, false);
+                trigger.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isOpen = dropdown.classList.contains('is-open');
+                    closeAllSelects();
+                    if (!isOpen) {
+                        dropdown.classList.add('is-open');
+                        trigger.classList.add('is-open');
+                    }
+                });
+            });
+            document.addEventListener('click', closeAllSelects);
+        }
+        function closeAllSelects() {
+            document.querySelectorAll('.select-dropdown').forEach(d => d.classList.remove('is-open'));
+            document.querySelectorAll('.select-trigger').forEach(t => t.classList.remove('is-open'));
+        }
+        function setSelectValue(select, value, triggerChange = true) {
+            const valueEl = select.querySelector('.select-value');
+            const options = select.querySelectorAll('.select-option');
+            options.forEach(opt => {
+                opt.classList.toggle('is-selected', opt.dataset.value === value);
+                if (opt.dataset.value === value) {
+                    valueEl.textContent = opt.textContent.trim();
+                }
+            });
+            select.dataset.value = value;
+        }
+        function getSelectValue(name) {
+            const select = document.querySelector(`[data-select="${name}"]`);
+            return select ? select.dataset.value : '';
+        }
+        // ============结束 custom‑select 工具函数============
+
+        // DOM 元素
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsList = document.getElementById('resultsList');
+        const resultsCount = document.getElementById('resultsCount');
+        const searchKeyword = document.getElementById('searchKeyword');
+        const loadingSection = document.getElementById('loadingSection');
+        const errorSection = document.getElementById('errorSection');
+        const emptySection = document.getElementById('emptySection');
+        const errorMessage = document.getElementById('errorMessage');
+        const retryBtn = document.getElementById('retryBtn');
+        const themeToggle = document.getElementById('themeToggle');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const hotSearch = document.getElementById('hotSearch');
+        const searchWrap = document.getElementById("searchWrap");
+        const currencyPanel = document.getElementById("currencyPanel");
+
+        const currencyAmount = document.getElementById("currencyAmount");
+        const currencyResult = document.getElementById("currencyResult");
+        const currencyRateInfo = document.getElementById("currencyRateInfo");
+        const currencyCalcBtn = document.getElementById("currencyCalcBtn");
+        const swapCurrencyBtn = document.getElementById("swapCurrencyBtn");
+
+        // 分类对应颜色映射
+        const categoryColors = {
+            kitchen: { bg: 'bg-kitchen/10', text: 'text-kitchen', border: 'border-kitchen/30' },
+            recyclable: { bg: 'bg-recyclable/10', text: 'text-recyclable', border: 'border-recyclable/30' },
+            harmful: { bg: 'bg-harmful/10', text: 'text-harmful', border: 'border-harmful/30' },
+            other: { bg: 'bg-other/10', text: 'text-other', border: 'border-other/30' },
+            default: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/30' }
+        };
+        document.addEventListener('DOMContentLoaded', () => {
+            loadThemePreference();
+            bindEvents();
+            initCustomSelects(); //初始化新版下拉，替换旧initCurrencyDropdown
+            toggleSections('empty');
+        });
+
+        // 选中货币
+        function selectCurrency(type, code){
+            const obj = CURRENCY_LIST.find(i=>i.code===code);
+            if(type === 'from'){
+                fromCurrencyCode = code;
+            }else{
+                toCurrencyCode = code;
+            }
+        }
+
+        // 绑定事件
+        function bindEvents() {
+            searchBtn.addEventListener('click', handleSearch);
+            searchInput.addEventListener('keypress', (e) => e.key === 'Enter' && handleSearch());
+            retryBtn.addEventListener('click', handleSearch);
+            themeToggle.addEventListener('click', toggleTheme);
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    switchTab(btn.dataset.tab);
+                });
+            });
+            currencyCalcBtn.addEventListener("click",calcCurrency);
+            swapCurrencyBtn.addEventListener("click",swapCurrency);
+        }
+        //交换源货币和目标货币
+        function swapCurrency(){
+            const tempCode = fromCurrencyCode;
+            selectCurrency('from', toCurrencyCode);
+            selectCurrency('to', tempCode);
+            setSelectValue(document.querySelector('[data-select="fromCurrency"]'), fromCurrencyCode);
+            setSelectValue(document.querySelector('[data-select="toCurrency"]'), toCurrencyCode);
+        }
+        //模拟汇率换算，这里后续替换真实接口
+        async function calcCurrency(){
+            const from = fromCurrencyCode;
+            const to = toCurrencyCode;
+            const num = Number(currencyAmount.value);
+            if(isNaN(num)||num<=0){
+                currencyResult.innerText="请输入有效金额";
+                return;
+            }
+            currencyResult.innerText="请求汇率接口...";
+            await new Promise(resolve=>setTimeout(resolve,400));
+            const mockRate = {
+                "CNY":{"USD":0.138,"EUR":0.127,"GBP":0.109,"JPY":20.3},
+                "USD":{"CNY":7.24,"EUR":0.92,"GBP":0.79,"JPY":147}
+            };
+            let rate;
+            if(from===to) rate=1;
+            else if(mockRate[from]&&mockRate[from][to]) rate=mockRate[from][to];
+            else if(mockRate[to]&&mockRate[to][from]) rate=1/mockRate[to][from];
+            else rate=1;
+            const res = (num*rate).toFixed(2);
+            const fromObj = CURRENCY_LIST.find(i=>i.code===from);
+            const toObj = CURRENCY_LIST.find(i=>i.code===to);
+            currencyResult.innerText = `${res} ${toObj.name}(${to})`;
+            currencyRateInfo.innerText = `1 ${fromObj.name}(${from}) ≈ ${rate.toFixed(4)} ${toObj.name}(${to})`;
+        }
+        // 切换标签
+        function switchTab(tab) {
+            currentTab = tab;
+            tabBtns.forEach(btn => {
+                if (btn.dataset.tab === tab) {
+                    btn.classList.add('tab-active');
+                    btn.classList.remove('text-textSecondary', 'dark:text-darkTextSecondary');
+                } else {
+                    btn.classList.remove('tab-active');
+                    btn.classList.add('text-textSecondary', 'dark:text-darkTextSecondary');
+                }
+            });
+            closeAllSelects();
+            if(tab === "currency"){
+                searchWrap.classList.add("hidden");
+                currencyPanel.classList.remove("hidden");
+                resultsSection.classList.add("hidden");
+                loadingSection.classList.add("hidden");
+                errorSection.classList.add("hidden");
+                emptySection.classList.add("hidden");
+            }else{
+                searchWrap.classList.remove("hidden");
+                currencyPanel.classList.add("hidden");
+            }
+            if (tab === 'garbage') {
+                searchInput.placeholder = '输入垃圾名称查询分类（如：苹果）';
+                hotSearch.innerHTML = `热门搜索：<a href="javascript:doSearch('电池')" class="text-primary hover:underline mx-1">电池</a>
+                <a href="javascript:doSearch('塑料瓶')" class="text-primary hover:underline mx-1">塑料瓶</a>
+                <a href="javascript:doSearch('剩菜')" class="text-primary hover:underline mx-1">剩菜</a>
+                <a href="javascript:doSearch('过期药品')" class="text-primary hover:underline mx-1">过期药品</a>`;
+            } else if (tab === 'singer') {
+                searchInput.placeholder = '输入歌手名称查询信息（如：邓紫棋）';
+                hotSearch.innerHTML = `热门搜索：<a href="javascript:doSearch('邓紫棋')" class="text-primary hover:underline mx-1">邓紫棋</a>
+                <a href="javascript:doSearch('周杰伦')" class="text-primary hover:underline mx-1">周杰伦</a>
+                <a href="javascript:doSearch('林俊杰')" class="text-primary hover:underline mx-1">林俊杰</a>
+                <a href="javascript:doSearch('陈奕迅')" class="text-primary hover:underline mx-1">陈奕迅</a>`;
+            } else if (tab === 'girlfriend') {
+                searchInput.placeholder = '输入女友原话，分析潜台词（如：我爱你）';
+                hotSearch.innerHTML = `热门搜索：<a href="javascript:doSearch('我爱你')" class="text-primary hover:underline mx-1">我爱你</a>
+                <a href="javascript:doSearch('我没事')" class="text-primary hover:underline mx-1">我没事</a>
+                <a href="javascript:doSearch('随便')" class="text-primary hover:underline mx-1">随便</a>
+                <a href="javascript:doSearch('你忙吧')" class="text-primary hover:underline mx-1">你忙吧</a>`;
+            } else if(tab === 'oil') {
+                searchInput.placeholder = '输入省份名称查询油价（如：广东）';
+                hotSearch.innerHTML = `热门搜索：<a href="javascript:doSearch('广东')" class="text-primary hover:underline mx-1">广东</a>
+                <a href="javascript:doSearch('北京')" class="text-primary hover:underline mx-1">北京</a>
+                <a href="javascript:doSearch('上海')" class="text-primary hover:underline mx-1">上海</a>
+                <a href="javascript:doSearch('四川')" class="text-primary hover:underline mx-1">四川</a>`;
+            }
+            toggleSections('empty');
+            searchInput.value = '';
+        }
+        // 加载主题偏好
+        function loadThemePreference() {
+            const savedTheme = localStorage.getItem('theme');
+            const isDarkMode = savedTheme === 'dark' ||
+                              (savedTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+        // 切换主题
+        function toggleTheme() {
+            const isDarkMode = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        }
+        // 搜索处理
+        function handleSearch() {
+            const keyword = searchInput.value.trim();
+            if (!keyword) {
+                alert('请输入查询关键词');
+                return;
+            }
+            doSearch(keyword);
+        }
+        // 执行查询
+        function doSearch(keyword) {
+            searchInput.value = keyword;
+            toggleSections('loading');
+            if (!searchHistory.includes(keyword)) {
+                searchHistory.unshift(keyword);
+                if (searchHistory.length > 10) searchHistory.pop();
+            }
+            if (currentTab === 'garbage') {
+                searchGarbage(keyword);
+            } else if (currentTab === 'singer') {
+                searchSinger(keyword);
+            } else if (currentTab === 'girlfriend') {
+                searchGirlfriend(keyword);
+            } else if(currentTab === 'oil') {
+                searchOil(keyword);
+            }
+        }
+        // 垃圾分类查询
+        function searchGarbage(keyword) {
+            const params = new URLSearchParams({
+                token: DEFAULT_TOKEN,
+                junk: keyword,
+                type: 'json'
+            });
+            fetch(`${GARBAGE_API}?${params.toString()}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('网络请求失败');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.code === 200 && data.data && data.data.length > 0) {
+                        renderGarbageResults(data.data, keyword);
+                        toggleSections('results');
+                    } else {
+                        errorMessage.textContent = data.message || '未找到相关分类信息';
+                        toggleSections('error');
+                    }
+                })
+                .catch(error => {
+                    console.error('查询错误:', error);
+                    errorMessage.textContent = '网络异常，请检查网络连接后重试';
+                    toggleSections('error');
+                });
+        }
+        // 歌手信息查询
+        function searchSinger(keyword) {
+            const params = new URLSearchParams({
+                token: DEFAULT_TOKEN,
+                msg: keyword,
+                type: 'json'
+            });
+            fetch(`${SINGER_API}?${params.toString()}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('网络请求失败');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.code === 200 && data.data) {
+                        renderSingerResult(data.data, keyword);
+                        toggleSections('results');
+                    } else {
+                        errorMessage.textContent = data.message || '未找到该歌手信息';
+                        toggleSections('error');
+                    }
+                })
+                .catch(error => {
+                    console.error('查询错误:', error);
+                    errorMessage.textContent = '网络异常，请检查网络连接后重试';
+                    toggleSections('error');
+                });
+        }
+        // 女友潜台词查询
+        function searchGirlfriend(keyword) {
+            const params = new URLSearchParams({
+                token: DEFAULT_TOKEN,
+                msg: keyword
+            });
+            fetch(`${GIRLFRIEND_API}?${params.toString()}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('网络请求失败');
+                    return response.text();
+                })
+                .then(text => {
+                    if (text && text.trim()) {
+                        renderGirlfriendResult(text, keyword);
+                        toggleSections('results');
+                    } else {
+                        errorMessage.textContent = '未分析出有效潜台词，请换一句话试试';
+                        toggleSections('error');
+                    }
+                })
+                .catch(error => {
+                    console.error('查询错误:', error);
+                    errorMessage.textContent = '网络异常，请检查网络连接后重试';
+                    toggleSections('error');
+                });
+        }
+        // 全国油价查询
+        function searchOil(keyword) {
+            const params = new URLSearchParams({
+                token: DEFAULT_TOKEN,
+                msg: keyword
+            });
+            fetch(`${OIL_API}?${params.toString()}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('网络请求失败');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.code === 200 && data.data && data.data.oil_prices) {
+                        renderOilResult(data, keyword);
+                        toggleSections('results');
+                    } else {
+                        errorMessage.textContent = data.message || '未找到该省份油价信息';
+                        toggleSections('error');
+                    }
+                })
+                .catch(error => {
+                    console.error('查询错误:', error);
+                    errorMessage.textContent = '网络异常，请检查网络连接后重试';
+                    toggleSections('error');
+                });
+        }
+        // 渲染垃圾分类结果
+        function renderGarbageResults(dataList, keyword) {
+            resultsCount.textContent = `找到 ${dataList.length} 条分类结果`;
+            searchKeyword.textContent = `关键词：${keyword}`;
+            resultsList.innerHTML = '';
+            dataList.forEach(item => {
+                const colorConfig = categoryColors[item.category] || categoryColors.default;
+                const resultItem = document.createElement('div');
+                resultItem.className = `bg-white dark:bg-gray-800 rounded-lg p-3 border border-neutral dark:border-darkNeutral card-shadow hover:border-primary/30 transition-all`;
+                resultItem.innerHTML = `
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded text-xs font-medium ${colorConfig.bg} ${colorConfig.text} border ${colorConfig.border}">
+                                ${item.category_name || '未知分类'}
+                            </span>
+                            <span class="text-xs text-textSecondary dark:text-darkTextSecondary">
+                                匹配度：${item.match_score || '-'}%
+                            </span>
+                        </div>
+                    </div>
+                    <h3 class="font-medium text-sm mb-1.5">${item.name || '未知名称'}</h3>
+                    <div class="space-y-1.5 text-xs">
+                        <div class="flex">
+                            <span class="text-textSecondary dark:text-darkTextSecondary w-16 flex-shrink-0">分类说明：</span>
+                            <span class="flex-1">${item.description || '暂无说明'}</span>
+                        </div>
+                        <div class="flex">
+                            <span class="text-textSecondary dark:text-darkTextSecondary w-16 flex-shrink-0">常见物品：</span>
+                            <span class="flex-1">${item.examples || '暂无示例'}</span>
+                        </div>
+                        <div class="flex">
+                            <span class="text-textSecondary dark:text-darkTextSecondary w-16 flex-shrink-0">投放建议：</span>
+                            <span class="flex-1">${item.disposal || '暂无建议'}</span>
+                        </div>
+                    </div>
+                `;
+                resultsList.appendChild(resultItem);
+            });
+        }
+        // 渲染歌手信息结果
+        function renderSingerResult(data, keyword) {
+            resultsCount.textContent = '找到 1 条歌手信息';
+            searchKeyword.textContent = `关键词：${keyword}`;
+            resultsList.innerHTML = '';
+            const resultItem = document.createElement('div');
+            resultItem.className = `bg-white dark:bg-gray-800 rounded-lg p-3 border border-neutral dark:border-darkNeutral card-shadow transition-all`;
+            resultItem.innerHTML = `
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="w-full sm:w-32 h-32 flex-shrink-0 rounded-md overflow-hidden bg-secondary dark:bg-darkSecondary flex items-center justify-center">
+                        ${data.img_url ? `<img src="${data.img_url}" alt="${data.name}" class="w-full h-full object-cover" onerror="this.parentNode.innerHTML='<i class=\\'fa fa-user text-2xl text-textSecondary dark:text-darkTextSecondary\\'></i>'">` : '<i class="fa fa-user text-2xl text-textSecondary dark:text-darkTextSecondary"></i>'}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h3 class="font-medium text-base mb-2">${data.name || '未知歌手'}</h3>
+                        <div class="text-xs text-textSecondary dark:text-darkTextSecondary leading-relaxed whitespace-pre-line">
+                            ${data.profile || '暂无歌手简介'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            resultsList.appendChild(resultItem);
+        }
+        // 渲染女友潜台词结果
+        function renderGirlfriendResult(text, keyword) {
+            resultsCount.textContent = '潜台词分析结果';
+            searchKeyword.textContent = `原话：${keyword}`;
+            resultsList.innerHTML = '';
+            const resultItem = document.createElement('div');
+            resultItem.className = `bg-white dark:bg-gray-800 rounded-lg p-4 border border-neutral dark:border-darkNeutral card-shadow transition-all`;
+            resultItem.innerHTML = `
+                <div class="flex items-center gap-2 mb-3">
+                    <i class="fa fa-heart text-pink text-sm"></i>
+                    <h3 class="font-medium text-sm text-pink">分析完成</h3>
+                </div>
+                <div class="text-xs text-textPrimary dark:text-darkTextPrimary leading-relaxed whitespace-pre-line">
+                    ${text}
+                </div>
+            `;
+            resultsList.appendChild(resultItem);
+        }
+        // 渲染全国油价结果
+        function renderOilResult(data, keyword) {
+            const oilData = data.data;
+            resultsCount.textContent = `${data.province}油价信息`;
+            searchKeyword.textContent = `更新时间：${data.update_time || '-'}`;
+            resultsList.innerHTML = '';
+            const priceCard = document.createElement('div');
+            priceCard.className = `bg-white dark:bg-gray-800 rounded-lg p-3 border border-neutral dark:border-darkNeutral card-shadow transition-all`;
+            let priceHtml = '';
+            oilData.oil_prices.forEach(oil => {
+                priceHtml += `
+                    <div class="flex items-center justify-between py-2 border-b border-neutral dark:border-darkNeutral last:border-b-0">
+                        <span class="text-sm">${oil.type || '未知油品'}</span>
+                        <span class="font-semibold text-primary">${oil.price || '-'} <span class="text-xs font-normal text-textSecondary dark:text-darkTextSecondary">元/升</span></span>
+                    </div>
+                `;
+            });
+            priceCard.innerHTML = priceHtml;
+            resultsList.appendChild(priceCard);
+            if (oilData.adjustment) {
+                const adjustCard = document.createElement('div');
+                adjustCard.className = `bg-white dark:bg-gray-800 rounded-lg p-3 border border-neutral dark:border-darkNeutral card-shadow transition-all`;
+                adjustCard.innerHTML = `
+                    <h3 class="font-medium text-sm mb-2 flex items-center">
+                        <i class="fa fa-bell-o text-primary mr-1.5 text-xs"></i>下次调价
+                    </h3>
+                    <p class="text-xs text-textPrimary dark:text-darkTextPrimary mb-1">时间：${oilData.adjustment.next_time || '-'}</p>
+                    <p class="text-xs text-textSecondary dark:text-darkTextSecondary">${oilData.adjustment.info || ''}</p>
+                `;
+                resultsList.appendChild(adjustCard);
+            }
+            if (oilData.density_info && oilData.density_info.length > 0) {
+                const densityCard = document.createElement('div');
+                densityCard.className = `bg-white dark:bg-gray-800 rounded-lg p-3 border border-neutral dark:border-darkNeutral card-shadow transition-all`;
+                densityCard.innerHTML = `
+                    <h3 class="font-medium text-sm mb-2 flex items-center">
+                        <i class="fa fa-info-circle text-primary mr-1.5 text-xs"></i>油品密度
+                    </h3>
+                    <div class="space-y-1 text-xs text-textSecondary dark:text-darkTextSecondary">
+                        ${oilData.density_info.map(item => `<p>${item}</p>`).join('')}
+                    </div>
+                `;
+                resultsList.appendChild(densityCard);
+            }
+        }
+        // 切换显示区域
+        function toggleSections(showSection) {
+            const sections = ['results', 'loading', 'error', 'empty'];
+            sections.forEach(section => {
+                const element = document.getElementById(`${section}Section`);
+                element.classList.add('hidden');
+            });
+            document.getElementById(`${showSection}Section`).classList.remove('hidden');
+        }
+        window.doSearch = doSearch;
+    </script>
+</body>
+</html>
