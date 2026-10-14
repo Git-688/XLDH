@@ -175,7 +175,7 @@
             .toast-warning { background: rgba(245, 158, 11, 0.92); color: #fff; }
             .toast-error { background: rgba(239, 68, 68, 0.92); color: #fff; }
 
-            /* AI绘画结果强制上下布局 */
+            /* AI绘画/识图/提示词 结果强制上下布局 */
             .draw-vertical #resultsWrap {
                 display: flex;
                 flex-direction: column;
@@ -221,6 +221,8 @@
             <button class="tab-btn py-2.5 text-sm font-medium border-b-2 border-transparent text-textSecondary dark:text-darkTextSecondary hover:text-primary transition-colors whitespace-nowrap" data-mode="6">图片扩图</button>
             <button class="tab-btn py-2.5 text-sm font-medium border-b-2 border-transparent text-textSecondary dark:text-darkTextSecondary hover:text-primary transition-colors whitespace-nowrap" data-mode="7">变清晰</button>
             <button class="tab-btn py-2.5 text-sm font-medium border-b-2 border-transparent text-textSecondary dark:text-darkTextSecondary hover:text-primary transition-colors whitespace-nowrap" data-mode="8">图片叠加</button>
+            <button class="tab-btn py-2.5 text-sm font-medium border-b-2 border-transparent text-textSecondary dark:text-darkTextSecondary hover:text-primary transition-colors whitespace-nowrap" data-mode="9">AI识图</button>
+            <button class="tab-btn py-2.5 text-sm font-medium border-b-2 border-transparent text-textSecondary dark:text-darkTextSecondary hover:text-primary transition-colors whitespace-nowrap" data-mode="10">图片提示词</button>
         </div>
     </section>
 
@@ -266,6 +268,7 @@
                             <div class="select-list scrollbar-hide">
                                 <div class="select-option" data-value="baidu">百度绘画</div>
                                 <div class="select-option" data-value="kuaishou">快手绘画</div>
+                                <div class="select-option" data-value="tinyai">TinyAI 绘画</div>
                             </div>
                         </div>
                     </div>
@@ -379,6 +382,62 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- TinyAI 绘画专属参数 -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 hidden" data-draw-params="tinyai">
+                        <div>
+                            <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">图片宽度</label>
+                            <div class="custom-select" data-select="tinyWidth" data-default="768">
+                                <div class="select-trigger">
+                                    <span class="select-value">768</span>
+                                    <i class="fa fa-chevron-down select-arrow"></i>
+                                </div>
+                                <div class="select-dropdown">
+                                    <div class="select-list scrollbar-hide">
+                                        <div class="select-option" data-value="768">768</div>
+                                        <div class="select-option" data-value="1024">1024</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">图片高度</label>
+                            <div class="custom-select" data-select="tinyHeight" data-default="768">
+                                <div class="select-trigger">
+                                    <span class="select-value">768</span>
+                                    <i class="fa fa-chevron-down select-arrow"></i>
+                                </div>
+                                <div class="select-dropdown">
+                                    <div class="select-list scrollbar-hide">
+                                        <div class="select-option" data-value="768">768</div>
+                                        <div class="select-option" data-value="1024">1024</div>
+                                        <div class="select-option" data-value="576">576</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">绘画风格</label>
+                            <div class="custom-select" data-select="tinyStyle" data-default="auto">
+                                <div class="select-trigger">
+                                    <span class="select-value">AI 自动判断</span>
+                                    <i class="fa fa-chevron-down select-arrow"></i>
+                                </div>
+                                <div class="select-dropdown">
+                                    <div class="select-list scrollbar-hide">
+                                        <div class="select-option" data-value="auto">AI 自动判断</div>
+                                        <div class="select-option" data-value="油画">油画</div>
+                                        <div class="select-option" data-value="水彩">水彩</div>
+                                        <div class="select-option" data-value="素描">素描</div>
+                                        <div class="select-option" data-value="动漫">动漫</div>
+                                        <div class="select-option" data-value="写实">写实</div>
+                                        <div class="select-option" data-value="赛博朋克">赛博朋克</div>
+                                        <div class="select-option" data-value="国风">国风</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 图片重绘 -->
@@ -485,6 +544,48 @@
                     </div>
                 </div>
 
+                <!-- AI识图 -->
+                <div class="func-panel hidden" data-panel="9">
+                    <h2 class="text-sm font-semibold mb-3">AI识图</h2>
+                    <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">图片链接</label>
+                    <input type="text" class="w-full px-3 py-2 rounded-lg border border-neutral dark:border-darkNeutral bg-white dark:bg-gray-800 focus:border-primary focus:outline-none focus:search-focus transition-all text-sm mb-3" data-id="recognize-url" placeholder="请输入需要识别的图片地址">
+                    
+                    <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">识别语言</label>
+                    <div class="custom-select" data-select="recognizeLang" data-default="zh">
+                        <div class="select-trigger">
+                            <span class="select-value">中文</span>
+                            <i class="fa fa-chevron-down select-arrow"></i>
+                        </div>
+                        <div class="select-dropdown">
+                            <div class="select-list scrollbar-hide">
+                                <div class="select-option" data-value="zh">中文</div>
+                                <div class="select-option" data-value="en">英文</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 图片提示词 -->
+                <div class="func-panel hidden" data-panel="10">
+                    <h2 class="text-sm font-semibold mb-3">图片提示词</h2>
+                    <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">图片链接</label>
+                    <input type="text" class="w-full px-3 py-2 rounded-lg border border-neutral dark:border-darkNeutral bg-white dark:bg-gray-800 focus:border-primary focus:outline-none focus:search-focus transition-all text-sm mb-3" data-id="prompt-url" placeholder="请输入需要反推提示词的图片地址">
+                    
+                    <label class="block text-xs text-textSecondary dark:text-darkTextSecondary mb-1">输出语言</label>
+                    <div class="custom-select" data-select="promptLang" data-default="zh">
+                        <div class="select-trigger">
+                            <span class="select-value">中文</span>
+                            <i class="fa fa-chevron-down select-arrow"></i>
+                        </div>
+                        <div class="select-dropdown">
+                            <div class="select-list scrollbar-hide">
+                                <div class="select-option" data-value="zh">中文</div>
+                                <div class="select-option" data-value="en">英文</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- 提交按钮 -->
                 <button id="globalSubmit" class="w-full mt-4 bg-primary text-white px-3 py-2 rounded-md hover:bg-primary/90 transition-colors text-sm font-medium flex items-center justify-center gap-1.5">
                     <i class="fa fa-magic text-xs"></i>
@@ -518,10 +619,13 @@
         <!-- 结果区域：文字在上、图片在下，垂直单列布局 -->
         <section id="resultsSection" class="hidden">
             <div id="resultsWrap" class="flex flex-col gap-3">
-                <!-- AI绘画说明文字：在上、居中 -->
-                <div id="drawOnlyInfo" class="w-full p-3 bg-primary/5 rounded-lg text-xs space-y-1 text-center hidden">
+                <!-- AI绘画/识图/提示词说明文字：在上 -->
+                <div id="drawOnlyInfo" class="w-full p-3 bg-primary/5 rounded-lg text-xs space-y-2 text-center hidden">
                     <p class="font-medium text-primary" id="drawOnlyMsg"></p>
-                    <p class="text-textSecondary dark:text-darkTextSecondary leading-relaxed" id="drawOnlyDesc"></p>
+                    <p class="text-textSecondary dark:text-darkTextSecondary leading-relaxed text-left whitespace-pre-line" id="drawOnlyDesc"></p>
+                    <button id="copyPromptBtn" class="hidden mx-auto px-3 py-1.5 rounded-md text-xs bg-primary text-white hover:bg-primary/90 transition-colors flex items-center justify-center gap-1.5">
+                        <i class="fa fa-copy"></i><span>复制提示词</span>
+                    </button>
                 </div>
                 <!-- 生成图片：在文字下方，垂直排列 -->
                 <div id="resultsList" class="flex flex-col gap-3"></div>
@@ -538,10 +642,12 @@
         // 全局常量
         const FUNC_MODE = {
             WATERMARK: 1, LINE: 2, DRAW: 3, REDRAW: 4,
-            CUTOUT: 5, EXPAND: 6, SHARPEN: 7, OVERLAY: 8
+            CUTOUT: 5, EXPAND: 6, SHARPEN: 7, OVERLAY: 8,
+            RECOGNIZE: 9, PROMPT: 10
         };
         const API_KEY = '5c7f37a79ce1eef4eb1b79dc5d7a752ab139ac681ce02447389e6fc6a2eb5a52';
         const KS_TOKEN = 'XIZhAXKnSQcH';
+        const TINY_KEY = 'sk_18b4ef591fe11fde974d772e9663640a';
         const API_MAP = {
             [FUNC_MODE.WATERMARK]: 'https://missqiu.icu/API/baiduqsy.php',
             [FUNC_MODE.LINE]: 'https://missqiu.icu/API/baidutqxg.php',
@@ -551,7 +657,10 @@
             [FUNC_MODE.EXPAND]: 'https://missqiu.icu/API/baidukt.php',
             [FUNC_MODE.SHARPEN]: 'https://missqiu.icu/API/baiduimage.php',
             [FUNC_MODE.OVERLAY]: 'https://api.pearktrue.cn/api/phantom_tank',
-            KUAISHOU_DRAW: 'https://yunzhiapi.cn/API/ks/api.php'
+            KUAISHOU_DRAW: 'https://yunzhiapi.cn/API/ks/api.php',
+            TINYAI_DRAW: 'https://api.tinyaii.top/v1/ai/paint',
+            TINYAI_RECOGNIZE: 'https://api.tinyaii.top/v1/image/recognize',
+            TINYAI_PROMPT: 'https://api.tinyaii.top/v1/image/prompt'
         };
 
         let currentFuncMode = FUNC_MODE.WATERMARK;
@@ -680,26 +789,25 @@
                 panel.classList.toggle('hidden', Number(panel.dataset.panel) !== mode);
             });
 
+            // 切回时清理上一次的说明与复制按钮
+            $('#drawOnlyInfo').classList.add('hidden');
+            $('#drawOnlyMsg').textContent = '';
+            $('#drawOnlyDesc').textContent = '';
+            $('#copyPromptBtn').classList.add('hidden');
             toggleSections('empty');
             closeAllSelects();
         }
 
         // ========== AI绘画引擎切换 ==========
         function initDrawEngineSwitch() {
+            const engines = ['baidu', 'kuaishou', 'tinyai'];
             $$('[data-select="drawEngine"] .select-option').forEach(opt => {
                 opt.addEventListener('click', () => {
                     const engine = opt.dataset.value;
-                    const baiduParams = document.querySelector('[data-draw-params="baidu"]');
-                    const kuaishouParams = document.querySelector('[data-draw-params="kuaishou"]');
-                    
-                    if (engine === 'baidu') {
-                        baiduParams.classList.remove('hidden');
-                        kuaishouParams.classList.add('hidden');
-                    } else {
-                        baiduParams.classList.add('hidden');
-                        kuaishouParams.classList.remove('hidden');
-                    }
-                    
+                    engines.forEach(name => {
+                        const panel = document.querySelector(`[data-draw-params="${name}"]`);
+                        if (panel) panel.classList.toggle('hidden', name !== engine);
+                    });
                     toggleSections('empty');
                     $('#drawOnlyInfo').classList.add('hidden');
                 });
@@ -782,6 +890,9 @@
                 method: submitData.method,
                 body: submitData.data || null
             };
+            if (submitData.headers && Object.keys(submitData.headers).length > 0) {
+                requestOptions.headers = submitData.headers;
+            }
 
             fetch(submitData.url, requestOptions)
                 .then(response => {
@@ -791,13 +902,17 @@
                 .then(text => {
                     const data = safeParse(text);
                     const imgList = handleResult(data);
+                    // AI识图 / 图片提示词：无图片但有文本也视为成功
+                    const hasInfoText = (currentFuncMode === FUNC_MODE.RECOGNIZE || currentFuncMode === FUNC_MODE.PROMPT) &&
+                                        !$('#drawOnlyInfo').classList.contains('hidden') &&
+                                        $('#drawOnlyDesc').textContent.trim().length > 0;
                     
-                    if (imgList.length > 0) {
+                    if (imgList.length > 0 || hasInfoText) {
                         renderResults(imgList);
                         toggleSections('results');
                         showToast('处理成功', 'success');
                     } else {
-                        $('#errorMessage').textContent = '未获取到有效图片';
+                        $('#errorMessage').textContent = '未获取到有效结果';
                         toggleSections('error');
                     }
                 })
@@ -813,7 +928,7 @@
 
         // 获取提交数据
         function getSubmitData() {
-            const result = { url: '', data: null, method: 'GET', error: '' };
+            const result = { url: '', data: null, method: 'GET', error: '', headers: {} };
             switch (currentFuncMode) {
                 case FUNC_MODE.WATERMARK:
                     const wUrl = $('[data-id="watermark-url"]').value.trim();
@@ -836,7 +951,7 @@
                         const style = getSelectValue('drawStyle');
                         const ratio = getSelectValue('drawRatio');
                         result.url = `${API_MAP[currentFuncMode]}?text=${encodeURIComponent(text)}&style=${encodeURIComponent(style)}&ratio=${encodeURIComponent(ratio)}&apikey=${API_KEY}`;
-                    } else {
+                    } else if (engine === 'kuaishou') {
                         const size = getSelectValue('ksSize');
                         const guidance = getSelectValue('ksGuidance');
                         const batch = getSelectValue('ksBatch');
@@ -848,6 +963,24 @@
                             batch: batch
                         });
                         result.url = `${API_MAP.KUAISHOU_DRAW}?${params.toString()}`;
+                    } else if (engine === 'tinyai') {
+                        const width = getSelectValue('tinyWidth') || '768';
+                        const height = getSelectValue('tinyHeight') || '768';
+                        const style = getSelectValue('tinyStyle');
+                        const payload = {
+                            prompt: text,
+                            width: Number(width),
+                            height: Number(height)
+                        };
+                        if (style && style !== 'auto') payload.style = style;
+
+                        result.url = API_MAP.TINYAI_DRAW;
+                        result.method = 'POST';
+                        result.headers = {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${TINY_KEY}`
+                        };
+                        result.data = JSON.stringify(payload);
                     }
                     break;
                 case FUNC_MODE.REDRAW:
@@ -891,6 +1024,36 @@
                     result.url = API_MAP[currentFuncMode];
                     result.method = 'POST';
                     break;
+                case FUNC_MODE.RECOGNIZE:
+                    const recUrl = $('[data-id="recognize-url"]').value.trim();
+                    if (!recUrl) {
+                        result.error = '请输入图片链接';
+                    } else {
+                        const lang = getSelectValue('recognizeLang') || 'zh';
+                        result.url = API_MAP.TINYAI_RECOGNIZE;
+                        result.method = 'POST';
+                        result.headers = {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${TINY_KEY}`
+                        };
+                        result.data = JSON.stringify({ url: recUrl, lang: lang });
+                    }
+                    break;
+                case FUNC_MODE.PROMPT:
+                    const pUrl = $('[data-id="prompt-url"]').value.trim();
+                    if (!pUrl) {
+                        result.error = '请输入图片链接';
+                    } else {
+                        const lang = getSelectValue('promptLang') || 'zh';
+                        result.url = API_MAP.TINYAI_PROMPT;
+                        result.method = 'POST';
+                        result.headers = {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${TINY_KEY}`
+                        };
+                        result.data = JSON.stringify({ image: pUrl, lang: lang });
+                    }
+                    break;
             }
             return result;
         }
@@ -898,6 +1061,9 @@
         // 处理返回结果
         function handleResult(data) {
             let imgList = [];
+            // 先重置复制按钮
+            $('#copyPromptBtn').classList.add('hidden');
+
             switch (currentFuncMode) {
                 case FUNC_MODE.DRAW:
                     const engine = getSelectValue('drawEngine');
@@ -910,7 +1076,7 @@
                         else if (data.images) rawImgList = Array.isArray(data.images) ? data.images : [data.images];
                         else if (data.img) rawImgList = Array.isArray(data.img) ? data.img : [data.img];
                         imgList = rawImgList.filter(src => src && typeof src === 'string' && src.startsWith('http'));
-                    } else {
+                    } else if (engine === 'kuaishou') {
                         $('#drawOnlyInfo').classList.add('hidden');
                         let urls = [];
                         if (data.url) {
@@ -921,11 +1087,56 @@
                             urls = [data.raw.trim()];
                         }
                         imgList = urls.filter(src => src && typeof src === 'string' && src.startsWith('http'));
+                    } else if (engine === 'tinyai') {
+                        // TinyAI 返回：{ code, data: { url, width, height, format, prompt }, message }
+                        const payload = (data && typeof data.data === 'object' && data.data) ? data.data : data;
+                        const rawUrl = payload ? (payload.url || payload.image_url || '') : '';
+                        const list = Array.isArray(rawUrl) ? rawUrl : [rawUrl];
+                        imgList = list.filter(src => src && typeof src === 'string' && src.startsWith('http'));
+
+                        if (imgList.length > 0 && payload && payload.prompt) {
+                            $('#drawOnlyMsg').textContent = 'TinyAI 绘画';
+                            $('#drawOnlyDesc').textContent = payload.prompt;
+                            $('#drawOnlyInfo').classList.remove('hidden');
+                        } else {
+                            $('#drawOnlyInfo').classList.add('hidden');
+                        }
                     }
                     break;
                 case FUNC_MODE.OVERLAY:
                     if (data.code === 200 && data.image_url) {
                         imgList = [data.image_url];
+                    }
+                    break;
+                case FUNC_MODE.RECOGNIZE:
+                    // TinyAI 识图返回：{ code, data: { description, image_url, lang }, message }
+                    const recPayload = (data && typeof data.data === 'object' && data.data) ? data.data : data;
+                    if (recPayload && recPayload.description) {
+                        $('#drawOnlyMsg').textContent = 'AI 识图结果';
+                        $('#drawOnlyDesc').textContent = recPayload.description;
+                        $('#drawOnlyInfo').classList.remove('hidden');
+                    } else {
+                        $('#drawOnlyInfo').classList.add('hidden');
+                    }
+                    const recImg = recPayload ? (recPayload.image_url || recPayload.url || '') : '';
+                    if (recImg && typeof recImg === 'string' && recImg.startsWith('http')) {
+                        imgList = [recImg];
+                    }
+                    break;
+                case FUNC_MODE.PROMPT:
+                    // TinyAI 图片提示词返回：{ code, data: { image_url, lang, mode, prompt }, message }
+                    const prPayload = (data && typeof data.data === 'object' && data.data) ? data.data : data;
+                    if (prPayload && prPayload.prompt) {
+                        $('#drawOnlyMsg').textContent = '图片提示词';
+                        $('#drawOnlyDesc').textContent = prPayload.prompt;
+                        $('#drawOnlyInfo').classList.remove('hidden');
+                        $('#copyPromptBtn').classList.remove('hidden');
+                    } else {
+                        $('#drawOnlyInfo').classList.add('hidden');
+                    }
+                    const prImg = prPayload ? (prPayload.image_url || prPayload.url || '') : '';
+                    if (prImg && typeof prImg === 'string' && prImg.startsWith('http')) {
+                        imgList = [prImg];
                     }
                     break;
                 default:
@@ -944,8 +1155,10 @@
 
             container.innerHTML = '';
 
-            // AI绘画：强制上下单列布局；其他功能：响应式网格
-            if (currentFuncMode === FUNC_MODE.DRAW) {
+            // AI绘画 / AI识图 / 图片提示词：强制上下单列布局；其他功能：响应式网格
+            if (currentFuncMode === FUNC_MODE.DRAW ||
+                currentFuncMode === FUNC_MODE.RECOGNIZE ||
+                currentFuncMode === FUNC_MODE.PROMPT) {
                 resultsSection.classList.add('draw-vertical');
                 wrap.className = 'flex flex-col gap-3';
                 container.className = 'flex flex-col gap-3';
@@ -987,6 +1200,37 @@
             try { return JSON.parse(str) } catch (e) { return { raw: str?.trim() || '' } }
         }
 
+        // 复制提示词
+        function copyPrompt() {
+            const text = $('#drawOnlyDesc').textContent.trim();
+            if (!text) {
+                showToast('暂无可复制内容', 'warning');
+                return;
+            }
+            const fallbackCopy = () => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('已复制到剪贴板', 'success');
+                } catch (e) {
+                    showToast('复制失败，请手动选择', 'error');
+                }
+                document.body.removeChild(ta);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text)
+                    .then(() => showToast('已复制到剪贴板', 'success'))
+                    .catch(fallbackCopy);
+            } else {
+                fallbackCopy();
+            }
+        }
+
         // 绑定事件
         function bindEvents() {
             $('#themeToggle').addEventListener('click', toggleTheme);
@@ -999,6 +1243,7 @@
 
             $('#globalSubmit').addEventListener('click', handleSubmit);
             $('#retryBtn').addEventListener('click', handleSubmit);
+            $('#copyPromptBtn').addEventListener('click', copyPrompt);
 
             initOverlayModule();
             initDrawEngineSwitch();
