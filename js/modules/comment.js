@@ -1,8 +1,8 @@
 /* comment.js - 已从 Waline 迁移至 Twikoo，保留弹窗控制、冷却重试、防重复初始化等逻辑 */
 class CommentModule {
   static CONFIG = {
-    // ===== Twikoo 环境地址（替换为你的 Netlify 部署地址） =====
-    twikooEnvId: window.APP_CONFIG?.TWIKOO_ENV_ID || 'https://pl688.ccwu.cc',
+    // ===== Twikoo 后端地址（自定义域名） =====
+    twikooEnvId: (window.APP_CONFIG && window.APP_CONFIG.TWIKOO_ENV_ID) || 'https://pl688.ccwu.cc',
     el: '#twikoo-comment',
     modalId: 'commentModal',
     openBtnId: 'commentBtn',
@@ -91,12 +91,13 @@ class CommentModule {
 
     try {
       container.innerHTML = '';
-      twikoo.init({
+      this.instance = twikoo.init({
         envId: twikooEnvId,
         el: el,
         // 可选配置，例如：
         // lang: 'zh-CN',
         // path: window.location.pathname,
+        // 主题：Twikoo 会自动适配暗色模式
       });
       this._initialized = true;
       this._initFailed = false;
