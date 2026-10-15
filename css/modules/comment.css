@@ -1,4 +1,4 @@
-/* comment.css - 适配 Twikoo 评论系统 */
+/* comment.css - 适配 Twikoo 评论系统，强制显示管理入口 */
 :root {
     --twikoo-theme-color: var(--primary-color, #4361ee);
 }
@@ -11,6 +11,18 @@
     --twikoo-border-color: var(--border-color, #f0f0f0);
     --twikoo-text-color: var(--text-primary, #111111);
     --twikoo-text-color-light: var(--text-secondary, #666666);
+}
+
+/* ===== 核心修复：强制显示 Twikoo 的管理齿轮图标 ===== */
+/* Twikoo 默认在未登录/未输入暗号前隐藏齿轮，这里强制覆盖显示 */
+#twikoo-comment .tk-admin-avatar,
+#twikoo-comment .tk-footer .tk-admin,
+#twikoo-comment .tk-icon,
+#twikoo-comment .tk-footer .tk-admin-icon {
+    display: inline-flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 9999 !important;
 }
 
 /* 整体容器 */
