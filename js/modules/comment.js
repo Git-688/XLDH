@@ -2,7 +2,7 @@
 class CommentModule {
   static CONFIG = {
     // ===== Twikoo 环境地址（替换为你的 Netlify 部署地址） =====
-    twikooEnvId: window.APP_CONFIG?.TWIKOO_ENV_ID || 'https://your-twikoo.netlify.app',
+    twikooEnvId: window.APP_CONFIG?.TWIKOO_ENV_ID || 'https://pl688.ccwu.cc',
     el: '#twikoo-comment',
     modalId: 'commentModal',
     openBtnId: 'commentBtn',
