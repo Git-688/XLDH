@@ -111,7 +111,10 @@
                     'favicon.yandex.net', 'icon.horse', 'api.71xk.com', 'bing.biturl.top',
                     'pearapi.ai', 'yunzhiapi.cn', 'google.com/s2/favicons',
                     'cdn.jsdelivr.net', 'unpkg.com', 'fonts.googleapis.com', 'fonts.gstatic.com',
-                    'netlify.app'  // ===== 新增：Twikoo 部署在 Netlify，忽略其后端域名错误 =====
+                    // ===== 新增：Twikoo 后端部署在 Netlify，忽略其资源加载错误 =====
+                    'netlify.app',
+                    // ===== 新增：Twikoo 官方 CDN 与其他可能使用的域名 =====
+                    'twikoo.js.org', 'npm.elemecdn.com', 'cdn.staticfile.org'
                 ];
                 if (ignoreDomains.some(domain => errorInfo.src.includes(domain))) {
                     return true;
