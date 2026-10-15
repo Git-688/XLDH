@@ -87,7 +87,8 @@
             }
             window.APP_CONFIG = {
                 API_BASE: apiBase,
-                WALINE_SERVER: 'https://pl688.ccwu.cc'
+                // ===== 请将此地址替换为你自己部署到 Netlify 的 Twikoo 后端地址 =====
+                TWIKOO_ENV_ID: 'https://your-twikoo.netlify.app'
             };
             window.Starlink = window.Starlink || {};
         })();
@@ -107,6 +108,7 @@
     <link rel="preconnect" href="https://unpkg.com">
     <link rel="preconnect" href="https://myhkw.cn">
     <link rel="preconnect" href="https://oiapi.net">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="dns-prefetch" href="https://favicon.yandex.net">
     <link rel="dns-prefetch" href="https://icon.horse">
     <link rel="dns-prefetch" href="https://www.google.com">
@@ -133,8 +135,7 @@
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
     <link rel="stylesheet" href="./css/modules/comment.css">
 
-    <!-- ===== 修复：所有 CDN 从 cdn.jsdelivr.net 改为 unpkg.com ===== -->
-    <link rel="stylesheet" href="https://unpkg.com/@waline/client@3.15.2/dist/waline.css">
+    <!-- ===== CDN 样式（已移除 Waline，改为 Twikoo 无需引入额外 CSS） ===== -->
     <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
     <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
@@ -519,7 +520,7 @@
         .dark-mode .notebook-content { background: rgba(50,50,50,0.8); color: #c0c0c0; border-color: rgba(255,255,255,0.05); }
 
         #commentModal .feedback-modal-content { max-height: 75vh; max-width: 700px; }
-        #commentModal .feedback-modal-header h3 i { color: #f59e0b; }
+        #commentModal .feedback-modal-header h3 i { color: #07C160; }
 
         #submitModal .feedback-modal-content { max-height: 90vh; max-width: 520px; }
         #submitModal .feedback-modal-header h3 i { color: #4361ee; }
@@ -751,7 +752,6 @@
     <script defer src="./js/modules/theme.js"></script>
     <script defer src="./js/cursor2.js"></script>
     <script defer src="./js/modules/keyboard-adapter.js"></script>
-    <script defer src="https://unpkg.com/@waline/client@3.15.2/dist/waline.umd.js"></script>
 </head>
 <body>
     <div class="scroll-progress" id="scrollProgress"></div>
@@ -996,10 +996,11 @@
             </div>
         </div>
 
+        <!-- ===== 评论模态框（已从 Waline 改为 Twikoo） ===== -->
         <div id="commentModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header"><h3><i class="fas fa-comments" style="color: #07C160;"></i> 网友评论</h3><button class="feedback-modal-close">&times;</button></div>
-                <div class="feedback-modal-body"><div id="waline-comment"></div></div>
+                <div class="feedback-modal-body"><div id="twikoo-comment"></div></div>
             </div>
         </div>
 
@@ -1066,6 +1067,9 @@
 
     <script defer src="https://unpkg.com/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://unpkg.com/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
+
+    <!-- ===== Twikoo 评论系统 SDK（在 comment.js 之前加载） ===== -->
+    <script defer src="https://cdn.jsdelivr.net/npm/twikoo@1.7.9/dist/twikoo.all.min.js"></script>
 
     <script>
         (function() {
