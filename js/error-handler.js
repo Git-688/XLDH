@@ -110,7 +110,8 @@
                 const ignoreDomains = [
                     'favicon.yandex.net', 'icon.horse', 'api.71xk.com', 'bing.biturl.top',
                     'pearapi.ai', 'yunzhiapi.cn', 'google.com/s2/favicons',
-                    'cdn.jsdelivr.net', 'unpkg.com', 'fonts.googleapis.com', 'fonts.gstatic.com'
+                    'cdn.jsdelivr.net', 'unpkg.com', 'fonts.googleapis.com', 'fonts.gstatic.com',
+                    'netlify.app'  // ===== 新增：Twikoo 部署在 Netlify，忽略其后端域名错误 =====
                 ];
                 if (ignoreDomains.some(domain => errorInfo.src.includes(domain))) {
                     return true;
