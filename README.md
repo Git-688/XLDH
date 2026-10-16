@@ -1,7 +1,7 @@
 <div align="center">
   <img src="./assets/logo.png" alt="星聚导航 Logo" width="100">
   <h1>⭐️ 星聚导航</h1>
-  <p>极简的个人导航（Git开源项目+Cloudflare）</p>
+  <p>小白的个人导航（Git开源项目+Cloudflare）</p>
 
   ![GitHub Repo stars](https://img.shields.io/github/stars/Git-688/XLDH?style=social)
   ![GitHub forks](https://img.shields.io/github/forks/Git-688/XLDH?style=social)
@@ -23,7 +23,7 @@
 - 🎣 **趣味木鱼**：功德/幸运/财富/健康，敲击有特效和音效
 - 🔔 **公告系统**：单公告模式，支持重要内容高亮，未读标记
 - 📝 **星聚笔记**：云存储的便签（API 驱动）
-- 💬 **Waline 评论系统**：支持 LaTeX
+- 💬 **Twikoo评论系统**：支持 LaTeX
 - 🌓 **深色模式**：适配深色主题，跟随系统或手动切换
 - 📱 **响应式设计**：适配桌面、平板、手机
 - 🔒 **安全检测**：网站投稿时自动执行 Google Safe Browsing + VirusTotal 双重检测
