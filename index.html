@@ -87,7 +87,7 @@
             }
             window.APP_CONFIG = {
                 API_BASE: apiBase,
-                // ===== 请将此地址替换为你自己部署到 Netlify 的 Twikoo 后端地址 =====
+                // ===== Twikoo 后端地址（自定义域名） =====
                 TWIKOO_ENV_ID: 'https://pl688.ccwu.cc'
             };
             window.Starlink = window.Starlink || {};
@@ -109,6 +109,7 @@
     <link rel="preconnect" href="https://myhkw.cn">
     <link rel="preconnect" href="https://oiapi.net">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://pl688.ccwu.cc">
     <link rel="dns-prefetch" href="https://favicon.yandex.net">
     <link rel="dns-prefetch" href="https://icon.horse">
     <link rel="dns-prefetch" href="https://www.google.com">
@@ -135,7 +136,7 @@
     <link rel="stylesheet" href="./css/xfyy1/music-player.css">
     <link rel="stylesheet" href="./css/modules/comment.css">
 
-    <!-- ===== CDN 样式（已移除 Waline，改为 Twikoo 无需引入额外 CSS） ===== -->
+    <!-- ===== CDN 样式 ===== -->
     <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/css/fontawesome.min.css">
     <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/css/solid.min.css">
     <link rel="stylesheet" href="https://unpkg.com/@fortawesome/fontawesome-free@6.4.0/css/brands.min.css">
@@ -747,6 +748,8 @@
     <script defer src="./js/xfyy/plugin-manager.js"></script>
     <script defer src="./js/xfyy/music-player.js"></script>
     <script defer src="./js/xfyy/music-main.js"></script>
+    <!-- ===== Twikoo SDK 2.0.14（锁定版本，与后端一致，必须在 comment.js 之前加载） ===== -->
+    <script defer src="https://cdn.jsdelivr.net/npm/twikoo@2.0.14/dist/twikoo.min.js"></script>
     <script defer src="./js/modules/comment.js"></script>
     <script defer src="./js/modules/submit.js"></script>
     <script defer src="./js/modules/theme.js"></script>
@@ -996,7 +999,7 @@
             </div>
         </div>
 
-        <!-- ===== 评论模态框（已从 Waline 改为 Twikoo） ===== -->
+        <!-- ===== 评论模态框（Twikoo 2.0.14） ===== -->
         <div id="commentModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header"><h3><i class="fas fa-comments" style="color: #07C160;"></i> 网友评论</h3><button class="feedback-modal-close">&times;</button></div>
@@ -1068,8 +1071,7 @@
     <script defer src="https://unpkg.com/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://unpkg.com/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
 
-    <!-- ===== Twikoo 评论系统 SDK（在 comment.js 之前加载） ===== -->
-    <script defer src="https://cdn.jsdelivr.net/npm/twikoo@2.0.15/dist/twikoo.all.min.js"></script>
+    <!-- ===== Twikoo SDK 已移至 <head> 中 comment.js 之前，版本锁定为 2.0.14 ===== -->
 
     <script>
         (function() {
