@@ -1,9 +1,7 @@
-/* comment.js - 已从 Waline 迁移至 Twikoo，使用 styles 参数注入自定义样式（无 !important 覆盖） */
+/* comment.js - Twikoo 评论模块 */
 class CommentModule {
   static CONFIG = {
-    // ===== Twikoo 后端地址（自定义域名） =====
     twikooEnvId: (window.APP_CONFIG && window.APP_CONFIG.TWIKOO_ENV_ID) || 'https://pl688.ccwu.cc',
-    // ===== 自定义样式文件（Twikoo 会在默认样式之后注入，优先级更高） =====
     twikooStylesUrl: './css/modules/comment.css',
     el: '#twikoo-comment',
     modalId: 'commentModal',
@@ -49,7 +47,6 @@ class CommentModule {
     });
   }
 
-  // ===== 初始化 Twikoo =====
   _initTwikoo() {
     if (this._initialized) return;
 
@@ -95,7 +92,6 @@ class CommentModule {
       this.instance = window.twikoo.init({
         envId: twikooEnvId,
         el: el,
-        // ===== 关键：Twikoo 会在自身默认样式之后加载此 CSS，从而无需 !important 即可覆盖 =====
         styles: twikooStylesUrl,
       });
       this._initialized = true;
