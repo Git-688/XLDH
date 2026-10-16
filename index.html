@@ -86,7 +86,7 @@
             }
             window.APP_CONFIG = {
                 API_BASE: apiBase,
-                // ===== Twikoo 后端地址（自定义域名，已迁移至 Twikoo 2.x） =====
+                // ===== Twikoo 后端地址（自定义域名） =====
                 TWIKOO_ENV_ID: 'https://pl688.ccwu.cc'
             };
             window.Starlink = window.Starlink || {};
@@ -710,12 +710,13 @@
     <script defer src="./js/xfyy/plugin-manager.js"></script>
     <script defer src="./js/xfyy/music-player.js"></script>
     <script defer src="./js/xfyy/music-main.js"></script>
+    <!-- ===== Twikoo 2.x SDK 静态引入（必须在 comment.js 之前，defer 保证顺序） ===== -->
+    <script defer src="https://cdn.jsdelivr.net/npm/twikoo@2/dist/twikoo.min.js"></script>
     <script defer src="./js/modules/comment.js"></script>
     <script defer src="./js/modules/submit.js"></script>
     <script defer src="./js/modules/theme.js"></script>
     <script defer src="./js/cursor2.js"></script>
     <script defer src="./js/modules/keyboard-adapter.js"></script>
-    <!-- 注意：Twikoo 2.x SDK 不再静态引入，改由 comment.js 内部动态 import() -->
 </head>
 <body>
     <div class="scroll-progress" id="scrollProgress"></div>
@@ -954,7 +955,7 @@
             </div>
         </div>
 
-        <!-- ===== 评论模态框（已从 Waline 改为 Twikoo 2.x） ===== -->
+        <!-- ===== 评论模态框（Twikoo 2.x） ===== -->
         <div id="commentModal" class="feedback-modal">
             <div class="feedback-modal-content">
                 <div class="feedback-modal-header"><h3><i class="fas fa-comments" style="color: #07C160;"></i> 网友评论</h3><button class="feedback-modal-close">&times;</button></div>
@@ -1025,8 +1026,6 @@
 
     <script defer src="https://unpkg.com/katex@0.16.45/dist/katex.min.js"></script>
     <script defer src="https://unpkg.com/katex@0.16.45/dist/contrib/auto-render.min.js"></script>
-
-    <!-- ===== 注意：Twikoo 2.x SDK 由 comment.js 内部动态 import() 加载，此处不再需要静态引入 ===== -->
 
     <script>
         (function() {
