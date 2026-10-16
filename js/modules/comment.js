@@ -1,8 +1,154 @@
 /* comment.js - Twikoo 评论模块 */
+
+const TWIKOO_STYLES = `
+#twikoo-comment.twikoo {
+  --twikoo-theme: var(--primary-color, #4361ee);
+  --twikoo-bg: var(--bg-card, #ffffff);
+  --twikoo-bg-secondary: var(--bg-secondary, #f8f9fa);
+  --twikoo-border: var(--border-color, #e9ecef);
+  --twikoo-text: var(--text-primary, #2b2d42);
+  --twikoo-text-secondary: var(--text-secondary, #6c757d);
+}
+
+#twikoo-comment.twikoo .tk-submit {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e9ecef);
+  border-radius: 8px;
+  padding: 12px;
+  color: var(--text-primary, #2b2d42);
+}
+
+#twikoo-comment.twikoo .tk-row {
+  background: transparent;
+}
+
+#twikoo-comment.twikoo .tk-input {
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary, #2b2d42);
+  border: 1px solid var(--border-color, #e9ecef);
+  border-radius: 8px;
+}
+
+#twikoo-comment.twikoo .tk-input:focus {
+  border-color: var(--primary-color, #4361ee);
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+}
+
+#twikoo-comment.twikoo .tk-meta-input .el-input-group__prepend,
+#twikoo-comment.twikoo .tk-meta-input > .el-input > .el-input-group__prepend {
+  background: var(--bg-secondary, #f8f9fa);
+  color: var(--text-secondary, #6c757d);
+  border-color: var(--border-color, #e9ecef);
+}
+
+#twikoo-comment.twikoo .tk-submit .el-button--primary {
+  background: var(--primary-color, #4361ee);
+  border-color: var(--primary-color, #4361ee);
+  color: #fff;
+  border-radius: 8px;
+}
+
+#twikoo-comment.twikoo .tk-submit .el-button--primary:hover {
+  background: var(--secondary-color, #3a0ca3);
+  border-color: var(--secondary-color, #3a0ca3);
+}
+
+#twikoo-comment.twikoo .tk-submit .el-button:not(.el-button--primary) {
+  background: var(--bg-card, #ffffff);
+  border-color: var(--border-color, #e9ecef);
+  color: var(--text-secondary, #6c757d);
+  border-radius: 8px;
+}
+
+#twikoo-comment.twikoo .tk-submit .el-button:not(.el-button--primary):hover {
+  border-color: var(--primary-color, #4361ee);
+  color: var(--primary-color, #4361ee);
+}
+
+#twikoo-comment.twikoo .tk-comments {
+  padding: 0;
+  margin: 0;
+}
+
+#twikoo-comment.twikoo .tk-comment {
+  border-bottom: 1px solid var(--border-color, #f0f0f0);
+  padding: 12px 0;
+  background: transparent;
+}
+
+#twikoo-comment.twikoo .tk-nick,
+#twikoo-comment.twikoo .tk-content {
+  color: var(--text-primary, #2b2d42);
+}
+
+#twikoo-comment.twikoo .tk-time {
+  color: var(--text-secondary, #6c757d);
+}
+
+#twikoo-comment.twikoo .tk-action-icon,
+#twikoo-comment.twikoo .tk-action-link {
+  color: var(--text-secondary, #6c757d);
+}
+
+#twikoo-comment.twikoo .tk-action-icon:hover,
+#twikoo-comment.twikoo .tk-action-link:hover {
+  color: var(--primary-color, #4361ee);
+}
+
+#twikoo-comment.twikoo .tk-emoji,
+#twikoo-comment.twikoo .tk-emoji-container {
+  background: transparent;
+  border: none;
+}
+
+#twikoo-comment.twikoo .tk-pagination,
+#twikoo-comment.twikoo .tk-pagination-page {
+  background: transparent;
+}
+
+.dark-mode #twikoo-comment.twikoo {
+  --twikoo-bg: #2d2d2d;
+  --twikoo-bg-secondary: #1e1e1e;
+  --twikoo-border: #404040;
+  --twikoo-text: #f8f9fa;
+  --twikoo-text-secondary: #adb5bd;
+}
+
+.dark-mode #twikoo-comment.twikoo .tk-submit {
+  background: var(--bg-card, #2d2d2d);
+  border-color: var(--border-color, #404040);
+}
+
+.dark-mode #twikoo-comment.twikoo .tk-input {
+  background: var(--bg-secondary, #1e1e1e);
+  color: var(--text-primary, #f8f9fa);
+  border-color: var(--border-color, #404040);
+}
+
+.dark-mode #twikoo-comment.twikoo .tk-meta-input .el-input-group__prepend {
+  background: var(--bg-card, #2d2d2d);
+  color: var(--text-secondary, #adb5bd);
+  border-color: var(--border-color, #404040);
+}
+
+.dark-mode #twikoo-comment.twikoo .tk-comment {
+  border-bottom-color: var(--border-color, #404040);
+}
+
+.dark-mode #twikoo-comment.twikoo .tk-nick,
+.dark-mode #twikoo-comment.twikoo .tk-content {
+  color: var(--text-primary, #f8f9fa);
+}
+
+.dark-mode #twikoo-comment.twikoo .tk-time {
+  color: var(--text-secondary, #adb5bd);
+}
+`;
+
 class CommentModule {
   static CONFIG = {
     twikooEnvId: (window.APP_CONFIG && window.APP_CONFIG.TWIKOO_ENV_ID) || 'https://pl688.ccwu.cc',
-    twikooStylesUrl: './css/modules/comment.css',
+    twikooStyles: TWIKOO_STYLES,
     el: '#twikoo-comment',
     modalId: 'commentModal',
     openBtnId: 'commentBtn',
@@ -70,7 +216,7 @@ class CommentModule {
 
     this._initAttempts++;
 
-    const { el, twikooEnvId, twikooStylesUrl } = CommentModule.CONFIG;
+    const { el, twikooEnvId, twikooStyles } = CommentModule.CONFIG;
     console.log(`[评论] 初始化 Twikoo（第 ${this._initAttempts} 次尝试），envId: ${twikooEnvId}`);
 
     const container = document.querySelector(el);
@@ -92,7 +238,7 @@ class CommentModule {
       this.instance = window.twikoo.init({
         envId: twikooEnvId,
         el: el,
-        styles: twikooStylesUrl,
+        styles: twikooStyles,
       });
       this._initialized = true;
       this._initFailed = false;
