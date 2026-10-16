@@ -1,15 +1,8 @@
-/* comment.js - 已从 Waline 迁移至 Twikoo，支持 Twikoo 2.x 动态加载 */
+/* comment.js - 已从 Waline 迁移至 Twikoo，静态引入 SDK 版本 */
 class CommentModule {
   static CONFIG = {
     // ===== Twikoo 后端地址（自定义域名） =====
     twikooEnvId: (window.APP_CONFIG && window.APP_CONFIG.TWIKOO_ENV_ID) || 'https://pl688.ccwu.cc',
-    // ===== Twikoo 2.x 前端 SDK（UMD）CDN 地址列表，按优先级尝试 =====
-    twikooCdnList: [
-      'https://cdn.jsdelivr.net/npm/twikoo@2/dist/twikoo.min.js',
-      'https://unpkg.com/twikoo@2/dist/twikoo.min.js',
-      'https://cdn.jsdelivr.net/npm/twikoo@2.0.14/dist/twikoo.min.js',
-      'https://npm.elemecdn.com/twikoo@2/dist/twikoo.min.js'
-    ],
     el: '#twikoo-comment',
     modalId: 'commentModal',
     openBtnId: 'commentBtn',
@@ -17,8 +10,6 @@ class CommentModule {
     // ===== 初始化重试配置 =====
     INIT_MAX_ATTEMPTS: 3,
     INIT_COOLDOWN_MS: 30 * 1000,
-    // ===== SDK 加载超时时间（毫秒） =====
-    SDK_LOAD_TIMEOUT: 15000,
   };
 
   constructor() {
@@ -31,7 +22,6 @@ class CommentModule {
     this._initAttempts = 0;
     this._initCooldownUntil = 0;
     this._initFailed = false;
-    this._sdkLoadingPromise = null;
     this._initDOM();
     this._bindEvents();
     this._initTwikoo();
@@ -58,73 +48,8 @@ class CommentModule {
     });
   }
 
-  // ===== 动态加载 Twikoo 2.x SDK（UMD，用 <script> 标签注入） =====
-  _loadTwikooSDK() {
-    // 已加载完成，直接返回
-    if (window.twikoo && typeof window.twikoo.init === 'function') {
-      return Promise.resolve(true);
-    }
-    // 正在加载中，复用同一个 Promise
-    if (this._sdkLoadingPromise) return this._sdkLoadingPromise;
-
-    this._sdkLoadingPromise = new Promise((resolve) => {
-      const cdnList = CommentModule.CONFIG.twikooCdnList;
-      let idx = 0;
-
-      const tryNext = () => {
-        if (idx >= cdnList.length) {
-          console.error('[评论] 所有 CDN 均加载 Twikoo SDK 失败');
-          resolve(false);
-          return;
-        }
-
-        const url = cdnList[idx++];
-        console.log(`[评论] 尝试加载 Twikoo SDK: ${url}`);
-
-        const script = document.createElement('script');
-        script.src = url;
-        script.async = true;
-
-        // 超时保护：避免某个 CDN 卡住导致整个加载流程阻塞
-        const timeoutId = setTimeout(() => {
-          if (script.parentNode) script.parentNode.removeChild(script);
-          console.warn(`[评论] Twikoo SDK 加载超时: ${url}`);
-          tryNext();
-        }, CommentModule.CONFIG.SDK_LOAD_TIMEOUT);
-
-        script.onload = () => {
-          clearTimeout(timeoutId);
-          if (window.twikoo && typeof window.twikoo.init === 'function') {
-            console.log('[评论] Twikoo SDK 加载成功');
-            resolve(true);
-          } else {
-            console.warn(`[评论] ${url} 加载后无 window.twikoo，尝试下一个 CDN`);
-            tryNext();
-          }
-        };
-
-        script.onerror = () => {
-          clearTimeout(timeoutId);
-          console.warn(`[评论] Twikoo SDK 加载失败: ${url}`);
-          tryNext();
-        };
-
-        document.head.appendChild(script);
-      };
-
-      tryNext();
-    });
-
-    // 失败后重置 Promise，允许下次重试
-    this._sdkLoadingPromise.then(ok => {
-      if (!ok) this._sdkLoadingPromise = null;
-    });
-
-    return this._sdkLoadingPromise;
-  }
-
-  // ===== 初始化 Twikoo =====
-  async _initTwikoo() {
+  // ===== 初始化 Twikoo（SDK 已由 index.html 静态引入） =====
+  _initTwikoo() {
     if (this._initialized) return;
 
     const now = Date.now();
@@ -157,14 +82,10 @@ class CommentModule {
       return;
     }
 
-    // 先显示"加载中"提示
-    container.innerHTML = '<div class="twikoo-fallback" style="padding:20px;text-align:center;color:#999;">评论系统加载中...</div>';
-
-    // 动态加载 SDK
-    const sdkLoaded = await this._loadTwikooSDK();
-    if (!sdkLoaded) {
-      console.warn('[评论] Twikoo SDK 加载失败，进入冷却等待');
-      container.innerHTML = '<div class="twikoo-fallback" style="padding:20px;text-align:center;color:#999;">评论系统加载失败，请稍后再试。</div>';
+    // SDK 未加载（可能 CDN 慢或脚本执行顺序异常），进入冷却等待
+    if (typeof window.twikoo === 'undefined' || typeof window.twikoo.init !== 'function') {
+      console.warn('[评论] Twikoo SDK 尚未加载，进入冷却等待');
+      container.innerHTML = '<div class="twikoo-fallback" style="padding:20px;text-align:center;color:#999;">评论系统加载中，请稍后再试...</div>';
       this._initCooldownUntil = now + CommentModule.CONFIG.INIT_COOLDOWN_MS;
       return;
     }
@@ -238,7 +159,6 @@ class CommentModule {
     this._initAttempts = 0;
     this._initCooldownUntil = 0;
     this._initFailed = false;
-    this._sdkLoadingPromise = null;
     this.isVisible = false;
     document.body.style.overflow = '';
   }
