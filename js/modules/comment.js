@@ -1,8 +1,8 @@
-/* comment.js - 已从 Waline 迁移至 Twikoo，静态引入 SDK 版本 */
+/* comment.js - 已从 Waline 迁移至 Twikoo，保留弹窗控制、冷却重试、防重复初始化等逻辑 */
 class CommentModule {
   static CONFIG = {
-    // ===== Twikoo 后端地址（自定义域名） =====
-    twikooEnvId: (window.APP_CONFIG && window.APP_CONFIG.TWIKOO_ENV_ID) || 'https://pl688.ccwu.cc',
+    // ===== Twikoo 环境地址（替换为你的 Netlify 部署地址） =====
+    twikooEnvId: window.APP_CONFIG?.TWIKOO_ENV_ID || 'https://pl688.ccwu.cc',
     el: '#twikoo-comment',
     modalId: 'commentModal',
     openBtnId: 'commentBtn',
@@ -18,7 +18,7 @@ class CommentModule {
     this.modal = null;
     this.openBtn = null;
     this.isVisible = false;
-    this._initialized = false;
+    this._initialized = false; // 防重复初始化标志
     this._initAttempts = 0;
     this._initCooldownUntil = 0;
     this._initFailed = false;
@@ -48,7 +48,7 @@ class CommentModule {
     });
   }
 
-  // ===== 初始化 Twikoo（SDK 已由 index.html 静态引入） =====
+  // ===== 初始化 Twikoo =====
   _initTwikoo() {
     if (this._initialized) return;
 
@@ -82,8 +82,7 @@ class CommentModule {
       return;
     }
 
-    // SDK 未加载（可能 CDN 慢或脚本执行顺序异常），进入冷却等待
-    if (typeof window.twikoo === 'undefined' || typeof window.twikoo.init !== 'function') {
+    if (typeof twikoo === 'undefined') {
       console.warn('[评论] Twikoo SDK 尚未加载，进入冷却等待');
       container.innerHTML = '<div class="twikoo-fallback" style="padding:20px;text-align:center;color:#999;">评论系统加载中，请稍后再试...</div>';
       this._initCooldownUntil = now + CommentModule.CONFIG.INIT_COOLDOWN_MS;
@@ -92,10 +91,10 @@ class CommentModule {
 
     try {
       container.innerHTML = '';
-      this.instance = window.twikoo.init({
+      twikoo.init({
         envId: twikooEnvId,
         el: el,
-        // 可选配置：
+        // 可选配置，例如：
         // lang: 'zh-CN',
         // path: window.location.pathname,
       });
@@ -111,10 +110,10 @@ class CommentModule {
     }
   }
 
-  async open() {
+  open() {
     if (!this.modal) return;
     if (!this._initialized) {
-      await this._initTwikoo();
+      this._initTwikoo();
       if (!this._initialized) {
         if (this._initFailed) {
           window.toast?.show('评论系统暂时不可用，请稍后再试', 'error');
