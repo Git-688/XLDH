@@ -1,63 +1,174 @@
-/* comment.css - 适配 Twikoo 评论系统 */
-:root {
-    --twikoo-theme-color: var(--primary-color, #4361ee);
-}
+/* comment.css - 适配 Twikoo 2.0.14，去除默认蓝色背景，跟随站点主题 */
 
+/* ============================================================
+   1. 覆盖 Twikoo 2.x 主题 CSS 变量（含新旧两套变量名）
+   ============================================================ */
 #twikoo-comment {
-    --twikoo-font-size: .95rem;
+    /* ---- Twikoo 2.x 新版变量 ---- */
+    --tk-theme-color: var(--primary-color, #4361ee);
+    --tk-theme-color-hover: var(--secondary-color, #3a0ca3);
+    --tk-bg-color: var(--bg-card, #ffffff);
+    --tk-bg-color-light: var(--bg-secondary, #f8f9fa);
+    --tk-border-color: var(--border-color, #e9ecef);
+    --tk-text-color: var(--text-primary, #2b2d42);
+    --tk-text-color-light: var(--text-secondary, #6c757d);
+    --tk-color-primary: var(--primary-color, #4361ee);
+
+    /* ---- 兼容 Twikoo 老版变量名 ---- */
     --twikoo-theme-color: var(--primary-color, #4361ee);
+    --twikoo-active-color: var(--secondary-color, #3a0ca3);
     --twikoo-bgcolor: var(--bg-card, #ffffff);
-    --twikoo-bgcolor-light: var(--bg-light, #f8f9fa);
-    --twikoo-border-color: var(--border-color, #f0f0f0);
-    --twikoo-text-color: var(--text-primary, #111111);
-    --twikoo-text-color-light: var(--text-secondary, #666666);
+    --twikoo-bgcolor-light: var(--bg-secondary, #f8f9fa);
+    --twikoo-border-color: var(--border-color, #e9ecef);
+    --twikoo-text-color: var(--text-primary, #2b2d42);
+    --twikoo-text-color-light: var(--text-secondary, #6c757d);
+
+    --twikoo-font-size: .95rem;
 }
 
-/* 整体容器 */
+/* ============================================================
+   2. 强制去除 Twikoo 表单区默认蓝色背景
+   ============================================================ */
+/* 表单最外层容器 */
+#twikoo-comment .tk-submit,
+#twikoo-comment .tk-comments-container,
+#twikoo-comment .tk-main,
+#twikoo-comment .tk-row,
+#twikoo-comment .tk-meta-input,
+#twikoo-comment .tk-action,
+#twikoo-comment .tk-edit,
+#twikoo-comment form {
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+}
+
+/* 强制让所有可能的蓝色容器变白（双保险，覆盖 Twikoo 2.x 各种版本） */
+#twikoo-comment .tk-submit {
+    background-color: var(--bg-card, #ffffff) !important;
+    border: 1px solid var(--border-color, #e9ecef) !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+}
+
+/* ============================================================
+   3. 输入框、文本框
+   ============================================================ */
+#twikoo-comment .el-input__inner,
+#twikoo-comment .el-textarea__inner,
+#twikoo-comment input,
+#twikoo-comment textarea,
+#twikoo-comment .tk-input {
+    background-color: var(--bg-card, #ffffff) !important;
+    color: var(--text-primary, #2b2d42) !important;
+    border: 1px solid var(--border-color, #e9ecef) !important;
+    border-radius: 8px !important;
+}
+
+#twikoo-comment .el-input__inner:focus,
+#twikoo-comment .el-textarea__inner:focus,
+#twikoo-comment input:focus,
+#twikoo-comment textarea:focus,
+#twikoo-comment .tk-input:focus {
+    border-color: var(--primary-color, #4361ee) !important;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1) !important;
+}
+
+/* 输入框前缀标签（昵称/邮箱/网址） */
+#twikoo-comment .el-input-group__prepend,
+#twikoo-comment .tk-input-group-prepend {
+    background-color: var(--bg-secondary, #f8f9fa) !important;
+    color: var(--text-secondary, #6c757d) !important;
+    border-color: var(--border-color, #e9ecef) !important;
+}
+
+/* ============================================================
+   4. 按钮
+   ============================================================ */
+#twikoo-comment .tk-submit-btn,
+#twikoo-comment .el-button--primary,
+#twikoo-comment button[type="submit"] {
+    background-color: var(--primary-color, #4361ee) !important;
+    border-color: var(--primary-color, #4361ee) !important;
+    color: #fff !important;
+    border-radius: 8px !important;
+}
+
+#twikoo-comment .tk-submit-btn:hover,
+#twikoo-comment .el-button--primary:hover,
+#twikoo-comment button[type="submit"]:hover {
+    background-color: var(--secondary-color, #3a0ca3) !important;
+    border-color: var(--secondary-color, #3a0ca3) !important;
+}
+
+/* 预览等次要按钮 */
+#twikoo-comment .el-button,
+#twikoo-comment .tk-preview-btn {
+    background-color: var(--bg-card, #ffffff) !important;
+    border-color: var(--border-color, #e9ecef) !important;
+    color: var(--text-secondary, #6c757d) !important;
+    border-radius: 8px !important;
+}
+
+#twikoo-comment .el-button:hover,
+#twikoo-comment .tk-preview-btn:hover {
+    border-color: var(--primary-color, #4361ee) !important;
+    color: var(--primary-color, #4361ee) !important;
+    background-color: rgba(67, 97, 238, 0.05) !important;
+}
+
+/* ============================================================
+   5. 评论列表
+   ============================================================ */
 #twikoo-comment .tk-comments {
     padding: 0;
     margin: 0;
 }
 
-/* 评论列表 */
 #twikoo-comment .tk-comment {
-    border-bottom: 1px solid var(--twikoo-border-color);
+    border-bottom: 1px solid var(--border-color, #f0f0f0);
     padding: 12px 0;
+    background: transparent !important;
 }
 
-/* 输入框 */
-#twikoo-comment .tk-input {
-    background: var(--twikoo-bgcolor);
-    border: 1px solid var(--twikoo-border-color);
-    border-radius: 8px;
-    color: var(--twikoo-text-color);
+/* 评论昵称、时间、正文 */
+#twikoo-comment .tk-nick,
+#twikoo-comment .tk-content {
+    color: var(--text-primary, #2b2d42) !important;
 }
 
-#twikoo-comment .tk-input:focus {
-    border-color: var(--twikoo-theme-color);
-    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+#twikoo-comment .tk-time {
+    color: var(--text-secondary, #6c757d) !important;
 }
 
-/* 按钮 */
-#twikoo-comment .tk-submit {
-    background: var(--twikoo-theme-color);
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    font-weight: 500;
-    transition: background .2s;
+/* 评论里的链接/操作按钮 */
+#twikoo-comment .tk-action-icon,
+#twikoo-comment .tk-action-link {
+    color: var(--text-secondary, #6c757d) !important;
 }
 
-#twikoo-comment .tk-submit:hover {
-    background: var(--secondary-color, #3a0ca3);
+#twikoo-comment .tk-action-icon:hover,
+#twikoo-comment .tk-action-link:hover {
+    color: var(--primary-color, #4361ee) !important;
 }
 
-/* 表情 */
-#twikoo-comment .tk-emoji {
-    border-radius: 6px;
+/* ============================================================
+   6. 表情、分页等其它区域
+   ============================================================ */
+#twikoo-comment .tk-emoji,
+#twikoo-comment .tk-emoji-container {
+    background: transparent !important;
+    border: none !important;
 }
 
-/* 降级提示 */
+#twikoo-comment .tk-pagination,
+#twikoo-comment .tk-pagination-page {
+    background: transparent !important;
+}
+
+/* ============================================================
+   7. 降级提示
+   ============================================================ */
 .twikoo-fallback {
     padding: 20px;
     text-align: center;
@@ -65,20 +176,16 @@
     font-size: 13px;
 }
 
-/* 模态框内边距调整 */
-#commentModal.feedback-modal .feedback-modal-content {
-    padding: 0;
-}
+/* ============================================================
+   8. 模态框内边距
+   ============================================================ */
+#commentModal.feedback-modal .feedback-modal-content { padding: 0; }
 #commentModal.feedback-modal .feedback-modal-header {
     padding: 10px 14px 8px;
     margin: 0;
 }
-#commentModal.feedback-modal .feedback-modal-body {
-    padding: 0 12px 12px;
-}
-#commentModal.feedback-modal #twikoo-comment {
-    margin: 0;
-}
+#commentModal.feedback-modal .feedback-modal-body { padding: 0 12px 12px; }
+#commentModal.feedback-modal #twikoo-comment { margin: 0; }
 
 #commentModal {
     align-items: center;
@@ -88,10 +195,7 @@
 }
 
 @media (min-width: 769px) {
-    #commentModal {
-        display: flex;
-        flex-direction: column;
-    }
+    #commentModal { display: flex; flex-direction: column; }
     #commentModal .feedback-modal-content {
         margin: auto 0;
         max-height: calc(100vh - 60px);
@@ -127,15 +231,11 @@
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
-    #commentModal .feedback-modal-content {
-        max-height: calc(100vh - 70px);
-    }
+    #commentModal .feedback-modal-content { max-height: calc(100vh - 70px); }
 }
 
 /* 滚动条 */
-#commentModal .feedback-modal-content::-webkit-scrollbar {
-    width: 4px;
-}
+#commentModal .feedback-modal-content::-webkit-scrollbar { width: 4px; }
 #commentModal .feedback-modal-content::-webkit-scrollbar-track {
     background: rgba(0, 0, 0, .05);
     border-radius: 4px;
@@ -145,22 +245,57 @@
     border-radius: 4px;
 }
 
-/* 深色模式适配 */
+/* ============================================================
+   9. 深色模式
+   ============================================================ */
 .dark-mode #twikoo-comment {
-    --twikoo-bgcolor: #2a2a2a;
-    --twikoo-bgcolor-light: #3a3a3a;
-    --twikoo-border-color: #3e3e3e;
-    --twikoo-text-color: #f1f1f1;
-    --twikoo-text-color-light: #aaaaaa;
+    --tk-bg-color: #2d2d2d;
+    --tk-bg-color-light: #1e1e1e;
+    --tk-border-color: #404040;
+    --tk-text-color: #f8f9fa;
+    --tk-text-color-light: #adb5bd;
+
+    --twikoo-bgcolor: #2d2d2d;
+    --twikoo-bgcolor-light: #1e1e1e;
+    --twikoo-border-color: #404040;
+    --twikoo-text-color: #f8f9fa;
+    --twikoo-text-color-light: #adb5bd;
 }
-.dark-mode #twikoo-comment .tk-comment {
-    border-bottom-color: var(--twikoo-border-color);
+
+.dark-mode #twikoo-comment .tk-submit {
+    background-color: var(--bg-card, #2d2d2d) !important;
+    border-color: var(--border-color, #404040) !important;
 }
+
+.dark-mode #twikoo-comment .el-input__inner,
+.dark-mode #twikoo-comment .el-textarea__inner,
+.dark-mode #twikoo-comment input,
+.dark-mode #twikoo-comment textarea,
 .dark-mode #twikoo-comment .tk-input {
-    background: var(--twikoo-bgcolor);
-    border-color: var(--twikoo-border-color);
-    color: var(--twikoo-text-color);
+    background-color: var(--bg-secondary, #1e1e1e) !important;
+    color: var(--text-primary, #f8f9fa) !important;
+    border-color: var(--border-color, #404040) !important;
 }
+
+.dark-mode #twikoo-comment .el-input-group__prepend {
+    background-color: var(--bg-card, #2d2d2d) !important;
+    color: var(--text-secondary, #adb5bd) !important;
+    border-color: var(--border-color, #404040) !important;
+}
+
+.dark-mode #twikoo-comment .tk-comment {
+    border-bottom-color: var(--border-color, #404040);
+}
+
+.dark-mode #twikoo-comment .tk-nick,
+.dark-mode #twikoo-comment .tk-content {
+    color: var(--text-primary, #f8f9fa) !important;
+}
+
+.dark-mode #twikoo-comment .tk-time {
+    color: var(--text-secondary, #adb5bd) !important;
+}
+
 .dark-mode #commentModal .feedback-modal-content::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, .05);
 }
